@@ -1,0 +1,156 @@
+import React, { useEffect, useRef } from 'react';
+
+export const FootballCustomCursor: React.FC = () => {
+  const dotRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const clickRippleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // 1. COMPLETELY DISABLE ON MOBILE & TOUCH SCREENS
+    const isMobileOrTouch =
+      window.matchMedia('(pointer: coarse)').matches ||
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.innerWidth < 768;
+
+    if (isMobileOrTouch) {
+      return;
+    }
+
+    document.body.classList.add('has-custom-cursor');
+
+    let mouseX = -100;
+    let mouseY = -100;
+    let ringX = -100;
+    let ringY = -100;
+    let animId = 0;
+
+    // Direct High-Performance Transform Update (NO REACT RE-RENDERS)
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+        dotRef.current.style.opacity = '1';
+      }
+      if (ringRef.current) {
+        ringRef.current.style.opacity = '1';
+      }
+    };
+
+    // Snappy, Event-Driven Hover Detection (Zero scanning on mousemove)
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('button, a, [role="button"], input, textarea, select, .cursor-pointer')) {
+        if (ringRef.current) {
+          ringRef.current.classList.add('cursor-hovered');
+        }
+      }
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('button, a, [role="button"], input, textarea, select, .cursor-pointer')) {
+        if (ringRef.current) {
+          ringRef.current.classList.remove('cursor-hovered');
+        }
+      }
+    };
+
+    const handleMouseDown = () => {
+      if (ringRef.current) {
+        ringRef.current.classList.add('cursor-clicked');
+      }
+      if (clickRippleRef.current) {
+        clickRippleRef.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) scale(0)`;
+        clickRippleRef.current.classList.remove('animate-kick-ripple');
+        // Trigger reflow to restart css animation
+        void clickRippleRef.current.offsetWidth;
+        clickRippleRef.current.classList.add('animate-kick-ripple');
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (ringRef.current) {
+        ringRef.current.classList.remove('cursor-clicked');
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (dotRef.current) dotRef.current.style.opacity = '0';
+      if (ringRef.current) ringRef.current.style.opacity = '0';
+    };
+
+    const handleMouseEnter = () => {
+      if (dotRef.current) dotRef.current.style.opacity = '1';
+      if (ringRef.current) ringRef.current.style.opacity = '1';
+    };
+
+    // Pure 120 FPS RAF loop with crisp 0.38 lerp (Zero lag)
+    const tick = () => {
+      const ease = 0.38; // Snappy & instant response
+      ringX += (mouseX - ringX) * ease;
+      ringY += (mouseY - ringY) * ease;
+
+      if (ringRef.current) {
+        ringRef.current.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      }
+
+      animId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseover', handleMouseOver, { passive: true });
+    document.addEventListener('mouseout', handleMouseOut, { passive: true });
+    window.addEventListener('mousedown', handleMouseDown, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
+
+    animId = requestAnimationFrame(tick);
+
+    return () => {
+      document.body.classList.remove('has-custom-cursor');
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('mouseout', handleMouseOut);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseenter', handleMouseEnter);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="hidden md:block fixed inset-0 pointer-events-none z-[999999] overflow-hidden select-none"
+    >
+      {/* 1. COMPACT TACTICAL RING (SLIM & LIGHTWEIGHT) */}
+      <div
+        ref={ringRef}
+        className="absolute top-0 left-0 w-5 h-5 -ml-2.5 -mt-2.5 rounded-full border border-purple-500/70 dark:border-purple-400/80 transition-[width,height,margin,border-color,background-color] duration-150 ease-out flex items-center justify-center opacity-0 will-change-transform"
+      >
+        {/* Subtle tactical crosshair pips */}
+        <span className="absolute -top-0.5 w-1 h-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+        <span className="absolute -bottom-0.5 w-1 h-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+        <span className="absolute -left-0.5 h-1 w-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+        <span className="absolute -right-0.5 h-1 w-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+      </div>
+
+      {/* 2. PINPOINT CENTER DOT (4px - ULTRA PRECISE) */}
+      <div
+        ref={dotRef}
+        className="absolute top-0 left-0 w-1.5 h-1.5 -ml-[3px] -mt-[3px] rounded-full bg-purple-600 dark:bg-purple-400 shadow-[0_0_6px_#a855f7] opacity-0 will-change-transform"
+      />
+
+      {/* 3. LIGHTWEIGHT CLICK RIPPLE (CSS-ONLY KEYFRAME) */}
+      <div
+        ref={clickRippleRef}
+        className="absolute top-0 left-0 w-6 h-6 -ml-3 -mt-3 rounded-full border border-purple-400 dark:border-purple-300 opacity-0 pointer-events-none will-change-transform"
+      />
+    </div>
+  );
+};

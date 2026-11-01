@@ -1,0 +1,438 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Royal Violet Purple (Matching Official Logo) */
+    --primary: 268 85% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 40% 96.1%;
+    --secondary-foreground: 268 85% 20%;
+
+    --muted: 270 30% 96.1%;
+    --muted-foreground: 268 15% 45%;
+
+    --accent: 270 50% 95%;
+    --accent-foreground: 268 85% 20%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 270 20% 91%;
+    --input: 270 20% 91%;
+    --ring: 268 85% 56%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 270 50% 4%;
+    --foreground: 270 20% 98%;
+
+    --card: 270 45% 6.5%;
+    --card-foreground: 270 20% 98%;
+
+    --popover: 270 45% 6.5%;
+    --popover-foreground: 270 20% 98%;
+
+    /* Vivid Glowing Violet */
+    --primary: 268 90% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 30% 15%;
+    --secondary-foreground: 270 20% 98%;
+
+    --muted: 270 30% 15%;
+    --muted-foreground: 270 15% 65%;
+
+    --accent: 270 35% 18%;
+    --accent-foreground: 270 20% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 270 30% 18%;
+    --input: 270 30% 18%;
+    --ring: 268 90% 65%;
+  }
+
+  * {
+    @apply border-border;
+    font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ==========================================================================
+   CIRCULAR VIEW TRANSITION THEME WAVE (PAINT-SPREAD EFFECT)
+   ========================================================================== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+::view-transition-group(theme-toggle-btn) {
+  z-index: 100000;
+}
+::view-transition-old(theme-toggle-btn),
+::view-transition-new(theme-toggle-btn) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* ==========================================================================
+   FOOTBALL TACTICAL CUSTOM CURSOR (COMPACT, LIGHTWEIGHT & ZERO LAG)
+   ========================================================================== */
+@media (pointer: fine) and (min-width: 769px) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button,
+  body.has-custom-cursor [role="button"],
+  body.has-custom-cursor input,
+  body.has-custom-cursor select,
+  body.has-custom-cursor textarea,
+  body.has-custom-cursor .cursor-pointer {
+    cursor: none !important;
+  }
+}
+
+.cursor-hovered {
+  width: 26px !important;
+  height: 26px !important;
+  margin-left: -13px !important;
+  margin-top: -13px !important;
+  border-color: #a855f7 !important;
+  background-color: rgba(168, 85, 247, 0.12) !important;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3) !important;
+}
+
+@keyframes kickRippleAnim {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-kick-ripple {
+  animation: kickRippleAnim 0.35s ease-out forwards;
+}
+
+/* STRICT MOBILE / TOUCH CURSOR DISABLE */
+@media (max-width: 768px), (pointer: coarse) {
+  body.has-custom-cursor,
+  body.has-custom-cursor * {
+    cursor: auto !important;
+  }
+}
+
+/* ==========================================================================
+   LIQUID GLASS NAVBAR (APPLE VISIONOS / IPHONE LIQUID GLASS SPEC)
+   ========================================================================== */
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  padding: 0 1rem;
+}
+
+.bn-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 100%;
+}
+
+/* Outer Refractive Liquid Glass Capsule */
+.bn-capsule {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 9999px;
+  overflow: hidden;
+  padding: 0.35rem 0.45rem;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow:
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 1),
+    0 16px 36px -8px rgba(124, 58, 237, 0.12),
+    0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(28px) saturate(220%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%);
+  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bn-capsule.is-pressed {
+  transform: scale(0.98);
+}
+
+.dark .bn-capsule {
+  background: rgba(20, 15, 35, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.5),
+    0 24px 48px -12px rgba(0, 0, 0, 0.65);
+}
+
+.bottom-nav-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 9999px;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* Liquid Sliding Pill Indicator (Like a smooth fluid droplet under active tab) */
+.bn-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  box-shadow:
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 1),
+    0 3px 8px -1px rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+}
+
+.bn-indicator.is-pressed {
+  filter: brightness(1.08);
+  transform-origin: center center;
+  box-shadow:
+    inset 0 2px 2px 0 rgba(255, 255, 255, 1),
+    0 4px 16px rgba(124, 58, 237, 0.25);
+}
+
+.dark .bn-indicator {
+  background: rgba(55, 45, 80, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 14px -2px rgba(0, 0, 0, 0.5);
+}
+
+.dark .bn-indicator.is-pressed {
+  filter: brightness(1.2);
+  box-shadow:
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.35),
+    0 6px 20px -2px rgba(168, 85, 247, 0.5);
+}
+
+.bottom-nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.25rem;
+  min-width: 5rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s ease;
+  color: #1e293b; /* High-contrast, crystal clear dark slate text */
+  font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 2;
+}
+
+.dark .bottom-nav-item {
+  color: #cbd5e1;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.92);
+}
+
+.bottom-nav-item.active {
+  color: #7c3aed; /* Bold Royal Purple */
+  font-weight: 900;
+}
+
+.dark .bottom-nav-item.active {
+  color: #c084fc;
+}
+
+.bn-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  width: 1.5rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bottom-nav-item.active .bn-glyph {
+  transform: translateY(-1px) scale(1.15);
+}
+
+.bn-label {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  margin-top: 0.25rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Liquid Glass Search Button beside the Capsule */
+.bn-search {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3.1rem;
+  width: 3.1rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 248, 252, 0.72) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.08),
+    0 18px 36px -10px rgba(0, 0, 0, 0.18),
+    0 6px 14px -3px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(28px) saturate(220%) contrast(102%) brightness(105%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(102%) brightness(105%);
+  color: #475569;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dark .bn-search {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.72) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.45),
+    0 20px 42px -10px rgba(0, 0, 0, 0.55);
+  color: #cbd5e1;
+}
+
+.bn-search:hover {
+  transform: scale(1.05);
+}
+
+.bn-search:active {
+  transform: scale(0.92);
+}
+
+/* Animations for Fireworks / Confetti Celebration */
+@keyframes confettiBurst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx, 50px), var(--ty, -100px)) rotate(var(--rot, 360deg)) scale(0);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confettiBurst 1.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.8));
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+
+/* Animated Login Mesh & Glowing Elements */
+@keyframes floatOrb1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, -30px) scale(1.15);
+  }
+}
+
+@keyframes floatOrb2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(1.1);
+  }
+}
+
+@keyframes borderGlowPulse {
+  0%, 100% {
+    border-color: rgba(124, 58, 237, 0.4);
+    box-shadow: 0 0 30px -5px rgba(124, 58, 237, 0.25);
+  }
+  50% {
+    border-color: rgba(168, 85, 247, 0.85);
+    box-shadow: 0 0 45px -5px rgba(168, 85, 247, 0.55);
+  }
+}
+
+.animate-orb-1 {
+  animation: floatOrb1 9s infinite ease-in-out;
+}
+
+.animate-orb-2 {
+  animation: floatOrb2 11s infinite ease-in-out;
+}
+
+.animate-border-glow {
+  animation: borderGlowPulse 4s infinite ease-in-out;
+}
+
+/* Modal Open Isolation: completely hide top header, bottom liquid glass nav, and floating bars */
+body.has-modal-open header,
+body.has-modal-open nav,
+body.has-modal-open .app-top-header,
+body.has-modal-open .liquid-glass-nav,
+body.has-modal-open [aria-label*="ناوبری"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

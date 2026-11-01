@@ -1,0 +1,185 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  COACH
+  STUDENT
+  ADMIN
+}
+
+enum PlanDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  PENDING
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  phoneNumber  String?
+  avatarUrl    String?
+  role         Role      @default(STUDENT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  coachProfile   CoachProfile?
+  studentProfile StudentProfile?
+  
+  // Relations
+  createdPlans         TrainingPlan[]
+  createdTactics       TacticBoard[]
+  studentSubscriptions UserSubscription[] @relation("StudentSubscriptions")
+  receivedSubscriptions UserSubscription[] @relation("CoachSubscriptions")
+  payments             Payment[]
+
+  @@map("users")
+}
+
+model AgilityDrill {
+  id            String         @id @default(uuid())
+  categoryIndex Int            // 1 to 12
+  categoryTitle String         // e.g. تمرینات نردبان چابکی (Agility Ladder)
+  englishName   String         // e.g. One Foot In Each Box
+  persianName   String         // e.g. یک پا در هر خانه
+  imageUrl      String?        // Reference illustration / diagram image
+  description   String?        // Instructions & coaching cues
+  difficulty    PlanDifficulty @default(INTERMEDIATE)
+  equipment     String?        // e.g. نردبان چابکی، مخروط، موانع
+  targetSkill   String?        // e.g. چابکی، سرعت، هماهنگی عصبی
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("agility_drills")
+}
+
+model CoachProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String?
+  experienceYears Int  @default(1)
+  coachingLicense String?
+  specialties String[]
+  rating      Float    @default(5.0)
+
+  @@map("coach_profiles")
+}
+
+model StudentProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthDate      DateTime?
+  preferredPosition String?
+  heightCm       Int?
+  weightKg       Int?
+
+  @@map("student_profiles")
+}
+
+model TrainingPlan {
+  id              String         @id @default(uuid())
+  coachId         String
+  coach           User           @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  difficulty      PlanDifficulty @default(INTERMEDIATE)
+  durationWeeks   Int            @default(4)
+  sessionsPerWeek Int            @default(3)
+  price           Decimal        @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  exercises       Exercise[]
+
+  @@map("training_plans")
+}
+
+model Exercise {
+  id              String       @id @default(uuid())
+  planId          String
+  plan            TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  durationMinutes Int          @default(15)
+  repetitions     Int?
+  sets            Int?
+  restSeconds     Int?
+  videoUrl        String?
+  orderIndex      Int          @default(0)
+
+  @@map("exercises")
+}
+
+model TacticBoard {
+  id          String   @id @default(uuid())
+  coachId     String
+  coach       User     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  formation   String   @default("4-3-3")
+  pitchView   String   @default("FULL")
+  playersJson Json     // JSON array of player markers
+  arrowsJson  Json     // JSON array of tactical drawings/arrows
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tactic_boards")
+}
+
+model UserSubscription {
+  id        String             @id @default(uuid())
+  studentId String
+  student   User               @relation("StudentSubscriptions", fields: [studentId], references: [id], onDelete: Cascade)
+  coachId   String
+  coach     User               @relation("CoachSubscriptions", fields: [coachId], references: [id], onDelete: Cascade)
+  status    SubscriptionStatus @default(PENDING)
+  pricePaid Decimal
+  startDate DateTime           @default(now())
+  endDate   DateTime
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  payments  Payment[]
+
+  @@map("user_subscriptions")
+}
+
+model Payment {
+  id             String             @id @default(uuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   UserSubscription?  @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  amount         Decimal
+  currency       String             @default("IRR")
+  authority      String             @unique // Gateway reference token
+  trackingCode   String?
+  status         PaymentStatus      @default(PENDING)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@map("payments")
+}

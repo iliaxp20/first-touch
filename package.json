@@ -1,0 +1,29 @@
+{
+  "name": "first-touch-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "First Touch (فرست تاچ) - Football Coaching & Training Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:api": "npm --prefix apps/api run start:dev",
+    "build:web": "npm --prefix apps/web run build",
+    "build:api": "npm --prefix apps/api run build",
+    "build:shared": "npm --prefix packages/shared run build",
+    "lint": "npm run lint --workspaces"
+  },
+  "keywords": [
+    "football",
+    "coach",
+    "training",
+    "tactics",
+    "react",
+    "nestjs",
+    "postgresql"
+  ],
+  "author": "First Touch Team",
+  "license": "MIT"
+}
