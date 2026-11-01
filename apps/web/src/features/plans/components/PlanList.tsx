@@ -14,7 +14,9 @@ import {
   Flame,
   Droplets,
   Utensils,
+  Trash2,
 } from 'lucide-react';
+import { saveUnlockedPlan } from '../data/readyProgramsStore';
 import { ExecutiveCalendarModal, TrainingProgramItem } from './ExecutiveCalendarModal';
 import { PlanAcquisitionModal } from './PlanAcquisitionModal';
 
@@ -106,11 +108,15 @@ export const PlanList: React.FC = () => {
         })),
       };
 
+      // Save unlocked plan so lifetime access is guaranteed
+      saveUnlockedPlan(planDetails.id, planDetails.title);
       const updated = [newProgram, ...trainingPrograms];
       setTrainingPrograms(updated);
       localStorage.setItem('first_touch_student_active_plans', JSON.stringify(updated));
       setToastNotification(`برنامه تمرینی «${planDetails.title}» با موفقیت فعال و به پنل اضافه شد.`);
     } else {
+      // Save unlocked plan so lifetime access is guaranteed
+      saveUnlockedPlan('nutrition-plan', planDetails.title);
       const newNut = {
         title: planDetails.title,
         calories: planDetails.dailyCalories || 2600,
@@ -144,6 +150,33 @@ export const PlanList: React.FC = () => {
     setTrainingPrograms(updated);
     localStorage.setItem('first_touch_student_active_plans', JSON.stringify(updated));
     setSelectedCalendarProgram(updatedProgram);
+  };
+
+  const handleDeleteTrainingProgram = (id: string, title: string) => {
+    if (!window.confirm(`آیا از حذف برنامه تمرینی «${title}» اطمینان دارید؟\nدسترسی شما محفوظ خواهد ماند و در آینده بدون نیاز به پرداخت مجدد می‌توانید آن را فعال نمایید.`)) {
+      return;
+    }
+    // Record in unlocked store so it NEVER asks for payment again
+    saveUnlockedPlan(id, title);
+    const updated = trainingPrograms.filter((p) => p.id !== id);
+    setTrainingPrograms(updated);
+    localStorage.setItem('first_touch_student_active_plans', JSON.stringify(updated));
+    setToastNotification(`برنامه تمرینی «${title}» حذف شد. شما می‌توانید هر زمان بدون پرداخت مجدد آن را مجدداً اضافه نمایید.`);
+    setTimeout(() => setToastNotification(null), 4000);
+  };
+
+  const handleDeleteNutritionPlan = () => {
+    if (!activeNutritionPlan) return;
+    const title = activeNutritionPlan.title;
+    if (!window.confirm(`آیا از حذف برنامه غذایی «${title}» اطمینان دارید؟\nدسترسی شما محفوظ خواهد ماند و در آینده بدون نیاز به پرداخت مجدد می‌توانید آن را فعال نمایید.`)) {
+      return;
+    }
+    // Record in unlocked store so it NEVER asks for payment again
+    saveUnlockedPlan('nutrition-plan', title);
+    setActiveNutritionPlan(null);
+    localStorage.removeItem('first_touch_student_nutrition_plan');
+    setToastNotification(`برنامه غذایی «${title}» حذف شد. شما می‌توانید هر زمان بدون پرداخت مجدد آن را مجدداً اضافه نمایید.`);
+    setTimeout(() => setToastNotification(null), 4000);
   };
 
   return (
@@ -275,7 +308,7 @@ export const PlanList: React.FC = () => {
                   className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs px-4 h-9 rounded-xl shadow-md cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
-                  افزودن برنامه تمرینی
+                  افزودن
                 </Button>
               </div>
 
@@ -295,8 +328,9 @@ export const PlanList: React.FC = () => {
                           <span className="text-[11px] font-black px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                             {program.ageGroup}
                           </span>
-                          <span className="text-xs font-black text-purple-600 dark:text-purple-400">
-                            {program.price}
+                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            برنامه فعال شاگرد
                           </span>
                         </div>
                         <CardTitle className="text-base font-black text-slate-900 dark:text-white line-clamp-1">
@@ -346,14 +380,22 @@ export const PlanList: React.FC = () => {
                         </div>
                       </CardContent>
 
-                      <CardFooter className="pt-2 border-t border-slate-100 dark:border-white/5">
+                      <CardFooter className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
                         <Button
                           variant="primary"
                           onClick={() => setSelectedCalendarProgram(program)}
-                          className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-md shadow-purple-500/25 cursor-pointer"
+                          className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-md shadow-purple-500/25 cursor-pointer h-10"
                         >
                           <CalendarCheck2 className="h-4 w-4" />
-                          مشاهده تقویم اجرایی و ثبت روزانه جلسات
+                          مشاهده تقویم اجرایی
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleDeleteTrainingProgram(program.id, program.title)}
+                          title="حذف برنامه تمرینی"
+                          className="h-10 w-10 p-0 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer shrink-0 rounded-xl"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </CardFooter>
                     </Card>
@@ -396,14 +438,25 @@ export const PlanList: React.FC = () => {
                     برنامه زمان‌بندی وعده‌های غذایی و اهداف درشت‌مغذی
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleOpenAcquisition('nutrition')}
-                  className="gap-1.5 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-black text-xs px-4 h-9 rounded-xl cursor-pointer"
-                >
-                  <Plus className="h-4 w-4" />
-                  افزودن برنامه غذایی جدید
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleOpenAcquisition('nutrition')}
+                    className="gap-1.5 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-black text-xs px-4 h-9 rounded-xl cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4" />
+                    افزودن
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteNutritionPlan}
+                    title="حذف برنامه غذایی"
+                    className="gap-1.5 border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold text-xs px-3 h-9 rounded-xl cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    حذف برنامه
+                  </Button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -30,6 +30,8 @@ import {
   getReadyNutritionPlans,
   ReadyTrainingPlan,
   ReadyNutritionPlan,
+  saveUnlockedPlan,
+  isPlanUnlocked,
 } from '../data/readyProgramsStore';
 import { DrillDetailModal } from './DrillDetailModal';
 
@@ -203,6 +205,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   // Trigger Plan Activation Animation Flow
   const triggerActivationFlow = (planData: any) => {
+    // Save to unlocked store so user has permanent lifetime ownership (never pay again)
+    saveUnlockedPlan(planData.id, planData.title);
     setCompletedPlanResult(planData);
     setIsTransitioning(true);
     setTransitionMsg('در حال بارگذاری موتور هوشمند صدور برنامه...');
@@ -734,76 +738,96 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                       p.ageGroup.includes(readyAgeFilter) ||
                       p.ageGroup === 'تمامی رده‌ها'
                   )
-                  .map((plan) => (
-                    <div
-                      key={plan.id}
-                      className="p-5 rounded-2xl border border-purple-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg transition-all flex flex-col justify-between space-y-4"
-                    >
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
-                            {plan.ageGroup}
-                          </span>
-                          <span className="text-xs font-black text-amber-600 dark:text-amber-400">
-                            {plan.price}
-                          </span>
-                        </div>
-                        <h4 className="text-base font-black text-slate-900 dark:text-white line-clamp-1">
-                          {plan.title}
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
-                          {plan.description}
-                        </p>
-
-                        <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 text-center text-xs">
-                          <div>
-                            <span className="text-[10px] text-slate-400 block">مدت دوره</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">
-                              {plan.durationWeeks} هفته
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block">جلسات</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">
-                              {plan.sessionsPerWeek} جلسه/هفته
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block">سطح</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">
-                              {plan.difficulty}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Drills Summary Pills */}
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                            محور تمرینات:
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {plan.drillsSummary.map((d, i) => (
-                              <span
-                                key={i}
-                                className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                              >
-                                {d}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="primary"
-                        onClick={() => triggerActivationFlow(plan)}
-                        className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs h-10 shadow-md shadow-purple-500/20 cursor-pointer"
+                  .map((plan) => {
+                    const isUnlocked = isPlanUnlocked(plan.id, plan.title);
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
+                          isUnlocked
+                            ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-sm'
+                            : 'border-purple-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
+                        }`}
                       >
-                        <Sparkles className="h-4 w-4" />
-                        دریافت و فعال‌سازی برنامه (۱۹۹ هزار تومان)
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                              {plan.ageGroup}
+                            </span>
+                            {isUnlocked ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                قبلاً خریداری شده (رایگان)
+                              </span>
+                            ) : (
+                              <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+                                {plan.price}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-base font-black text-slate-900 dark:text-white line-clamp-1">
+                            {plan.title}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                            {plan.description}
+                          </p>
+
+                          <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 text-center text-xs">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">مدت دوره</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                {plan.durationWeeks} هفته
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">جلسات</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                {plan.sessionsPerWeek} جلسه/هفته
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">سطح</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                {plan.difficulty}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Drills Summary Pills */}
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                              محور تمرینات:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {plan.drillsSummary.map((d, i) => (
+                                <span
+                                  key={i}
+                                  className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                >
+                                  {d}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant={isUnlocked ? 'outline' : 'primary'}
+                          onClick={() => triggerActivationFlow(plan)}
+                          className={`w-full gap-2 text-xs font-black h-10 cursor-pointer ${
+                            isUnlocked
+                              ? 'border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm'
+                              : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20'
+                          }`}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          {isUnlocked
+                            ? 'فعال‌سازی مجدد (بدون نیاز به پرداخت)'
+                            : 'دریافت و فعال‌سازی برنامه (۱۹۹ هزار تومان)'}
+                        </Button>
+                      </div>
+                    );
+                  })}
               </div>
             ) : (
               /* Ready Nutrition Plans */
@@ -815,74 +839,94 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                       p.ageGroup.includes(readyAgeFilter) ||
                       p.ageGroup === 'تمامی رده‌ها'
                   )
-                  .map((nutPlan) => (
-                    <div
-                      key={nutPlan.id}
-                      className="p-5 rounded-2xl border border-purple-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg transition-all flex flex-col justify-between space-y-4"
-                    >
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
-                            {nutPlan.ageGroup}
-                          </span>
-                          <span className="text-xs font-black text-amber-600 dark:text-amber-400">
-                            {nutPlan.price}
-                          </span>
-                        </div>
-                        <h4 className="text-base font-black text-slate-900 dark:text-white line-clamp-1">
-                          {nutPlan.title}
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                          {nutPlan.goal}
-                        </p>
-
-                        <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-white/5 space-y-1 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">کالری روزانه هدف:</span>
-                            <span className="font-black text-purple-700 dark:text-purple-300">
-                              {nutPlan.dailyCalories} کیلوکالری
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">تمرکز تغذیه:</span>
-                            <span className="font-bold text-slate-700 dark:text-slate-300">
-                              {nutPlan.focus}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                            وعده‌های شاخص:
-                          </span>
-                          <div className="space-y-1 text-xs">
-                            {nutPlan.mealsSummary.slice(0, 3).map((m, idx) => (
-                              <div
-                                key={idx}
-                                className="flex justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-[11px]"
-                              >
-                                <span className="font-bold text-purple-700 dark:text-purple-300">
-                                  {m.name}:
-                                </span>
-                                <span className="text-slate-600 dark:text-slate-300 truncate max-w-[200px]">
-                                  {m.food}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="primary"
-                        onClick={() => triggerActivationFlow(nutPlan)}
-                        className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs h-10 shadow-md shadow-purple-500/20 cursor-pointer"
+                  .map((nutPlan) => {
+                    const isNutUnlocked = isPlanUnlocked(nutPlan.id, nutPlan.title);
+                    return (
+                      <div
+                        key={nutPlan.id}
+                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
+                          isNutUnlocked
+                            ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-sm'
+                            : 'border-purple-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
+                        }`}
                       >
-                        <Sparkles className="h-4 w-4" />
-                        دریافت و فعال‌سازی رژیم غذایی (۱۹۹ هزار تومان)
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                              {nutPlan.ageGroup}
+                            </span>
+                            {isNutUnlocked ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                قبلاً خریداری شده (رایگان)
+                              </span>
+                            ) : (
+                              <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+                                {nutPlan.price}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-base font-black text-slate-900 dark:text-white line-clamp-1">
+                            {nutPlan.title}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            {nutPlan.goal}
+                          </p>
+
+                          <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-white/5 space-y-1 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">کالری روزانه هدف:</span>
+                              <span className="font-black text-purple-700 dark:text-purple-300">
+                                {nutPlan.dailyCalories} کیلوکالری
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">تمرکز تغذیه:</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300">
+                                {nutPlan.focus}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                              وعده‌های شاخص:
+                            </span>
+                            <div className="space-y-1 text-xs">
+                              {nutPlan.mealsSummary.slice(0, 3).map((m, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-[11px]"
+                                >
+                                  <span className="font-bold text-purple-700 dark:text-purple-300">
+                                    {m.name}:
+                                  </span>
+                                  <span className="text-slate-600 dark:text-slate-300 truncate max-w-[200px]">
+                                    {m.food}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant={isNutUnlocked ? 'outline' : 'primary'}
+                          onClick={() => triggerActivationFlow(nutPlan)}
+                          className={`w-full gap-2 text-xs font-black h-10 cursor-pointer ${
+                            isNutUnlocked
+                              ? 'border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm'
+                              : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20'
+                          }`}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          {isNutUnlocked
+                            ? 'فعال‌سازی مجدد (بدون نیاز به پرداخت)'
+                            : 'دریافت و فعال‌سازی رژیم غذایی (۱۹۹ هزار تومان)'}
+                        </Button>
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </div>

@@ -226,3 +226,43 @@ export const deleteReadyNutritionPlan = (id: string): void => {
   const updated = current.filter((p) => p.id !== id);
   saveReadyNutritionPlans(updated);
 };
+
+// =========================================================================
+// UNLOCKED / PURCHASED PLANS STORE (PERSISTENT LIFETIME ACCESS)
+// Once unlocked, deleting the plan will NEVER ask for payment again!
+// =========================================================================
+const UNLOCKED_STORAGE_KEY = 'first_touch_unlocked_plans';
+
+export const getUnlockedPlans = (): string[] => {
+  try {
+    const raw = localStorage.getItem(UNLOCKED_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveUnlockedPlan = (id?: string, title?: string): void => {
+  try {
+    const current = getUnlockedPlans();
+    let changed = false;
+    if (id && !current.includes(id)) {
+      current.push(id);
+      changed = true;
+    }
+    if (title && !current.includes(title)) {
+      current.push(title);
+      changed = true;
+    }
+    if (changed) {
+      localStorage.setItem(UNLOCKED_STORAGE_KEY, JSON.stringify(current));
+    }
+  } catch {
+    // Ignored
+  }
+};
+
+export const isPlanUnlocked = (id?: string, title?: string): boolean => {
+  const current = getUnlockedPlans();
+  return (!!id && current.includes(id)) || (!!title && current.includes(title));
+};
