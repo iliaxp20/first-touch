@@ -6,7 +6,7 @@ import { Phone, KeyRound, User, Lock, Shield, Award, Users, ChevronLeft } from '
 export type UserRole = 'PLAYER' | 'COACH' | 'PARENT';
 
 interface AuthScreenProps {
-  onLoginSuccess: (user: { phoneNumber: string; role: UserRole; isProfileComplete: boolean; fullName?: string }) => void;
+  onLoginSuccess: (user: { token?: string; phoneNumber: string; role: UserRole; isProfileComplete: boolean; fullName?: string }) => void;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
@@ -16,6 +16,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
   const [referralCode, setReferralCode] = useState('');
   const [otp, setOtp] = useState('');
   const [testOtpNotice, setTestOtpNotice] = useState<string | null>(null);
+  const [verifiedToken, setVerifiedToken] = useState<string | undefined>(undefined);
+  const [verifiedUser, setVerifiedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,9 +53,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         setTestOtpNotice(data.testOtp);
         setOtp(data.testOtp);
       }
-    } catch {
-      setTestOtpNotice('۱۲۳۴۵');
-      setOtp('12345');
+    } catch (err: any) {
+      setError(err.message || 'خطا در برقراری ارتباط با سرویس پیامک');
     } finally {
       setLoading(false);
       setAuthStep('otp-verify');
@@ -64,24 +65,45 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     e.preventDefault();
     setError(null);
 
-    if (otp.length < 4) {
-      setError('کد تایید معتبر نیست');
+    const cleanOtp = otp.trim();
+    if (cleanOtp.length < 4) {
+      setError('کد تایید وارد شده معتبر نیست (حداقل ۵ رقم)');
       return;
     }
 
     setLoading(true);
 
     try {
-      await fetch('http://localhost:4000/auth/verify-otp', {
+      const res = await fetch('http://localhost:4000/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber: phoneNumber.trim(), otp: otp.trim() }),
+        body: JSON.stringify({ phoneNumber: phoneNumber.trim(), otp: cleanOtp }),
       });
-    } catch {
-      // Continue for preview
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'کد تایید وارد شده نادرست یا منقضی شده است');
+      }
+
+      setVerifiedToken(data.token);
+      setVerifiedUser(data.user);
+
+      // If user profile is already completed in DB, log in directly
+      if (data.user?.isProfileComplete) {
+        onLoginSuccess({
+          token: data.token,
+          phoneNumber: phoneNumber.trim(),
+          role: data.user.role || 'PLAYER',
+          isProfileComplete: true,
+          fullName: data.user.fullName || 'کاربر گرامی',
+        });
+      } else {
+        setAuthStep('role-selection');
+      }
+    } catch (err: any) {
+      setError(err.message || 'خطا در اعتبارسنجی کد تایید');
     } finally {
       setLoading(false);
-      setAuthStep('role-selection');
     }
   };
 
@@ -108,28 +130,19 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'نام کاربری یا رمز عبور نامعتبر است');
+        throw new Error(data.message || 'نام کاربری یا رمز عبور اشتباه است');
       }
 
-      // Successful password login from real API
+      // Successful password login with server JWT token
       onLoginSuccess({
+        token: data.token,
         phoneNumber: cleanUsername,
         role: (data.user?.role as UserRole) || 'PLAYER',
         isProfileComplete: Boolean(data.user?.isProfileComplete),
-        fullName: cleanUsername,
+        fullName: data.user?.fullName || cleanUsername,
       });
     } catch (err: any) {
-      if (err.message && err.message !== 'Failed to fetch') {
-        setError(err.message);
-      } else {
-        // Fallback when API offline: proceed
-        onLoginSuccess({
-          phoneNumber: cleanUsername,
-          role: 'PLAYER',
-          isProfileComplete: false,
-          fullName: cleanUsername,
-        });
-      }
+      setError(err.message || 'خطا در احراز هویت با نام کاربری و رمز عبور');
     } finally {
       setLoading(false);
     }
@@ -137,10 +150,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
 
   const handleSelectRole = (role: UserRole) => {
     onLoginSuccess({
+      token: verifiedToken,
       phoneNumber: phoneNumber || '۰۹۱۲۳۴۵۶۷۸۹',
       role,
       isProfileComplete: false,
-      fullName: 'کاربر گرامی',
+      fullName: verifiedUser?.fullName || 'کاربر گرامی',
     });
   };
 

@@ -2,11 +2,12 @@ import React from 'react';
 import { Navbar } from './Navbar';
 import { NavItemKey } from './Sidebar';
 import { LiquidGlassNav } from './LiquidGlassNav';
+import { useAuth } from '@/context/AuthContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  activeItem: NavItemKey;
-  onSelectNavItem: (item: NavItemKey) => void;
+  activeItem?: NavItemKey;
+  onSelectNavItem?: (item: NavItemKey) => void;
   activeRole?: 'COACH' | 'STUDENT' | 'PARENT' | 'PLAYER';
   userName?: string;
   isProfileComplete?: boolean;
@@ -17,11 +18,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   activeItem,
   onSelectNavItem,
-  activeRole = 'PLAYER',
+  activeRole,
   userName,
   isProfileComplete,
   userAvatar,
 }) => {
+  const auth = useAuth();
+  const effectiveRole = activeRole ?? auth.currentUser?.role ?? 'PLAYER';
+  const effectiveName = userName ?? auth.currentUser?.fullName ?? 'کاربر گرامی';
+  const effectiveProfileComplete = isProfileComplete ?? auth.currentUser?.isProfileComplete ?? false;
+  const effectiveAvatar = userAvatar ?? auth.currentUser?.avatarUrl;
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100/70 via-slate-50 to-violet-100/60 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/40 text-foreground transition-colors duration-200 relative overflow-x-hidden">
       {/* Ambient Flowing Light Orbs in Background */}
@@ -30,10 +37,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* Top Navbar */}
       <Navbar
-        activeRole={activeRole}
-        userName={userName}
-        isProfileComplete={isProfileComplete}
-        userAvatar={userAvatar}
+        activeRole={effectiveRole}
+        userName={effectiveName}
+        isProfileComplete={effectiveProfileComplete}
+        userAvatar={effectiveAvatar}
       />
 
       {/* Main Content Area - Full Width without Sidebar Clutter */}

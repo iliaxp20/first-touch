@@ -116,29 +116,43 @@
   }
 }
 
-.cursor-hovered {
-  width: 26px !important;
-  height: 26px !important;
-  margin-left: -13px !important;
-  margin-top: -13px !important;
-  border-color: #a855f7 !important;
-  background-color: rgba(168, 85, 247, 0.12) !important;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3) !important;
+.cursor-inner {
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(168, 85, 247, 0.8);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
 }
 
-@keyframes kickRippleAnim {
+.cursor-hovered .cursor-inner {
+  transform: scale(1.35);
+  border-color: #a855f7;
+  background-color: rgba(168, 85, 247, 0.15);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+}
+
+.cursor-clicked .cursor-inner {
+  transform: scale(0.75) !important;
+  border-color: #9333ea !important;
+  background-color: rgba(147, 51, 234, 0.3) !important;
+  box-shadow: 0 0 16px rgba(147, 51, 234, 0.6) !important;
+}
+
+@keyframes cursorRipplePulse {
   0% {
     transform: scale(0.6);
-    opacity: 0.8;
+    opacity: 0.9;
   }
   100% {
-    transform: scale(2.2);
+    transform: scale(2.4);
     opacity: 0;
   }
 }
 
-.animate-kick-ripple {
-  animation: kickRippleAnim 0.35s ease-out forwards;
+.cursor-ripple-active {
+  animation: cursorRipplePulse 0.32s ease-out forwards;
 }
 
 /* STRICT MOBILE / TOUCH CURSOR DISABLE */

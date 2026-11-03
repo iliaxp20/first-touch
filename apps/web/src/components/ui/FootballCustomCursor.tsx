@@ -63,11 +63,10 @@ export const FootballCustomCursor: React.FC = () => {
         ringRef.current.classList.add('cursor-clicked');
       }
       if (clickRippleRef.current) {
-        clickRippleRef.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) scale(0)`;
-        clickRippleRef.current.classList.remove('animate-kick-ripple');
-        // Trigger reflow to restart css animation
+        clickRippleRef.current.classList.remove('cursor-ripple-active');
+        // Trigger reflow to restart css animation exactly on the mouse cursor
         void clickRippleRef.current.offsetWidth;
-        clickRippleRef.current.classList.add('animate-kick-ripple');
+        clickRippleRef.current.classList.add('cursor-ripple-active');
       }
     };
 
@@ -128,28 +127,30 @@ export const FootballCustomCursor: React.FC = () => {
       aria-hidden="true"
       className="hidden md:block fixed inset-0 pointer-events-none z-[999999] overflow-hidden select-none"
     >
-      {/* 1. COMPACT TACTICAL RING (SLIM & LIGHTWEIGHT) */}
+      {/* 1. TACTICAL RING (POSITIONED PRECISELY VIA TRANSLATE3D) */}
       <div
         ref={ringRef}
-        className="absolute top-0 left-0 w-5 h-5 -ml-2.5 -mt-2.5 rounded-full border border-purple-500/70 dark:border-purple-400/80 transition-[width,height,margin,border-color,background-color] duration-150 ease-out flex items-center justify-center opacity-0 will-change-transform"
+        className="absolute top-0 left-0 pointer-events-none opacity-0 will-change-transform"
       >
-        {/* Subtle tactical crosshair pips */}
-        <span className="absolute -top-0.5 w-1 h-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
-        <span className="absolute -bottom-0.5 w-1 h-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
-        <span className="absolute -left-0.5 h-1 w-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
-        <span className="absolute -right-0.5 h-1 w-[1px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+        <div className="cursor-inner relative flex items-center justify-center">
+          {/* Subtle tactical crosshair pips */}
+          <span className="absolute -top-1 w-1 h-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+          <span className="absolute -bottom-1 w-1 h-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+          <span className="absolute -left-1 h-1 w-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+          <span className="absolute -right-1 h-1 w-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+
+          {/* Click Ripple: Nested directly inside the cursor so it NEVER jumps to (0,0) */}
+          <span
+            ref={clickRippleRef}
+            className="absolute -inset-1 rounded-full border-2 border-purple-500 dark:border-purple-300 opacity-0 pointer-events-none"
+          />
+        </div>
       </div>
 
-      {/* 2. PINPOINT CENTER DOT (4px - ULTRA PRECISE) */}
+      {/* 2. PINPOINT CENTER DOT (ULTRA PRECISE) */}
       <div
         ref={dotRef}
-        className="absolute top-0 left-0 w-1.5 h-1.5 -ml-[3px] -mt-[3px] rounded-full bg-purple-600 dark:bg-purple-400 shadow-[0_0_6px_#a855f7] opacity-0 will-change-transform"
-      />
-
-      {/* 3. LIGHTWEIGHT CLICK RIPPLE (CSS-ONLY KEYFRAME) */}
-      <div
-        ref={clickRippleRef}
-        className="absolute top-0 left-0 w-6 h-6 -ml-3 -mt-3 rounded-full border border-purple-400 dark:border-purple-300 opacity-0 pointer-events-none will-change-transform"
+        className="absolute top-0 left-0 w-1.5 h-1.5 -ml-[3px] -mt-[3px] rounded-full bg-purple-600 dark:bg-purple-400 shadow-[0_0_6px_#a855f7] opacity-0 pointer-events-none will-change-transform"
       />
     </div>
   );

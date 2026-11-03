@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { LoginPasswordDto } from './dto/login-password.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
 
 @ApiTags('احراز هویت (Auth)')
 @Controller('auth')
@@ -32,5 +33,13 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'ورود موفق' })
   async loginPassword(@Body() dto: LoginPasswordDto) {
     return this.authService.loginWithPassword(dto);
+  }
+
+  @Post('admin-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'احراز هویت امن مدیر ارشد سیستم' })
+  @ApiResponse({ status: 200, description: 'ورود موفق ادمین' })
+  async adminLogin(@Body() dto: AdminLoginDto) {
+    return this.authService.adminLogin(dto);
   }
 }

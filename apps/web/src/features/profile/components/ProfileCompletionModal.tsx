@@ -34,7 +34,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   const [transitionMessage, setTransitionMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // All fields start EMPTY as explicitly requested!
+  // All fields start EMPTY
   const [formData, setFormData] = useState<ProfileData>({
     fullName: '',
     nationalId: '',
@@ -112,11 +112,14 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
 
   if (!isOpen) return null;
 
+  const inputClass =
+    'w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/90 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-colors';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 dark:bg-black/70 overflow-y-auto select-none transition-all">
-      <Card className="w-full max-w-xl border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl shadow-purple-950/20 relative overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm overflow-y-auto select-none transition-all">
+      <Card className="w-full max-w-xl border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl shadow-purple-950/20 dark:shadow-black/70 relative overflow-hidden my-6">
         {/* Step Progress Top Bar */}
-        <div className="bg-purple-50/60 dark:bg-purple-950/30 p-4 border-b border-purple-100 dark:border-purple-900/40 flex items-center justify-between">
+        <div className="bg-purple-50/80 dark:bg-purple-950/40 p-4 border-b border-purple-100 dark:border-purple-900/40 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-600 text-white font-black text-xs shadow-sm">
               {step}
@@ -132,7 +135,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
           {step < 4 && !isTransitioning && (
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
@@ -140,16 +143,16 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
         </div>
 
         <CardContent className="p-6">
-          {/* INTERMEDIATE TRANSITION ANIMATION (Something happening behind the scenes) */}
+          {/* INTERMEDIATE TRANSITION ANIMATION */}
           {isTransitioning ? (
             <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
               <div className="relative flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin" />
-                <Sparkles className="h-6 w-6 text-purple-600 absolute animate-pulse" />
+                <div className="h-16 w-16 rounded-full border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 animate-spin" />
+                <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400 absolute animate-pulse" />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-black text-slate-800 dark:text-slate-200">{transitionMessage}</p>
-                <p className="text-xs text-slate-400">سامانه در حال تحلیل داده‌هاست...</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">سامانه در حال تحلیل داده‌هاست...</p>
               </div>
             </div>
           ) : (
@@ -159,7 +162,9 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                 <div className="space-y-4 animate-in fade-in duration-300">
                   <div className="text-center space-y-1 mb-2">
                     <h3 className="text-lg font-black text-slate-900 dark:text-white">تکمیل مشخصات فردی بازیکن</h3>
-                    <p className="text-xs text-slate-500">جهت ثبت در فهرست شاگردان مربی و صدور شناسه ورزشی</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      جهت ثبت در فهرست شاگردان مربی و صدور شناسه ورزشی
+                    </p>
                   </div>
 
                   {/* Real File Upload Zone */}
@@ -177,7 +182,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                       className={`relative h-20 w-20 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden ${
                         formData.avatarUrl
                           ? 'border-purple-600 shadow-md ring-2 ring-purple-500/20'
-                          : 'border-purple-300 hover:border-purple-500 bg-purple-50/50 hover:bg-purple-50'
+                          : 'border-purple-300 dark:border-purple-700/80 hover:border-purple-500 dark:hover:border-purple-500 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-50 dark:hover:bg-purple-900/30'
                       }`}
                     >
                       {formData.avatarUrl ? (
@@ -187,7 +192,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex flex-col items-center text-purple-600">
+                        <div className="flex flex-col items-center text-purple-600 dark:text-purple-400">
                           <Camera className="h-6 w-6" />
                           <span className="text-[9px] font-bold mt-1">بارگذاری عکس</span>
                         </div>
@@ -197,7 +202,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                      className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 cursor-pointer"
                     >
                       <Upload className="h-3.5 w-3.5" />
                       {formData.avatarUrl ? 'تغییر تصویر چهره' : 'انتخاب تصویر چهره از دستگاه'}
@@ -211,7 +216,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         type="text"
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                        className={inputClass}
                         placeholder="نام و نام خانوادگی خود را وارد کنید"
                       />
                     </div>
@@ -223,7 +228,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.nationalId}
                         onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="کد ملی ۱۰ رقمی"
                       />
                     </div>
@@ -235,7 +240,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.age}
                         onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="سن"
                       />
                     </div>
@@ -247,7 +252,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                        className={inputClass}
                         placeholder="نام کاربری"
                       />
                     </div>
@@ -259,7 +264,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                        className={inputClass}
                         placeholder="حداقل ۶ نویسه"
                       />
                     </div>
@@ -269,7 +274,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <Button
                       variant="primary"
                       onClick={() => goToStep(2, 'در حال ثبت مشخصات فردی و آماده‌سازی بخش سنجش...')}
-                      className="w-full h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25"
+                      className="w-full h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25 cursor-pointer"
                     >
                       مرحله بعد: اطلاعات تمرینی و بدنی
                       <ChevronLeft className="h-4 w-4" />
@@ -283,7 +288,9 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                 <div className="space-y-4 animate-in fade-in duration-300">
                   <div className="text-center space-y-1 mb-2">
                     <h3 className="text-lg font-black text-slate-900 dark:text-white">اطلاعات تمرینی و سنجش بدنی</h3>
-                    <p className="text-xs text-slate-500">این مشخصات به مربی در تنظیم صحیح تمرینات کمک می‌نماید</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      این مشخصات به مربی در تنظیم صحیح تمرینات کمک می‌نماید
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-right">
@@ -294,7 +301,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.height}
                         onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="قد"
                       />
                     </div>
@@ -306,7 +313,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.weight}
                         onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="وزن"
                       />
                     </div>
@@ -318,7 +325,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.bicep}
                         onChange={(e) => setFormData({ ...formData, bicep: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="دور بازو"
                       />
                     </div>
@@ -330,7 +337,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.calf}
                         onChange={(e) => setFormData({ ...formData, calf: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="دور ساق"
                       />
                     </div>
@@ -342,7 +349,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         dir="ltr"
                         value={formData.chest}
                         onChange={(e) => setFormData({ ...formData, chest: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center"
+                        className={`${inputClass} text-center`}
                         placeholder="دور سینه"
                       />
                     </div>
@@ -353,7 +360,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         type="text"
                         value={formData.experienceYears}
                         onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                        className={inputClass}
                         placeholder="سابقه تمرین یا باشگاه"
                       />
                     </div>
@@ -365,13 +372,17 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button variant="outline" onClick={() => setStep(1)} className="flex-1 h-11 text-xs">
+                    <Button
+                      variant="outline"
+                      onClick={() => setStep(1)}
+                      className="flex-1 h-11 text-xs border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    >
                       بازگشت
                     </Button>
                     <Button
                       variant="primary"
                       onClick={() => goToStep(3, 'در حال محاسبه شاخص‌های تنی و ساخت کارت دیجیتال مربیگری...')}
-                      className="flex-[2] h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25"
+                      className="flex-[2] h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25 cursor-pointer"
                     >
                       مشاهده پیش‌نمایش کارت مربی
                       <ChevronLeft className="h-4 w-4" />
@@ -385,7 +396,9 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                 <div className="space-y-4 animate-in fade-in duration-300">
                   <div className="text-center space-y-1 mb-2">
                     <h3 className="text-lg font-black text-slate-900 dark:text-white">پیش‌نمایش پروفایل (نمای مربی)</h3>
-                    <p className="text-xs text-slate-500">کارت رسمی دیجیتال شما در کارتابل مربیان فرست تاچ</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      کارت رسمی دیجیتال شما در کارتابل مربیان فرست تاچ
+                    </p>
                   </div>
 
                   {/* Official Player Card */}
@@ -450,7 +463,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <Button
                       variant="outline"
                       onClick={() => setStep(1)}
-                      className="flex-1 h-11 text-xs font-bold gap-1.5"
+                      className="flex-1 h-11 text-xs font-bold gap-1.5 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                     >
                       <Edit3 className="h-4 w-4" />
                       ویرایش اطلاعات
@@ -458,7 +471,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <Button
                       variant="primary"
                       onClick={() => goToStep(4, 'در حال راه‌اندازی فرآیند شخصی‌سازی...')}
-                      className="flex-[2] h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/30"
+                      className="flex-[2] h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/30 cursor-pointer"
                     >
                       <Sparkles className="h-4 w-4" />
                       ثبت نهایی و شخصی‌سازی برنامه
@@ -467,10 +480,10 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                 </div>
               )}
 
-              {/* ================= STEP 4: GENTLE CIRCLE ANIMATION WITHOUT HEAVY BACKGROUND ================= */}
+              {/* ================= STEP 4: GENTLE CIRCLE ANIMATION ================= */}
               {step === 4 && (
                 <div className="py-8 flex flex-col items-center justify-center text-center relative overflow-hidden bg-transparent">
-                  {/* Circular SVG Progress Ring (Filling Gently & Smoothly) */}
+                  {/* Circular SVG Progress Ring */}
                   <div className="relative h-44 w-44 flex items-center justify-center mb-6">
                     <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
                       <circle
@@ -499,7 +512,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                         {progress}٪
                       </span>
-                      <span className="text-[10px] font-bold text-purple-600 mt-0.5">
+                      <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 mt-0.5">
                         {progress < 100 ? 'در حال تکمیل' : 'تکمیل شد'}
                       </span>
                     </div>
@@ -510,7 +523,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                       <h4 className="text-base font-black text-slate-800 dark:text-slate-200 transition-all">
                         {statusText}
                       </h4>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
                         تنظیم شاخص‌ها و اتصال پرونده مربیگری در حال انجام است...
                       </p>
                     </div>
@@ -520,16 +533,15 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         <h3 className="text-2xl font-black text-purple-600 dark:text-purple-400">
                           تمام قابلیت‌ها برات فعال شد! برو حالشو ببر
                         </h3>
-                        <p className="text-xs text-slate-500 leading-relaxed">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                           پروفایل ورزشی شما با موفقیت ثبت شد و قفل تمامی بخش‌های تاکتیک و تمرینات برای شما باز شد.
                         </p>
                       </div>
 
-                      {/* Entry Button with NO BACKGROUND as requested! */}
                       <button
                         type="button"
                         onClick={() => onComplete(formData)}
-                        className="w-full h-12 text-sm font-black border-2 border-purple-600 text-purple-600 hover:bg-purple-600/10 active:scale-[0.98] rounded-xl transition-all shadow-sm"
+                        className="w-full h-12 text-sm font-black border-2 border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-600/10 active:scale-[0.98] rounded-xl transition-all shadow-sm cursor-pointer"
                       >
                         ورود به برنامه فرست تاچ
                       </button>

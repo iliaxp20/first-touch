@@ -1,29 +1,53 @@
 import React from 'react';
 import { motion, LayoutGroup } from 'framer-motion';
 import { Home, Compass, CalendarCheck2, User } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { NavItemKey } from './Sidebar';
 
 interface LiquidGlassNavProps {
-  activeItem: NavItemKey;
-  onSelect: (item: NavItemKey) => void;
+  activeItem?: NavItemKey;
+  onSelect?: (item: NavItemKey) => void;
 }
 
 interface NavTab {
   key: NavItemKey;
   label: string;
   icon: React.ElementType;
+  path: string;
 }
 
 export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
   activeItem,
   onSelect,
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const tabs: NavTab[] = [
-    { key: 'dashboard', label: 'داشبورد', icon: Home },
-    { key: 'tactics', label: 'تخته تاکتیک', icon: Compass },
-    { key: 'plans', label: 'تمرینات', icon: CalendarCheck2 },
-    { key: 'settings', label: 'حساب من', icon: User },
+    { key: 'dashboard', label: 'داشبورد', icon: Home, path: '/' },
+    { key: 'tactics', label: 'تخته تاکتیک', icon: Compass, path: '/tactics' },
+    { key: 'plans', label: 'تمرینات', icon: CalendarCheck2, path: '/practice' },
+    { key: 'settings', label: 'حساب من', icon: User, path: '/settings' },
   ];
+
+  const getCurrentActiveKey = (): NavItemKey => {
+    const path = location.pathname;
+    if (path === '/tactics') return 'tactics';
+    if (path === '/practice' || path.startsWith('/plans') || path.startsWith('/exercises')) return 'plans';
+    if (path === '/settings' || path === '/profile') return 'settings';
+    if (path === '/subscriptions') return 'subscriptions';
+    if (activeItem) return activeItem;
+    return 'dashboard';
+  };
+
+  const currentActive = getCurrentActiveKey();
+
+  const handleTabClick = (tab: NavTab) => {
+    navigate(tab.path);
+    if (onSelect) {
+      onSelect(tab.key);
+    }
+  };
 
   return (
     <nav
@@ -40,13 +64,13 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
           <div className="flex items-center gap-1 sm:gap-1.5 relative">
             {tabs.map((tab) => {
               const Icon = tab.icon;
-              const isActive = activeItem === tab.key;
+              const isActive = currentActive === tab.key;
 
               return (
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => onSelect(tab.key)}
+                  onClick={() => handleTabClick(tab)}
                   className={`relative px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex flex-col items-center justify-center transition-colors duration-200 min-w-[4.6rem] sm:min-w-[5.2rem] outline-none focus:outline-none cursor-pointer ${
                     isActive
                       ? 'text-purple-800 dark:text-purple-200 font-black'

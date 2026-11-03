@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { Bell, User } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -30,12 +31,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="app-top-header sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 select-none">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Right side (RTL): Brand Logo & Title */}
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 select-none group cursor-pointer">
           <div className="flex items-center gap-2.5">
             <img
               src="/logo.png"
               alt="لوگوی فرست تاچ"
-              className="h-10 w-10 sm:h-11 sm:w-11 object-contain drop-shadow-md select-none transition-transform hover:scale-105"
+              className="h-10 w-10 sm:h-11 sm:w-11 object-contain drop-shadow-md select-none transition-transform group-hover:scale-105"
             />
             <div>
               <span className="text-lg font-black tracking-tight text-foreground block leading-tight">
@@ -46,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Left side: Role Badge, Theme Toggle, Notifications & Avatar */}
         <div className="flex items-center gap-2 sm:gap-3">

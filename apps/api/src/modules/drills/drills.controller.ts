@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Query, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { DrillsService } from './drills.service';
 import { CreateDrillDto } from './dto/create-drill.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles, Role } from '../../common/decorators/roles.decorator';
 
 @ApiTags('بانک تمرینات چابکی (Agility Drills)')
 @Controller('drills')
@@ -32,8 +35,13 @@ export class DrillsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'افزودن تمرین چابکی جدید (از پنل ادمین یا مربی)' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.COACH, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'افزودن تمرین چابکی جدید (تنها مربی یا ادمین با توکن معتبر)' })
   @ApiResponse({ status: 201, description: 'تمرین با موفقیت ایجاد شد' })
+  @ApiResponse({ status: 401, description: 'عدم احراز هویت' })
+  @ApiResponse({ status: 403, description: 'عدم دسترسی' })
   async createDrill(@Body() dto: CreateDrillDto) {
     return this.drillsService.create(dto);
   }

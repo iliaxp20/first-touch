@@ -25,9 +25,6 @@ import {
   ReadyNutritionPlan,
 } from '../plans/data/readyProgramsStore';
 
-// STRICT HIDDEN ADMIN CREDENTIALS
-const ADMIN_USER = 'ft_master_admin_2026';
-const ADMIN_PASS = 'Ft#SecureX99!Alpha2026@Pass';
 const SESSION_KEY = 'ft_secret_admin_session_auth';
 
 interface SecretAdminPortalProps {
@@ -40,13 +37,14 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   onClose,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem(SESSION_KEY) === 'granted_2026';
+    return !!sessionStorage.getItem(SESSION_KEY);
   });
 
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
 
   const [activeTab, setActiveTab] = useState<'training' | 'nutrition'>('training');
@@ -97,20 +95,40 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (attempts >= 5) {
-      setAuthError('دسترسی به علت تلاش‌های ناموفق مکرر مسدود گردید.');
+      setAuthError('دسترسی به علت تلاش‌های ناموفق مکرر موقتاً مسدود گردید.');
       return;
     }
 
-    if (usernameInput === ADMIN_USER && passwordInput === ADMIN_PASS) {
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      const response = await fetch('http://localhost:4000/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: usernameInput.trim(),
+          password: passwordInput,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'نام کاربری یا رمز عبور امنیتی ادمین نادرست است.');
+      }
+
       setIsAuthenticated(true);
-      sessionStorage.setItem(SESSION_KEY, 'granted_2026');
+      sessionStorage.setItem(SESSION_KEY, data.token || 'granted');
       setAuthError(null);
-    } else {
+    } catch (err: any) {
       setAttempts((prev) => prev + 1);
-      setAuthError('نام کاربری یا رمز عبور امنیتی ادمین نادرست است.');
+      setAuthError(err.message || 'خطا در ارتباط با سرور امنیتی ادمین.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -297,9 +315,10 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs h-11 rounded-xl shadow-lg shadow-rose-600/25 mt-2 cursor-pointer"
+                disabled={isLoading}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs h-11 rounded-xl shadow-lg shadow-rose-600/25 mt-2 cursor-pointer disabled:opacity-50"
               >
-                احراز هویت و ورود به کنسول
+                {isLoading ? 'در حال اعتبارسنجی با سرور...' : 'احراز هویت امن و ورود به کنسول'}
               </Button>
             </form>
           </div>
