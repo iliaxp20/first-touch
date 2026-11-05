@@ -1,10 +1,18 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { TacticsService } from './tactics.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 
 @Controller('tactics')
 export class TacticsController {
   constructor(private readonly tacticsService: TacticsService) {}
+
+  @Get('boards')
+  getAllBoards() {
+    return {
+      success: true,
+      boards: this.tacticsService.getAllBoards(),
+    };
+  }
 
   @Post('boards')
   createBoard(@Body() dto: CreateBoardDto) {
@@ -19,6 +27,22 @@ export class TacticsController {
     return {
       success: true,
       board: this.tacticsService.getBoard(id),
+    };
+  }
+
+  @Put('boards/:id')
+  saveBoard(@Param('id') id: string, @Body() body: any) {
+    return {
+      success: true,
+      board: this.tacticsService.saveFullBoard(id, body),
+    };
+  }
+
+  @Delete('boards/:id')
+  deleteBoard(@Param('id') id: string) {
+    const success = this.tacticsService.deleteBoard(id);
+    return {
+      success,
     };
   }
 

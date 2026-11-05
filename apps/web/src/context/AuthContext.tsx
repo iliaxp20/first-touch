@@ -8,6 +8,16 @@ export interface AuthUser {
   isProfileComplete: boolean;
   fullName?: string;
   avatarUrl?: string;
+  age?: string;
+  nationalId?: string;
+  height?: string;
+  weight?: string;
+  bicep?: string;
+  calf?: string;
+  chest?: string;
+  experienceYears?: string;
+  preferredFoot?: string;
+  position?: string;
 }
 
 interface AuthContextType {

@@ -19,6 +19,7 @@ interface UseTacticsSocketProps {
   onRemotePlayerUpdated?: (playerId: string, name?: string, number?: number, position?: string) => void;
   onRemoteBallMoved?: (x: number, y: number) => void;
   onRemoteDrawingAdded?: (drawing: TacticalDrawing) => void;
+  onRemoteDrawingRemoved?: (drawingId: string) => void;
   onDrawingsCleared?: () => void;
   onBoardReset?: (players: TacticalPlayer[]) => void;
   onInitialBoardLoaded?: (
@@ -36,6 +37,7 @@ export const useTacticsSocket = ({
   onRemotePlayerUpdated,
   onRemoteBallMoved,
   onRemoteDrawingAdded,
+  onRemoteDrawingRemoved,
   onDrawingsCleared,
   onBoardReset,
   onInitialBoardLoaded,
@@ -161,13 +163,44 @@ export const useTacticsSocket = ({
 
     try {
       setAudioError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+
+      let stream: MediaStream | null = null;
+
+      // 1. Try modern standard getUserMedia
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (err: any) {
+          throw err;
+        }
+      } else {
+        // 2. Fallback to legacy vendor prefixes if available
+        const legacyGetUserMedia =
+          (navigator as any).getUserMedia ||
+          (navigator as any).webkitGetUserMedia ||
+          (navigator as any).mozGetUserMedia;
+
+        if (legacyGetUserMedia) {
+          stream = await new Promise<MediaStream>((resolve, reject) => {
+            legacyGetUserMedia.call(navigator, { audio: true }, resolve, reject);
+          });
+        }
+      }
+
+      if (!stream) {
+        const isLocalhost =
+          typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === '::1');
+
+        if (typeof window !== 'undefined' && !window.isSecureContext && !isLocalhost) {
+          setAudioError('مرورگر کروم روی آدرس‌های شبکه HTTP پنجره مجوز (Permission) را باز نمی‌کند. لطفاً با localhost یا پروتکل امن HTTPS متصل شوید.');
+        } else {
+          setAudioError('دسترسی به میکروفون در این مرورگر مسدود است یا دستگاه میکروفون شناسایی نشد.');
+        }
+        return;
+      }
 
       localStreamRef.current = stream;
       setIsVoiceActive(true);
@@ -197,7 +230,29 @@ export const useTacticsSocket = ({
       });
     } catch (err: any) {
       console.error('Microphone access failed:', err);
-      setAudioError('دسترسی به میکروفون داده نشد یا میکروفون یافت نشد.');
+      const isLocalhost =
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname === '::1');
+      const isHttpsIssue = typeof window !== 'undefined' && !window.isSecureContext && !isLocalhost;
+
+      if (isHttpsIssue) {
+        setAudioError('مرورگر کروم روی آدرس‌های شبکه HTTP پنجره درخواست مجوز را باز نمی‌کند. لطفاً با localhost:3000 متصل شوید یا تنظیمات امنیتی کروم را تغییر دهید.');
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        const msg = (err.message || '').toLowerCase();
+        if (msg.includes('system')) {
+          setAudioError('دسترسی توسط بخش Privacy ویندوز مسدود است. لطفاً دسترسی کروم به میکروفون را در تنظیمات ویندوز فعال کنید.');
+        } else {
+          setAudioError('دسترسی به میکروفون در کروم مسدود شده یا پنجره درخواست مجوز باز نشد. لطفاً از آیکون تنظیمات نوار آدرس دسترسی را بازنشانی (Reset) کنید.');
+        }
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setAudioError('هیچ دستگاه میکروفونی روی سیستم یافت نشد یا در ویندوز غیرفعال است.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setAudioError('میکروفون توسط نرم‌افزار دیگری در حال استفاده است.');
+      } else {
+        setAudioError(`خطا در فعال‌سازی میکروفون: ${err.message || 'عدم دسترسی'}`);
+      }
     }
   }, [boardId, currentUser.id, getOrCreatePeerConnection, isVoiceActive, send, viewers]);
 
@@ -280,6 +335,18 @@ export const useTacticsSocket = ({
     });
   }, [boardId, send]);
 
+  // Realtime Drawing Remove (Single Item with Eraser)
+  const sendDrawingRemove = useCallback(
+    (drawingId: string) => {
+      send({
+        type: 'DRAW_REMOVE',
+        boardId,
+        drawingId,
+      });
+    },
+    [boardId, send],
+  );
+
   // Realtime Reset Board
   const sendResetBoard = useCallback(() => {
     send({
@@ -336,9 +403,26 @@ export const useTacticsSocket = ({
             }
             break;
 
-          case 'VIEWER_JOINED':
+          case 'VIEWER_JOINED': {
             setViewers(msg.viewers || []);
+            const newViewer = msg.viewer;
+            if (localStreamRef.current && newViewer?.id && newViewer.id !== currentUser.id) {
+              const pc = getOrCreatePeerConnection(newViewer.id);
+              pc.createOffer()
+                .then((offer) => pc.setLocalDescription(offer))
+                .then(() => {
+                  send({
+                    type: 'WEBRTC_SIGNAL',
+                    boardId,
+                    targetId: newViewer.id,
+                    signalType: 'offer',
+                    payload: pc.localDescription,
+                  });
+                })
+                .catch((e) => console.warn('Offer creation failed for new viewer:', e));
+            }
             break;
+          }
 
           case 'VIEWER_LEFT':
             setViewers(msg.viewers || []);
@@ -375,6 +459,12 @@ export const useTacticsSocket = ({
           case 'DRAW_CLEARED':
             if (onDrawingsCleared) {
               onDrawingsCleared();
+            }
+            break;
+
+          case 'DRAW_REMOVED':
+            if (onRemoteDrawingRemoved && msg.drawingId) {
+              onRemoteDrawingRemoved(msg.drawingId);
             }
             break;
 
@@ -440,12 +530,14 @@ export const useTacticsSocket = ({
     isVoiceActive,
     isMuted,
     audioError,
+    clearAudioError: () => setAudioError(null),
     toggleVoice,
     toggleMute,
     sendPlayerMove,
     sendPlayerEdit,
     sendBallMove,
     sendDrawingAdd,
+    sendDrawingRemove,
     sendDrawingClear,
     sendResetBoard,
     sendMessage,

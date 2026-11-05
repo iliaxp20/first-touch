@@ -1,10 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, Compass, CalendarCheck2, CreditCard, Users, Settings, X } from 'lucide-react';
+import { LayoutDashboard, Presentation, CalendarCheck2, CreditCard, Users, Settings, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/Button';
 
-export type NavItemKey = 'dashboard' | 'tactics' | 'plans' | 'subscriptions' | 'students' | 'settings';
+export type NavItemKey = 'dashboard' | 'tactics' | 'plans' | 'subscriptions' | 'students' | 'settings' | 'rewards';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeItem, o
 
   const navItems = [
     { key: 'dashboard' as NavItemKey, label: 'داشبورد', path: '/', icon: LayoutDashboard },
-    { key: 'tactics' as NavItemKey, label: 'تخته تاکتیک', path: '/tactics', icon: Compass, badge: 'جدید' },
+    { key: 'tactics' as NavItemKey, label: 'تخته تاکتیک', path: '/tactics', icon: Presentation, badge: 'جدید' },
     { key: 'plans' as NavItemKey, label: 'برنامه‌های تمرینی', path: '/practice', icon: CalendarCheck2 },
     { key: 'subscriptions' as NavItemKey, label: 'اشتراک و درآمد', path: '/subscriptions', icon: CreditCard },
     { key: 'students' as NavItemKey, label: 'لیست شاگردان', path: '/subscriptions', icon: Users },

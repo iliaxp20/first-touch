@@ -110,6 +110,103 @@ export const TRAINING_CATEGORIES_10: TrainingCategoryMeta[] = [
   },
 ];
 
+// =========================================================================
+// DYNAMIC TRAINING CATEGORIES STORE & ADMIN MANAGEMENT
+// =========================================================================
+const CATEGORIES_STORAGE_KEY = 'first_touch_training_categories';
+const DELETED_CATEGORIES_KEY = 'first_touch_deleted_category_keys';
+
+export const getDeletedCategoryKeys = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_CATEGORIES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const addDeletedCategoryKey = (key: string): void => {
+  try {
+    const current = getDeletedCategoryKeys();
+    if (!current.includes(key)) {
+      current.push(key);
+      localStorage.setItem(DELETED_CATEGORIES_KEY, JSON.stringify(current));
+    }
+  } catch {}
+};
+
+export const getTrainingCategories = (): TrainingCategoryMeta[] => {
+  const deletedKeys = getDeletedCategoryKeys();
+  try {
+    const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.filter((c: TrainingCategoryMeta) => c && !deletedKeys.includes(c.key));
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to parse categories from localStorage', err);
+  }
+  return TRAINING_CATEGORIES_10.filter((c) => !deletedKeys.includes(c.key));
+};
+
+export const saveTrainingCategories = (categories: TrainingCategoryMeta[]): void => {
+  try {
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('ft_categories_updated'));
+    }
+  } catch (err) {
+    console.error('Failed to save categories', err);
+  }
+};
+
+export const addTrainingCategory = (
+  cat: Omit<TrainingCategoryMeta, 'key'> & { key?: string },
+): TrainingCategoryMeta => {
+  const current = getTrainingCategories();
+  const slugKey =
+    cat.key && cat.key.trim()
+      ? cat.key.trim().toLowerCase().replace(/\s+/g, '-')
+      : `cat-${Date.now()}`;
+
+  const newCat: TrainingCategoryMeta = {
+    ...cat,
+    key: slugKey,
+  };
+  const updated = [...current, newCat];
+  saveTrainingCategories(updated);
+  return newCat;
+};
+
+export const updateTrainingCategory = (updatedCat: TrainingCategoryMeta): void => {
+  const current = getTrainingCategories();
+  const exists = current.some((c) => c.key === updatedCat.key);
+  const next = exists
+    ? current.map((c) => (c.key === updatedCat.key ? updatedCat : c))
+    : [...current, updatedCat];
+  saveTrainingCategories(next);
+};
+
+export const deleteTrainingCategory = (key: string): void => {
+  addDeletedCategoryKey(key);
+  const current = getTrainingCategories();
+  const updated = current.filter((c) => c.key !== key);
+  saveTrainingCategories(updated);
+};
+
+export const resetTrainingCategories = (): void => {
+  try {
+    localStorage.removeItem(DELETED_CATEGORIES_KEY);
+    localStorage.removeItem(CATEGORIES_STORAGE_KEY);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('ft_categories_updated'));
+    }
+  } catch {}
+};
+
+
 export const FREE_TRAINING_DRILLS: FreeDrill[] = [
   // 1. چابکی (نردبان چابکی، تغییر جهت، واکنش)
   {
@@ -438,3 +535,4 @@ export const FREE_TRAINING_DRILLS: FreeDrill[] = [
     commonMistakes: 'استفاده از کشش‌های ایستا و ساکن قبل از شروع تمرینات سرعتی.',
   },
 ];
+

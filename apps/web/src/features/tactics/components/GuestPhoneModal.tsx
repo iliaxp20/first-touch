@@ -61,14 +61,14 @@ export const GuestPhoneModal: React.FC<GuestPhoneModalProps> = ({ isOpen, onSubm
 
           <div>
             <label className="block text-xs font-semibold text-foreground mb-1">
-              نام و نام خانوادگی (یا شماره پیراهن)
+              نام و نام خانوادگی
             </label>
             <div className="relative">
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="مثلاً: علی رضایی (شماره ۱۰)"
+                placeholder="مثلاً: علی رضایی"
                 className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

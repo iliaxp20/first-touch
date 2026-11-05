@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Patch, Delete, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { ProgramsService } from './programs.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -24,10 +24,23 @@ export class ProgramsController {
     return this.programsService.findAll(difficulty, isFreeBool, search);
   }
 
+  @Get('weekly-performance')
+  @ApiOperation({ summary: 'دریافت آمار خطی عملکرد واقعی هفتگی بر اساس جلسات ثبتی' })
+  async getWeeklyPerformance() {
+    return this.programsService.getWeeklyPerformance();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'مشاهده جزئیات برنامه و تقویم اجرایی جلسات' })
   async getProgramById(@Param('id') id: string) {
     return this.programsService.findOne(id);
+  }
+
+  @Post('sync')
+  @ApiOperation({ summary: 'همگام‌سازی و ثبت برنامه تمرینی فعال شاگرد در سرور' })
+  @ApiResponse({ status: 200, description: 'برنامه با موفقیت در سرور ثبت گردید' })
+  async syncProgram(@Body() body: any) {
+    return this.programsService.syncProgram(body);
   }
 
   @Post()
@@ -42,12 +55,16 @@ export class ProgramsController {
     return this.programsService.create(body);
   }
 
+  @Delete(':id')
+  @ApiOperation({ summary: 'حذف برنامه تمرینی' })
+  @ApiResponse({ status: 200, description: 'برنامه با موفقیت حذف شد' })
+  async deleteProgram(@Param('id') id: string) {
+    return this.programsService.delete(id);
+  }
+
   @Patch(':id/session-toggle')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'ثبت و تغییر وضعیت تکمیل جلسه در تقویم اجرایی (نیازمند لاگین)' })
+  @ApiOperation({ summary: 'ثبت و تغییر وضعیت تکمیل جلسه در تقویم اجرایی' })
   @ApiResponse({ status: 200, description: 'وضعیت جلسه تغییر یافت' })
-  @ApiResponse({ status: 401, description: 'عدم احراز هویت' })
   async toggleSession(
     @Param('id') id: string,
     @Body() body: { weekNumber: number; dayName: string },

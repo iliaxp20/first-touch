@@ -1,4 +1,4 @@
-export type TacticalTool = 'select' | 'pen' | 'arrow' | 'rect' | 'circle' | 'line';
+export type TacticalTool = 'select' | 'pen' | 'arrow' | 'rect' | 'circle' | 'line' | 'eraser';
 
 export interface TacticalPlayer {
   id: string;

@@ -2,8 +2,8 @@ export interface ReadyTrainingPlan {
   id: string;
   title: string;
   ageGroup: 'نونهالان (زیر ۱۲ سال)' | 'نوجوانان (۱۲ تا ۱۵ سال)' | 'جوانان (۱۶ تا ۱۹ سال)' | 'بزرگسالان (+۱۹ سال)' | 'تمامی رده‌ها';
-  price: string; // '۱۹۹,۰۰۰ تومان'
-  priceNumber: number; // 199000
+  price: string; // '۱۹۹,۰۰۰ تومان' یا 'رایگان'
+  priceNumber: number; // 199000 یا 0
   durationWeeks: number;
   sessionsPerWeek: number;
   totalSessions: number;
@@ -15,6 +15,11 @@ export interface ReadyTrainingPlan {
   rating: number;
   studentsCount: number;
   drillsSummary: string[];
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  isFree?: boolean;
+  category?: string;
+  schedule?: any[];
   isCustomAdminCreated?: boolean;
 }
 
@@ -31,6 +36,17 @@ export interface ReadyNutritionPlan {
   mealsSummary: { name: string; food: string; time: string }[];
   isCustomAdminCreated?: boolean;
 }
+
+export const getAgeGroupFromAge = (
+  ageInput?: string | number,
+): 'نونهالان (زیر ۱۲ سال)' | 'نوجوانان (۱۲ تا ۱۵ سال)' | 'جوانان (۱۶ تا ۱۹ سال)' | 'بزرگسالان (+۱۹ سال)' => {
+  const age = Number(ageInput);
+  if (!age || isNaN(age)) return 'نوجوانان (۱۲ تا ۱۵ سال)';
+  if (age < 12) return 'نونهالان (زیر ۱۲ سال)';
+  if (age <= 15) return 'نوجوانان (۱۲ تا ۱۵ سال)';
+  if (age <= 19) return 'جوانان (۱۶ تا ۱۹ سال)';
+  return 'بزرگسالان (+۱۹ سال)';
+};
 
 const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [
   {
@@ -148,18 +164,41 @@ const DEFAULT_READY_NUTRITION_PLANS: ReadyNutritionPlan[] = [
 
 const TRAINING_STORAGE_KEY = 'first_touch_ready_training_plans';
 const NUTRITION_STORAGE_KEY = 'first_touch_ready_nutrition_plans';
+const DELETED_PLANS_KEY = 'first_touch_deleted_plan_ids';
+
+export const getDeletedPlanIds = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_PLANS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const addDeletedPlanId = (id: string): void => {
+  try {
+    const current = getDeletedPlanIds();
+    if (!current.includes(id)) {
+      current.push(id);
+      localStorage.setItem(DELETED_PLANS_KEY, JSON.stringify(current));
+    }
+  } catch {}
+};
 
 export const getReadyTrainingPlans = (): ReadyTrainingPlan[] => {
+  const deletedIds = getDeletedPlanIds();
   try {
     const raw = localStorage.getItem(TRAINING_STORAGE_KEY);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((p: ReadyTrainingPlan) => p && !deletedIds.includes(p.id));
+      }
     }
   } catch (err) {
     console.warn('Failed to parse training plans from localStorage', err);
   }
-  return DEFAULT_READY_TRAINING_PLANS;
+  return DEFAULT_READY_TRAINING_PLANS.filter((p) => !deletedIds.includes(p.id));
 };
 
 export const saveReadyTrainingPlans = (plans: ReadyTrainingPlan[]): void => {
@@ -182,23 +221,76 @@ export const addReadyTrainingPlan = (plan: Omit<ReadyTrainingPlan, 'id'>): Ready
   return newPlan;
 };
 
+export const updateReadyTrainingPlan = (updatedPlan: ReadyTrainingPlan): void => {
+  const current = getReadyTrainingPlans();
+  const exists = current.some((p) => p.id === updatedPlan.id);
+  const next = exists
+    ? current.map((p) => (p.id === updatedPlan.id ? updatedPlan : p))
+    : [updatedPlan, ...current];
+  saveReadyTrainingPlans(next);
+
+  // Sync to student active plans if currently active
+  try {
+    const rawActive = localStorage.getItem('first_touch_student_active_plans');
+    if (rawActive) {
+      const activeList = JSON.parse(rawActive);
+      if (Array.isArray(activeList)) {
+        const nextActive = activeList.map((p: any) =>
+          p.id === updatedPlan.id ? { ...p, ...updatedPlan } : p,
+        );
+        localStorage.setItem('first_touch_student_active_plans', JSON.stringify(nextActive));
+      }
+    }
+  } catch {}
+
+  // Sync to API
+  try {
+    fetch('http://localhost:4000/programs/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedPlan),
+    }).catch(() => {});
+  } catch {}
+};
+
 export const deleteReadyTrainingPlan = (id: string): void => {
+  addDeletedPlanId(id);
   const current = getReadyTrainingPlans();
   const updated = current.filter((p) => p.id !== id);
   saveReadyTrainingPlans(updated);
+
+  // Also purge from student active plans if currently enrolled
+  try {
+    const rawActive = localStorage.getItem('first_touch_student_active_plans');
+    if (rawActive) {
+      const activeList = JSON.parse(rawActive);
+      if (Array.isArray(activeList)) {
+        const filtered = activeList.filter((p: any) => p && p.id !== id);
+        localStorage.setItem('first_touch_student_active_plans', JSON.stringify(filtered));
+      }
+    }
+  } catch {}
+
+  // Also notify server to delete program
+  try {
+    fetch(`http://localhost:4000/programs/${id}`, { method: 'DELETE' }).catch(() => {});
+  } catch {}
 };
 
 export const getReadyNutritionPlans = (): ReadyNutritionPlan[] => {
+  const deletedIds = getDeletedPlanIds();
   try {
     const raw = localStorage.getItem(NUTRITION_STORAGE_KEY);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((p: ReadyNutritionPlan) => p && !deletedIds.includes(p.id));
+      }
     }
   } catch (err) {
     console.warn('Failed to parse nutrition plans from localStorage', err);
   }
-  return DEFAULT_READY_NUTRITION_PLANS;
+  return DEFAULT_READY_NUTRITION_PLANS.filter((p) => !deletedIds.includes(p.id));
 };
 
 export const saveReadyNutritionPlans = (plans: ReadyNutritionPlan[]): void => {
@@ -221,7 +313,17 @@ export const addReadyNutritionPlan = (plan: Omit<ReadyNutritionPlan, 'id'>): Rea
   return newPlan;
 };
 
+export const updateReadyNutritionPlan = (updatedPlan: ReadyNutritionPlan): void => {
+  const current = getReadyNutritionPlans();
+  const exists = current.some((p) => p.id === updatedPlan.id);
+  const next = exists
+    ? current.map((p) => (p.id === updatedPlan.id ? updatedPlan : p))
+    : [updatedPlan, ...current];
+  saveReadyNutritionPlans(next);
+};
+
 export const deleteReadyNutritionPlan = (id: string): void => {
+  addDeletedPlanId(id);
   const current = getReadyNutritionPlans();
   const updated = current.filter((p) => p.id !== id);
   saveReadyNutritionPlans(updated);

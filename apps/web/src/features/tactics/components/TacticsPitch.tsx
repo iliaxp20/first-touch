@@ -11,8 +11,10 @@ interface TacticsPitchProps {
   onPlayerMove: (playerId: string, x: number, y: number) => void;
   onBallMove: (x: number, y: number) => void;
   onAddDrawing: (drawing: TacticalDrawing) => void;
+  onRemoveDrawing?: (drawingId: string) => void;
   onEditPlayer: (player: TacticalPlayer) => void;
   isReadOnly?: boolean;
+  isRotatedLandscape?: boolean;
 }
 
 export const TacticsPitch: React.FC<TacticsPitchProps> = ({
@@ -24,8 +26,10 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
   onPlayerMove,
   onBallMove,
   onAddDrawing,
+  onRemoveDrawing,
   onEditPlayer,
   isReadOnly = false,
+  isRotatedLandscape = false,
 }) => {
   const pitchRef = useRef<HTMLDivElement>(null);
   const [activePlayer, setActivePlayer] = useState<string | null>(null);
@@ -33,11 +37,25 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
 
   // Temporary drawing in progress
   const [currentDrawing, setCurrentDrawing] = useState<TacticalDrawing | null>(null);
+  const currentDrawingRef = useRef<TacticalDrawing | null>(null);
+  currentDrawingRef.current = currentDrawing;
 
   // Convert client pointer coordinates to percentage (0 - 100) inside pitch
   const getCoordinates = (e: React.PointerEvent): { x: number; y: number } => {
     if (!pitchRef.current) return { x: 50, y: 50 };
     const rect = pitchRef.current.getBoundingClientRect();
+
+    if (isRotatedLandscape) {
+      // 90deg Clockwise Rotation Coordinate Mapping:
+      // Screen vertical position (Y) maps to pitch length (X axis)
+      // Screen horizontal position (X) maps to pitch width (Y axis)
+      let x = ((e.clientY - rect.top) / rect.height) * 100;
+      let y = ((rect.right - e.clientX) / rect.width) * 100;
+      x = Math.max(1, Math.min(99, x));
+      y = Math.max(1, Math.min(99, y));
+      return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+    }
+
     let x = ((e.clientX - rect.left) / rect.width) * 100;
     let y = ((e.clientY - rect.top) / rect.height) * 100;
     x = Math.max(1, Math.min(99, x));
@@ -48,6 +66,25 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
   // Handle pointer down on pitch background
   const handlePitchPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isReadOnly || activeTool === 'select') return;
+
+    if (activeTool === 'eraser') {
+      const { x, y } = getCoordinates(e);
+      const hit = drawings.find((d) => {
+        if (d.tool === 'pen' && d.points) {
+          return d.points.some((pt) => Math.hypot(pt.x - x, pt.y - y) < 4);
+        }
+        const minX = Math.min(d.startX || 0, d.endX || 0) - 3;
+        const maxX = Math.max(d.startX || 0, d.endX || 0) + 3;
+        const minY = Math.min(d.startY || 0, d.endY || 0) - 3;
+        const maxY = Math.max(d.startY || 0, d.endY || 0) + 3;
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+      });
+      if (hit && onRemoveDrawing) {
+        onRemoveDrawing(hit.id);
+      }
+      return;
+    }
+
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
 
     const { x, y } = getCoordinates(e);
@@ -78,6 +115,24 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isReadOnly) return;
     const { x, y } = getCoordinates(e);
+
+    // Eraser drag support
+    if (activeTool === 'eraser' && (e.buttons === 1 || e.pressure > 0)) {
+      const hit = drawings.find((d) => {
+        if (d.tool === 'pen' && d.points) {
+          return d.points.some((pt) => Math.hypot(pt.x - x, pt.y - y) < 4);
+        }
+        const minX = Math.min(d.startX || 0, d.endX || 0) - 3;
+        const maxX = Math.max(d.startX || 0, d.endX || 0) + 3;
+        const minY = Math.min(d.startY || 0, d.endY || 0) - 3;
+        const maxY = Math.max(d.startY || 0, d.endY || 0) + 3;
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+      });
+      if (hit && onRemoveDrawing) {
+        onRemoveDrawing(hit.id);
+      }
+      return;
+    }
 
     // 1. If dragging a player
     if (activePlayer && activeTool === 'select') {
@@ -113,15 +168,16 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
       setIsDraggingBall(false);
     }
 
-    if (currentDrawing) {
+    const drw = currentDrawingRef.current;
+    if (drw) {
       // Commit drawing
       if (
-        (currentDrawing.tool === 'pen' && (currentDrawing.points?.length || 0) > 1) ||
-        (currentDrawing.tool !== 'pen' &&
-          (Math.abs((currentDrawing.endX || 0) - (currentDrawing.startX || 0)) > 1 ||
-            Math.abs((currentDrawing.endY || 0) - (currentDrawing.startY || 0)) > 1))
+        (drw.tool === 'pen' && (drw.points?.length || 0) > 1) ||
+        (drw.tool !== 'pen' &&
+          (Math.abs((drw.endX || 0) - (drw.startX || 0)) > 1 ||
+            Math.abs((drw.endY || 0) - (drw.startY || 0)) > 1))
       ) {
-        onAddDrawing(currentDrawing);
+        onAddDrawing(drw);
       }
       setCurrentDrawing(null);
     }
@@ -143,9 +199,7 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
 
   useEffect(() => {
     const handleGlobalUp = () => {
-      setActivePlayer(null);
-      setIsDraggingBall(false);
-      setCurrentDrawing(null);
+      handlePointerUp();
     };
     window.addEventListener('pointerup', handleGlobalUp);
     return () => window.removeEventListener('pointerup', handleGlobalUp);
@@ -277,7 +331,9 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
       onPointerDown={handlePitchPointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className={`relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden shadow-2xl border-4 border-emerald-950/70 select-none touch-none ${
+      className={`relative w-full ${
+        isRotatedLandscape ? 'h-full aspect-[16/9]' : 'aspect-[16/10] sm:aspect-[16/9] max-h-[64vh]'
+      } rounded-2xl overflow-hidden shadow-2xl border-4 border-emerald-950/70 select-none touch-none mx-auto ${
         activeTool === 'select' ? 'cursor-default' : 'cursor-crosshair'
       }`}
       style={{
@@ -325,14 +381,30 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
         <circle cx="88" cy="32.5" r="0.6" fill="rgba(255, 255, 255, 0.85)" />
       </svg>
 
-      {/* TACTICAL DRAWINGS SVG LAYER (Freehand Pen, Arrows, Rectangles, Circles) */}
+      {/* TACTICAL DRAWINGS SVG LAYER (Freehand Pen, Arrows, Rectangles, Circles, Eraser) */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none z-10"
+        className={`absolute inset-0 w-full h-full ${
+          activeTool === 'eraser' ? 'z-20 cursor-pointer pointer-events-auto' : 'pointer-events-none z-10'
+        }`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
-        {drawings.map((drw) => renderDrawingItem(drw))}
+        {drawings.map((drw) => (
+          <g
+            key={drw.id}
+            onClick={(e) => {
+              if (activeTool === 'eraser') {
+                e.stopPropagation();
+                onRemoveDrawing?.(drw.id);
+              }
+            }}
+            className={activeTool === 'eraser' ? 'cursor-pointer hover:opacity-20 transition-opacity' : ''}
+            style={{ pointerEvents: activeTool === 'eraser' ? 'all' : 'none' }}
+          >
+            {renderDrawingItem(drw)}
+          </g>
+        ))}
         {currentDrawing && renderDrawingItem(currentDrawing)}
       </svg>
 

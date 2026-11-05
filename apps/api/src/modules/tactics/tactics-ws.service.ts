@@ -209,6 +209,18 @@ export class TacticsWsService implements OnModuleInit, OnModuleDestroy {
         break;
       }
 
+      case 'DRAW_REMOVE': {
+        const { drawingId } = data;
+        if (!drawingId) return;
+        this.tacticsService.removeDrawing(boardId, drawingId);
+        this.broadcastToRoom(boardId, {
+          type: 'DRAW_REMOVED',
+          boardId,
+          drawingId,
+        });
+        break;
+      }
+
       case 'RESET_BOARD': {
         const board = this.tacticsService.resetBoard(boardId);
         this.broadcastToRoom(boardId, {

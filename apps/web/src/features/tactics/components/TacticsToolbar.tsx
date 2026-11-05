@@ -8,9 +8,9 @@ import {
   Mic,
   MicOff,
   MessageSquare,
-  Maximize2,
-  Minimize2,
   Check,
+  Save,
+  ArrowRight,
   MousePointer2,
   PenTool,
   MoveUpRight,
@@ -18,6 +18,9 @@ import {
   Square,
   Circle,
   Trash2,
+  RotateCw,
+  Lock,
+  Eraser,
 } from 'lucide-react';
 
 interface TacticsToolbarProps {
@@ -37,8 +40,12 @@ interface TacticsToolbarProps {
   onToggleVoice: () => void;
   onToggleMute: () => void;
   onResetBoard: () => void;
-  isZenMode: boolean;
-  onToggleZenMode: () => void;
+  isMobileLandscape?: boolean;
+  onToggleMobileLandscape?: () => void;
+  isCreator?: boolean;
+  onSaveBoard?: () => void;
+  isSaved?: boolean;
+  onBack?: () => void;
 }
 
 const COLORS = [
@@ -47,6 +54,16 @@ const COLORS = [
   { name: 'آبی', value: '#3b82f6' },
   { name: 'سفید', value: '#ffffff' },
   { name: 'سبز', value: '#10b981' },
+];
+
+const TOOLS: { key: TacticalTool; label: string; icon: React.ElementType }[] = [
+  { key: 'select', label: 'مهره‌ها', icon: MousePointer2 },
+  { key: 'pen', label: 'قلم آزاد', icon: PenTool },
+  { key: 'arrow', label: 'فلش', icon: MoveUpRight },
+  { key: 'line', label: 'خط', icon: Minus },
+  { key: 'rect', label: 'ناحیه', icon: Square },
+  { key: 'circle', label: 'کانون', icon: Circle },
+  { key: 'eraser', label: 'پاک‌کن', icon: Eraser },
 ];
 
 export const TacticsToolbar: React.FC<TacticsToolbarProps> = ({
@@ -66,8 +83,12 @@ export const TacticsToolbar: React.FC<TacticsToolbarProps> = ({
   onToggleVoice,
   onToggleMute,
   onResetBoard,
-  isZenMode,
-  onToggleZenMode,
+  isMobileLandscape = false,
+  onToggleMobileLandscape,
+  isCreator = true,
+  onSaveBoard,
+  isSaved = false,
+  onBack,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -79,247 +100,238 @@ export const TacticsToolbar: React.FC<TacticsToolbarProps> = ({
   };
 
   return (
-    <div className="space-y-2">
-      {/* Top Main Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-card/85 backdrop-blur-md border border-border/80 px-4 py-2.5 rounded-2xl shadow-sm">
-        {/* Title & Live Status */}
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm sm:text-base font-black text-foreground">{title}</h2>
+    <div className="space-y-2 select-none">
+      {/* 1. Top Card: Title Bar & Action Controls */}
+      <div className="bg-card/90 backdrop-blur-md border border-border/80 p-2.5 sm:px-4 sm:py-3 rounded-2xl shadow-sm space-y-2.5">
+        {/* Row 1: Back, Title, Viewers Badge, Fullscreen Button */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Back & Board Title */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+            {onBack && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                className="h-8 w-8 p-0 rounded-xl text-muted-foreground hover:text-foreground shrink-0"
+                title="بازگشت به لیست تخته‌ها"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
 
-          {/* Real-time Viewers Badge (API WebSocket - Not fake) */}
-          <button
-            type="button"
-            onClick={onOpenViewers}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold transition-colors cursor-pointer"
-            title="مشاهده کاربران آنلاین روی تخته"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <Users className="h-3.5 w-3.5" />
-            <span>{viewersCount} نفر آنلاین</span>
-          </button>
-        </div>
+            <h2 className="text-xs sm:text-base font-black text-foreground truncate max-w-[180px] sm:max-w-md">
+              {title}
+            </h2>
+          </div>
 
-        {/* Action Buttons (Voice, Chat, Share, Zen) */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* WebRTC Voice Button */}
-          {!isVoiceActive ? (
-            <Button
+          {/* Right: Viewers Count & Mobile Landscape Rotate Button */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={onToggleVoice}
-              className="gap-1.5 text-xs text-foreground hover:border-emerald-500 hover:text-emerald-500"
-              title="اتصال به گفتگوی صوتی زنده تیمی (WebRTC)"
+              onClick={onOpenViewers}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold transition-colors cursor-pointer"
+              title="مشاهده کاربران آنلاین روی تخته"
             >
-              <Mic className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">وویس تیمی</span>
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <Users className="h-3 w-3" />
+              <span>{viewersCount} نفر</span>
+            </button>
+
+            {/* Mobile Only: Rotate Landscape Toggle */}
+            {onToggleMobileLandscape && (
               <button
                 type="button"
-                onClick={onToggleMute}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
-                  isMuted
-                    ? 'bg-rose-500/15 text-rose-500 hover:bg-rose-500/25'
-                    : 'bg-emerald-500 text-white'
+                onClick={onToggleMobileLandscape}
+                className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-xl border text-[11px] font-bold transition-all ${
+                  isMobileLandscape
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-muted/70 hover:bg-muted text-foreground border-border'
                 }`}
-                title={isMuted ? 'میکروفون بسته است' : 'میکروفون باز است'}
+                title={isMobileLandscape ? 'بازگشت به حالت عادی' : 'چرخش تخته به حالت افقی (Landscape)'}
               >
-                {isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5 animate-pulse" />}
-                <span className="text-[11px] hidden sm:inline">{isMuted ? 'بی‌صدا' : 'در حال پخش'}</span>
+                <RotateCw className={`h-3 w-3 ${isMobileLandscape ? 'text-primary-foreground' : 'text-primary'}`} />
+                <span>{isMobileLandscape ? 'عمودی' : 'افقی'}</span>
               </button>
+            )}
+          </div>
+        </div>
 
+        {/* Row 2: Equal Action Buttons with Icons & Text (Save, Voice, Chat, Share, Reset) */}
+        <div className="grid grid-cols-5 gap-1.5">
+          {/* 1. Save Button */}
+          <button
+            type="button"
+            onClick={onSaveBoard}
+            className={`h-8 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+              isSaved
+                ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                : 'bg-primary text-primary-foreground shadow-sm hover:opacity-90'
+            }`}
+            title="ذخیره وضعیت مهره‌ها و طراحی‌ها"
+          >
+            {isSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+            <span>{isSaved ? 'ذخیره شد' : 'ذخیره'}</span>
+          </button>
+
+          {/* 2. Voice Button (Active for Creator only) */}
+          {!isVoiceActive ? (
+            isCreator ? (
               <button
                 type="button"
                 onClick={onToggleVoice}
-                className="p-1 text-slate-400 hover:text-rose-500 rounded text-xs"
-                title="قطع کامل وویس"
+                className="h-8 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 border border-border bg-background hover:bg-muted text-foreground transition-colors"
+                title="اتصال به گفتگوی صوتی زنده (مربی)"
               >
-                ✕
+                <Mic className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>وویس</span>
               </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="h-8 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 border border-border/50 bg-muted/40 text-muted-foreground/60 cursor-not-allowed opacity-75"
+                title="تنها مربی و سازنده این تخته می‌تواند گفتگوی صوتی را باز کند"
+              >
+                <Lock className="h-3 w-3 text-muted-foreground" />
+                <span>وویس مربی</span>
+              </button>
+            )
+          ) : (
+            <div className="h-8 rounded-xl flex items-center justify-between p-0.5 bg-emerald-500/10 border border-emerald-500/30">
+              <button
+                type="button"
+                onClick={onToggleMute}
+                className={`flex-1 h-full rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 ${
+                  isMuted ? 'text-rose-500' : 'bg-emerald-500 text-white'
+                }`}
+                title={isMuted ? 'میکروفون بسته است' : 'میکروفون باز است'}
+              >
+                {isMuted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3 animate-pulse" />}
+                <span>{isMuted ? 'بی‌صدا' : 'صدا باز'}</span>
+              </button>
+              {isCreator && (
+                <button
+                  type="button"
+                  onClick={onToggleVoice}
+                  className="w-5 text-slate-400 hover:text-rose-500 text-xs font-bold"
+                  title="قطع وویس تخته"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           )}
 
-          {/* Live Chat Button */}
-          <Button
+          {/* 3. Chat Button */}
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={onToggleChat}
-            className="relative gap-1.5 text-xs text-foreground"
-            title="چت متنی لحظه‌ای"
+            className="relative h-8 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 border border-border bg-background hover:bg-muted text-foreground transition-colors"
+            title="چت زنده با اعضای تیم"
           >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">چت زنده</span>
+            <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+            <span>چت زنده</span>
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary text-primary-foreground text-[9px] font-black flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
-          </Button>
+          </button>
 
-          {/* Share Link Button */}
-          <Button
+          {/* 4. Share Link Button */}
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={handleCopy}
-            className="gap-1.5 text-xs text-foreground"
-            title="کپی لینک اختصاصی این تخته"
+            className="h-8 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 border border-border bg-background hover:bg-muted text-foreground transition-colors"
+            title="کپی لینک اختصاصی تخته"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
-            <span>{copied ? 'کپی شد' : 'اشتراک لینک'}</span>
-          </Button>
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-emerald-600 dark:text-emerald-400">کپی شد</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>اشتراک</span>
+              </>
+            )}
+          </button>
 
-          {/* Reset Board */}
-          <Button
+          {/* 5. Reset Board Button */}
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
             onClick={onResetBoard}
-            className="p-2 text-muted-foreground hover:text-foreground"
-            title="بازنشانی چیدمان مهره‌ها"
+            className="h-8 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 border border-border bg-background hover:bg-muted text-foreground transition-colors"
+            title="بازنشانی مهره‌ها به چیدمان اولیه"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
-          </Button>
-
-          {/* Zen / Fullscreen Mode */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onToggleZenMode}
-            className="p-2 text-muted-foreground hover:text-foreground"
-            title={isZenMode ? 'خروج از تمام‌صفحه' : 'حالت تمام‌صفحه و پنهان‌سازی نوبار'}
-          >
-            {isZenMode ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
+            <RotateCcw className="h-3.5 w-3.5 text-muted-foreground" />
+            <span>بازنشانی</span>
+          </button>
         </div>
       </div>
 
-      {/* Sub-Toolbar: Tactical Tools (Pen, Arrow, Shapes, Colors, Clear) */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-card/65 backdrop-blur-md border border-border/60 px-3 py-1.5 rounded-2xl text-xs">
-        {/* Left: Tools Palette */}
-        <div className="flex items-center gap-1">
-          {/* Select / Move */}
-          <button
-            type="button"
-            onClick={() => onChangeTool('select')}
-            className={`p-1.5 rounded-xl flex items-center gap-1.5 font-bold transition-all ${
-              activeTool === 'select'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="جابجایی مهره‌ها و توپ"
-          >
-            <MousePointer2 className="h-3.5 w-3.5" />
-            <span className="text-[11px] hidden sm:inline">حرکت مهره‌ها</span>
-          </button>
-
-          {/* Freehand Pen */}
-          <button
-            type="button"
-            onClick={() => onChangeTool('pen')}
-            className={`p-1.5 rounded-xl flex items-center gap-1.5 font-bold transition-all ${
-              activeTool === 'pen'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="رسم آزاد با قلم"
-          >
-            <PenTool className="h-3.5 w-3.5" />
-            <span className="text-[11px] hidden sm:inline">قلم</span>
-          </button>
-
-          {/* Tactical Arrow */}
-          <button
-            type="button"
-            onClick={() => onChangeTool('arrow')}
-            className={`p-1.5 rounded-xl flex items-center gap-1.5 font-bold transition-all ${
-              activeTool === 'arrow'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="فلش مسیر حرکت یا پاس"
-          >
-            <MoveUpRight className="h-3.5 w-3.5" />
-            <span className="text-[11px] hidden sm:inline">فلش</span>
-          </button>
-
-          {/* Line */}
-          <button
-            type="button"
-            onClick={() => onChangeTool('line')}
-            className={`p-1.5 rounded-xl flex items-center gap-1.5 font-bold transition-all ${
-              activeTool === 'line'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="خط مستقیم تاکتیکی"
-          >
-            <Minus className="h-3.5 w-3.5" />
-            <span className="text-[11px] hidden sm:inline">خط</span>
-          </button>
-
-          {/* Rectangle (Box) */}
-          <button
-            type="button"
-            onClick={() => onChangeTool('rect')}
-            className={`p-1.5 rounded-xl flex items-center gap-1.5 font-bold transition-all ${
-              activeTool === 'rect'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="باکس / بلوک دفاعی"
-          >
-            <Square className="h-3.5 w-3.5" />
-            <span className="text-[11px] hidden sm:inline">باکس</span>
-          </button>
-
-          {/* Circle (Pressing Zone) */}
-          <button
-            type="button"
-            onClick={() => onChangeTool('circle')}
-            className={`p-1.5 rounded-xl flex items-center gap-1.5 font-bold transition-all ${
-              activeTool === 'circle'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-            title="منطقه پرس / دایره"
-          >
-            <Circle className="h-3.5 w-3.5" />
-            <span className="text-[11px] hidden sm:inline">دایره</span>
-          </button>
+      {/* 2. Sub-Toolbar: Tactical Tools Palette with Icons & Persian Labels */}
+      <div className="bg-card/85 backdrop-blur-md border border-border/80 p-2 sm:p-2.5 rounded-2xl shadow-sm space-y-2">
+        {/* Row A: 7 Tools Grid with both Icons AND Persian text */}
+        <div className="grid grid-cols-7 gap-1">
+          {TOOLS.map((t) => {
+            const Icon = t.icon;
+            const isActive = activeTool === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => onChangeTool(t.key)}
+                className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1.5 sm:py-1 px-1 rounded-xl font-bold transition-all ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-sm scale-[1.02]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+                title={t.label}
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="text-[10px] sm:text-xs leading-none">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Right: Colors & Clear */}
-        <div className="flex items-center gap-2">
-          {/* Colors */}
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-xl bg-muted/40 border border-border/40">
-            {COLORS.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                onClick={() => onChangeColor(c.value)}
-                style={{ backgroundColor: c.value }}
-                className={`w-4 h-4 rounded-full border border-black/30 transition-transform ${
-                  activeColor === c.value ? 'scale-125 ring-2 ring-primary ring-offset-1' : 'hover:scale-110 opacity-80'
-                }`}
-                title={c.name}
-              />
-            ))}
+        {/* Row B: Colors & Clear Action (No empty gaps) */}
+        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/50 text-xs">
+          {/* Right: Color Selection */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] sm:text-[11px] font-bold text-muted-foreground">
+              رنگ رسم:
+            </span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => onChangeColor(c.value)}
+                  style={{ backgroundColor: c.value }}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border transition-all ${
+                    activeColor === c.value
+                      ? 'border-foreground scale-110 ring-2 ring-primary/40 shadow-sm'
+                      : 'border-black/20 hover:scale-105'
+                  }`}
+                  title={`رنگ ${c.name}`}
+                />
+              ))}
+            </div>
           </div>
 
-          {/* Clear Drawings Button */}
+          {/* Left: Clear All Drawings */}
           <button
             type="button"
             onClick={onClearDrawings}
-            className="p-1.5 rounded-xl text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-1 text-[11px] font-bold transition-colors"
-            title="پاک کردن تمامی خطوط و اشکال رسم شده"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl text-rose-500 hover:bg-rose-500/10 text-[10px] sm:text-[11px] font-bold transition-colors"
+            title="پاک کردن تمام خطوط و اشکال رسم‌شده"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">پاک‌کردن خطوط</span>
+            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span>پاکسازی خطوط</span>
           </button>
         </div>
       </div>

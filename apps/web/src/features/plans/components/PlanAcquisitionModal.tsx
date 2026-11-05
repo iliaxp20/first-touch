@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -17,9 +17,10 @@ import {
   Apple,
 } from 'lucide-react';
 import {
-  TRAINING_CATEGORIES_10,
   FREE_TRAINING_DRILLS,
   FreeDrill,
+  getTrainingCategories,
+  TrainingCategoryMeta,
 } from '../data/freeTrainingCategories';
 import {
   NUTRITION_CATEGORIES_FREE,
@@ -32,7 +33,9 @@ import {
   ReadyNutritionPlan,
   saveUnlockedPlan,
   isPlanUnlocked,
+  getAgeGroupFromAge,
 } from '../data/readyProgramsStore';
+import { useAuth } from '@/context/AuthContext';
 import { DrillDetailModal } from './DrillDetailModal';
 
 type AcquisitionTab = 'free' | 'ready' | 'custom-coach';
@@ -50,14 +53,26 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   mode,
   onPlanActivated,
 }) => {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<AcquisitionTab>('free');
+
+  // Personalization based on user profile age
+  const userAgeGroup = useMemo(() => {
+    return currentUser?.age ? getAgeGroupFromAge(currentUser.age) : null;
+  }, [currentUser?.age]);
 
   // --- FREE TAB STATE ---
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string>(
     mode === 'training' ? 'agility' : 'hydration'
   );
+  const [trainingCategories, setTrainingCategories] = useState<TrainingCategoryMeta[]>(() =>
+    getTrainingCategories()
+  );
   const [freeDrillDetail, setFreeDrillDetail] = useState<FreeDrill | null>(null);
   const [selectedFreeItems, setSelectedFreeItems] = useState<string[]>([]);
+
+  // --- FREE CALENDAR SCHEDULE CONFIGURATION (4 WEEKS / 3 SESSIONS PER WEEK / 12 TOTAL) ---
+  const [calendarDays, setCalendarDays] = useState<string[]>(['شنبه', 'دوشنبه', 'چهارشنبه']);
 
   // --- READY TAB STATE ---
   const [readyAgeFilter, setReadyAgeFilter] = useState<string>('همه');
@@ -201,6 +216,15 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setTrainingCategories(getTrainingCategories());
+      if (userAgeGroup) {
+        setReadyAgeFilter(userAgeGroup);
+      }
+    }
+  }, [isOpen, userAgeGroup]);
+
   if (!isOpen) return null;
 
   // Trigger Plan Activation Animation Flow
@@ -226,6 +250,115 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
     setIsFinished(false);
     setProgress(0);
     setCompletedPlanResult(null);
+    onClose();
+  };
+
+  const handleToggleCalendarDay = (day: string) => {
+    setCalendarDays((prev) => {
+      if (prev.includes(day)) {
+        if (prev.length <= 1) return prev;
+        return prev.filter((d) => d !== day);
+      } else {
+        if (prev.length >= 3) {
+          return [...prev.slice(1), day];
+        }
+        return [...prev, day];
+      }
+    });
+  };
+
+  const handleConfirmFreeCalendarPlan = () => {
+    const days = calendarDays.length === 3 ? calendarDays : ['شنبه', 'دوشنبه', 'چهارشنبه'];
+
+    const weekFocuses = [
+      {
+        weekNum: 1,
+        title1: 'تمرین لمس اول و شتاب اولیه',
+        foc1: 'شتاب اولیه و کنترل جهت‌دار',
+        title2: 'تمرین چابکی و انتقال توپ',
+        foc2: 'چابکی و انتقال پرسرعت',
+        title3: 'تمرین تاکتیک و شوت‌زنی',
+        foc3: 'دقت ضربه و موقعیت‌سنجی',
+      },
+      {
+        weekNum: 2,
+        title1: 'تمرین سرعت واکنش و استارت کوتاه',
+        foc1: 'شروع انفجاری و زمان واکنش',
+        title2: 'تمرین پلیومتریک و پرش‌های کنترلی',
+        foc2: 'قدرت انفجاری پرش و فرود',
+        title3: 'تمرین دقت پاس و چرخش ۹۰ درجه',
+        foc3: 'پاس تک‌ضرب تحت فشار',
+      },
+      {
+        weekNum: 3,
+        title1: 'تمرین شاتل متوالی و استقامت سرعت',
+        foc1: 'استقامت در شتاب و ریکاوری',
+        title2: 'تمرین کنترل هوایی و لمس اول',
+        foc2: 'کنترل با سینه و روی پا',
+        title3: 'تمرین حفظ توپ در فضای فشرده',
+        foc3: 'تصمیم‌گیری سریع و تمام‌کنندگی',
+      },
+      {
+        weekNum: 4,
+        title1: 'تمرین بیشینه سرعت و استارت انفجاری',
+        foc1: 'بیشینه سرعت خطی',
+        title2: 'تمرین چابکی ترکیبی با موانع',
+        foc2: 'فرکانس گام و تعادل پویا',
+        title3: 'سنجش آمادگی و مسابقه تمرینی نهایی',
+        foc3: 'ارزیابی نهایی دوره و رکوردگیری',
+      },
+    ];
+
+    const schedule = weekFocuses.map((wf) => ({
+      weekNumber: wf.weekNum,
+      sessions: [
+        {
+          dayName: days[0],
+          title: wf.title1,
+          focus: wf.foc1,
+          durationMinutes: 50,
+          completed: false,
+          drillsCount: 3,
+        },
+        {
+          dayName: days[1],
+          title: wf.title2,
+          focus: wf.foc2,
+          durationMinutes: 50,
+          completed: false,
+          drillsCount: 3,
+        },
+        {
+          dayName: days[2],
+          title: wf.title3,
+          focus: wf.foc3,
+          durationMinutes: 50,
+          completed: false,
+          drillsCount: 4,
+        },
+      ],
+    }));
+
+    const titleSuffix = selectedFreeItems.length > 0 ? ` (${selectedFreeItems.length} تمرین انتخابی)` : '';
+    const newPlan = {
+      id: `free-plan-${Date.now()}`,
+      title: `برنامه تمرینی رایگان ۴ هفته‌ای${titleSuffix}`,
+      coachName: 'کادر فنی آکادمی فرست تاچ',
+      coachTitle: 'آکادمی فوتبال فرست تاچ',
+      price: 'رایگان',
+      isFree: true,
+      difficulty: 'متوسط',
+      durationWeeks: 4,
+      sessionsPerWeek: 3,
+      totalSessions: 12,
+      completedSessions: 0,
+      goal: 'ارتقای شتاب اولیه، لمس اول و آمادگی بدنی پایه فوتبال',
+      description: `برنامه تقویمی ۴ هفته‌ای (۱۲ جلسه) بر اساس روزهای ${days.join('، ')}. تمام جلسات دارای چک‌لیست تقویمی و امکان تیک زدن با ماندگاری کامل هستند.`,
+      schedule,
+    };
+
+    saveUnlockedPlan(newPlan.id, newPlan.title);
+    onPlanActivated(newPlan);
     onClose();
   };
 
@@ -467,36 +600,92 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                   <div className="space-y-3.5">
                     {mode === 'training' ? (
                       <>
-                        {/* Selected items quick-activation bar (only shown when selected) */}
+                        {/* 1. Schedule Selection: 4 Weeks, 3 Sessions/Week, 12 Total Sessions */}
+                        <div className="p-4 rounded-3xl bg-purple-50/50 dark:bg-slate-800/80 border border-purple-200/80 dark:border-purple-800/40 space-y-3.5 shadow-xs">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-100 dark:border-white/5 pb-2.5">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                                <Calendar className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                                  برنامه تمرینی رایگان (۴ هفته • ۳ جلسه در هفته • ۱۲ جلسه کل)
+                                </h3>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  ۳ روز تمرینی هفته را مشخص کنید تا برنامه ۱۲ جلسه‌ای صادر شود
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="primary"
+                              disabled={calendarDays.length !== 3}
+                              onClick={handleConfirmFreeCalendarPlan}
+                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-black px-4 h-9 rounded-xl shadow-md cursor-pointer self-start sm:self-auto gap-1.5"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              فعال‌سازی برنامه (۱۲ جلسه)
+                            </Button>
+                          </div>
+
+                          {/* 7 Days of the Week Selection */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-700 dark:text-slate-300 text-[11px]">
+                                روزهای جلسات تمرین در طول هفته (۳ روز):
+                              </span>
+                              <span className={`text-[11px] font-black ${calendarDays.length === 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                ({calendarDays.length} از ۳ روز انتخاب شده)
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-7 gap-1.5">
+                              {['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'].map((day) => {
+                                const isPicked = calendarDays.includes(day);
+                                return (
+                                  <button
+                                    key={day}
+                                    type="button"
+                                    onClick={() => handleToggleCalendarDay(day)}
+                                    className={`py-2 px-1 text-center rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                                      isPicked
+                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-purple-400'
+                                    }`}
+                                  >
+                                    {day}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {calendarDays.length !== 3 && (
+                              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">
+                                لطفاً ۳ روز در هفته را انتخاب فرمایید تا ۱۲ جلسه فعال گردد.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Selected items indicator if drills were picked */}
                         {selectedFreeItems.length > 0 && (
                           <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2">
                             <span className="text-xs font-black text-emerald-800 dark:text-emerald-300">
-                              {selectedFreeItems.length} تمرین انتخاب شده
+                              {selectedFreeItems.length} تمرین تخصصی برگزیده شد
                             </span>
                             <Button
                               variant="primary"
-                              onClick={() =>
-                                triggerActivationFlow({
-                                  id: `free-plan-${Date.now()}`,
-                                  title: `برنامه تمرینی برگزیده (${selectedFreeItems.length} تمرین)`,
-                                  price: 'رایگان',
-                                  difficulty: 'متوسط',
-                                  durationWeeks: 4,
-                                  sessionsPerWeek: 3,
-                                  totalSessions: 12,
-                                  goal: 'ارتقای توان بدنی با تمرینات برگزیده رایگان',
-                                })
-                              }
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3 h-8 shadow-sm cursor-pointer"
+                              onClick={handleConfirmFreeCalendarPlan}
+                              disabled={calendarDays.length !== 3}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3.5 h-8 shadow-sm cursor-pointer gap-1.5"
                             >
-                              فعال‌سازی ({selectedFreeItems.length} تمرین)
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              تأیید و صدور با {selectedFreeItems.length} تمرین
                             </Button>
                           </div>
                         )}
 
-                        {/* 10 Category Horizontal Pills (Clean & Compact) */}
+                        {/* Category Horizontal Pills (Dynamic from Admin / Clean & Compact) */}
                         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                          {TRAINING_CATEGORIES_10.map((cat, idx) => {
+                          {trainingCategories.map((cat, idx) => {
                             const isSel = selectedCategoryKey === cat.key;
                             return (
                               <button
@@ -699,6 +888,26 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
             ========================================================================= */}
         {activeTab === 'ready' && (
           <div className="space-y-3.5">
+            {/* User Age Group Match Banner */}
+            {userAgeGroup && (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-xs font-bold">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 shrink-0 text-purple-500" />
+                  <span>
+                    رده سنی متناسب با پرونده شما ({currentUser?.age} سال):{' '}
+                    <strong className="font-black text-foreground">{userAgeGroup}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReadyAgeFilter(userAgeGroup)}
+                  className="text-[11px] font-black underline cursor-pointer"
+                >
+                  نمایش رده شما
+                </button>
+              </div>
+            )}
+
             {/* Clean Age Group Filter & Subtle Price Indicator */}
             <div className="flex items-center justify-between pb-1 gap-2">
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -768,9 +977,38 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           <h4 className="text-base font-black text-slate-900 dark:text-white line-clamp-1">
                             {plan.title}
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
-                            {plan.description}
-                          </p>
+
+                          {/* Video Indicator if video attached */}
+                          {plan.videoUrl && (
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400">
+                              <Play className="h-3 w-3 fill-current" />
+                              <span>دارای ویدیوی اختصاصی آموزش تمرین</span>
+                            </div>
+                          )}
+
+                          {/* Description - only rendered if not empty */}
+                          {Boolean(plan.description && plan.description.trim()) && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                              {plan.description}
+                            </p>
+                          )}
+
+                          {/* Goal - only rendered if not empty */}
+                          {Boolean(plan.goal && plan.goal.trim()) && (
+                            <p className="text-[11px] text-muted-foreground font-semibold">
+                              هدف: <span className="text-foreground">{plan.goal}</span>
+                            </p>
+                          )}
+
+                          {/* Equipment - only rendered if not empty */}
+                          {Boolean(plan.equipment && plan.equipment.length > 0) && (
+                            <div className="text-[11px] text-muted-foreground">
+                              <span>تجهیزات: </span>
+                              <span className="font-semibold text-foreground">
+                                {Array.isArray(plan.equipment) ? plan.equipment.join('، ') : plan.equipment}
+                              </span>
+                            </div>
+                          )}
 
                           <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 text-center text-xs">
                             <div>
@@ -793,22 +1031,24 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Drills Summary Pills */}
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                              محور تمرینات:
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {plan.drillsSummary.map((d, i) => (
-                                <span
-                                  key={i}
-                                  className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                                >
-                                  {d}
-                                </span>
-                              ))}
+                          {/* Drills Summary Pills - only rendered if not empty */}
+                          {Boolean(plan.drillsSummary && plan.drillsSummary.length > 0) && (
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                                محور تمرینات:
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {plan.drillsSummary.map((d, i) => (
+                                  <span
+                                    key={i}
+                                    className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                  >
+                                    {d}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
 
                         <Button

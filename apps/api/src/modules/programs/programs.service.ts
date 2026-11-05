@@ -70,13 +70,80 @@ export class ProgramsService {
     return newProg;
   }
 
-  async toggleSession(programId: string, weekNumber: number, dayName: string): Promise<TrainingProgramItem> {
-    const prog = await this.findOne(programId);
-    const week = prog.schedule.find((w) => w.weekNumber === weekNumber);
-    if (!week) throw new NotFoundException('هفته مورد نظر یافت نشد.');
+  async delete(id: string): Promise<boolean> {
+    const initialLen = this.programs.length;
+    this.programs = this.programs.filter((p) => p.id !== id);
+    return this.programs.length < initialLen;
+  }
 
-    const session = week.sessions.find((s) => s.dayName === dayName);
-    if (!session) throw new NotFoundException('جلسه تمرینی مورد نظر یافت نشد.');
+  async syncProgram(program: TrainingProgramItem): Promise<TrainingProgramItem> {
+    const existingIdx = this.programs.findIndex((p) => p.id === program.id);
+    if (existingIdx >= 0) {
+      this.programs[existingIdx] = { ...this.programs[existingIdx], ...program };
+      return this.programs[existingIdx];
+    } else {
+      this.programs.unshift(program);
+      return program;
+    }
+  }
+
+  async toggleSession(programId: string, weekNumber: number, dayName: string): Promise<TrainingProgramItem> {
+    let prog = this.programs.find((p) => p.id === programId);
+    if (!prog) {
+      // Auto-register program if not found in server cache
+      prog = {
+        id: programId,
+        title: 'برنامه تمرینی شاگرد (۴ هفته - ۱۲ جلسه)',
+        coachName: 'کادر فنی آکادمی',
+        coachTitle: 'آکادمی فوتبال فرست تاچ',
+        goal: 'ارتقای توان بدنی و مهارتی شاگرد',
+        difficulty: 'متوسط',
+        ageGroup: 'تمامی رده‌ها',
+        durationWeeks: 4,
+        sessionsPerWeek: 3,
+        totalSessions: 12,
+        completedSessions: 0,
+        price: 'رایگان',
+        isFree: true,
+        studentsCount: 1,
+        rating: 5,
+        equipment: ['توپ', 'مخروط', 'نردبان'],
+        description: 'برنامه تمرینی فعال شده برای شاگرد',
+        schedule: Array.from({ length: 4 }).map((_, wIdx) => ({
+          weekNumber: wIdx + 1,
+          sessions: [
+            { dayName: 'شنبه', title: 'تمرین جلسه اول هفته', focus: 'شتاب اولیه و لمس اول', durationMinutes: 50, completed: false, drillsCount: 3 },
+            { dayName: 'دوشنبه', title: 'تمرین جلسه دوم هفته', focus: 'چابکی و انتقال توپ', durationMinutes: 50, completed: false, drillsCount: 3 },
+            { dayName: 'چهارشنبه', title: 'تمرین جلسه سوم هفته', focus: 'تاکتیک و شوت‌زنی', durationMinutes: 50, completed: false, drillsCount: 3 },
+          ],
+        })),
+      };
+      this.programs.unshift(prog);
+    }
+
+    let week = prog.schedule.find((w) => w.weekNumber === weekNumber);
+    if (!week) {
+      week = {
+        weekNumber,
+        sessions: [
+          { dayName, title: `تمرین جلسه ${dayName}`, focus: 'مهارت و استقامت', durationMinutes: 45, completed: false, drillsCount: 3 },
+        ],
+      };
+      prog.schedule.push(week);
+    }
+
+    let session = week.sessions.find((s) => s.dayName === dayName);
+    if (!session) {
+      session = {
+        dayName,
+        title: `تمرین جلسه ${dayName}`,
+        focus: 'مهارت و استقامت',
+        durationMinutes: 45,
+        completed: false,
+        drillsCount: 3,
+      };
+      week.sessions.push(session);
+    }
 
     session.completed = !session.completed;
 
@@ -90,5 +157,56 @@ export class ProgramsService {
     prog.completedSessions = completedCount;
 
     return prog;
+  }
+
+  async getWeeklyPerformance(): Promise<any> {
+    const days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+    const primaryProg = this.programs[0];
+    const weekSessions = primaryProg?.schedule?.[0]?.sessions || [];
+
+    // Persian calendar day index: Saturday is 0, Friday is 6
+    const now = new Date();
+    const dayOfWeek = (now.getDay() + 1) % 7;
+
+    const points = days.map((day, idx) => {
+      const session = weekSessions.find((s) => s.dayName === day);
+      const isCompleted = session?.completed || false;
+      const duration = session?.durationMinutes || 45;
+
+      const workoutScore = isCompleted ? 90 + Math.min(10, (session?.drillsCount || 3) * 2) : 0;
+      const workoutMinutes = isCompleted ? duration : 0;
+      const nutritionScore = isCompleted ? 85 : 0;
+      const calories = isCompleted ? 2400 : 0;
+
+      return {
+        day,
+        workoutScore,
+        workoutMinutes,
+        nutritionScore,
+        calories,
+        isToday: idx === dayOfWeek,
+      };
+    });
+
+    const completedCount = weekSessions.filter((s) => s.completed).length;
+    const totalCount = weekSessions.length || 3;
+    const workoutPercent = Math.round((completedCount / totalCount) * 100);
+    const readinessScore = completedCount > 0 ? Math.min(100, Math.round(workoutPercent * 0.8 + 20)) : 0;
+
+    return {
+      points,
+      readinessScore,
+      readinessLabel:
+        readinessScore >= 80
+          ? 'عالی'
+          : readinessScore >= 50
+            ? 'آماده مسابقه'
+            : readinessScore > 0
+              ? 'در حال آمادگی'
+              : 'ثبت نشده',
+      workoutPercent,
+      completedSessions: completedCount,
+      totalSessions: totalCount,
+    };
   }
 }

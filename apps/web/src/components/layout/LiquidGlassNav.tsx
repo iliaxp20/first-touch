@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, LayoutGroup } from 'framer-motion';
-import { Home, Compass, CalendarCheck2, User } from 'lucide-react';
+import { Home, Presentation, CalendarCheck2, Trophy } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavItemKey } from './Sidebar';
 
@@ -25,15 +25,16 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
 
   const tabs: NavTab[] = [
     { key: 'dashboard', label: 'داشبورد', icon: Home, path: '/' },
-    { key: 'tactics', label: 'تخته تاکتیک', icon: Compass, path: '/tactics' },
+    { key: 'tactics', label: 'تخته تاکتیک', icon: Presentation, path: '/tactics' },
     { key: 'plans', label: 'تمرینات', icon: CalendarCheck2, path: '/practice' },
-    { key: 'settings', label: 'حساب من', icon: User, path: '/settings' },
+    { key: 'rewards', label: 'بازی و جوایز', icon: Trophy, path: '/rewards' },
   ];
 
   const getCurrentActiveKey = (): NavItemKey => {
     const path = location.pathname;
     if (path === '/tactics') return 'tactics';
     if (path === '/practice' || path.startsWith('/plans') || path.startsWith('/exercises')) return 'plans';
+    if (path === '/rewards' || path === '/quiz') return 'rewards';
     if (path === '/settings' || path === '/profile') return 'settings';
     if (path === '/subscriptions') return 'subscriptions';
     if (activeItem) return activeItem;
@@ -48,6 +49,11 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
       onSelect(tab.key);
     }
   };
+
+  // When inside a tactics room, completely hide the bottom navbar so the pitch is unobstructed
+  if (location.pathname.startsWith('/tactics/')) {
+    return null;
+  }
 
   return (
     <nav

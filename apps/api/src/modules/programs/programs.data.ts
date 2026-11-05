@@ -50,14 +50,14 @@ export const INITIAL_TRAINING_PROGRAMS: TrainingProgramItem[] = [
     studentsCount: 28,
     rating: 4.9,
     imageUrl: 'https://images.openai.com/static-rsc-4/57Fxx5YigrvTD5plecW8SeNc4w8CPdQkPYMimsdhsM8qDK3EbwD-v0WLOjaqiF9q_2x_Ewakc6pwZVPc7jZnZrBIA05SsSxJT4j68XVdWfjgKXXDbFXrey8xPwC-h7FFUo4XxODM4OpxXi24UUu4NwEV8sJLTD7JTyKaJMNs1o0?purpose=inline',
-    completedSessions: 4,
+    completedSessions: 0,
     totalSessions: 12,
     schedule: [
       {
         weekNumber: 1,
         sessions: [
-          { dayName: 'شنبه', title: 'تمرین چابکی و تغییر جهت ۴۵ درجه', focus: 'شتاب اولیه و گام اول', durationMinutes: 45, completed: true, drillsCount: 5 },
-          { dayName: 'دوشنبه', title: 'تمرین سرعت واکنش به سوت و رنگ', focus: 'شروع انفجاری و زمان واکنش', durationMinutes: 40, completed: true, drillsCount: 4 },
+          { dayName: 'شنبه', title: 'تمرین چابکی و تغییر جهت ۴۵ درجه', focus: 'شتاب اولیه و گام اول', durationMinutes: 45, completed: false, drillsCount: 5 },
+          { dayName: 'دوشنبه', title: 'تمرین سرعت واکنش به سوت و رنگ', focus: 'شروع انفجاری و زمان واکنش', durationMinutes: 40, completed: false, drillsCount: 4 },
           { dayName: 'چهارشنبه', title: 'تمرین هماهنگی نردبان و شاتل ۵-۱۰-۵', focus: 'ریتم فرکانس پا', durationMinutes: 50, completed: false, drillsCount: 6 },
         ],
       },
@@ -88,15 +88,15 @@ export const INITIAL_TRAINING_PROGRAMS: TrainingProgramItem[] = [
     studentsCount: 94,
     rating: 4.8,
     imageUrl: 'https://images.openai.com/static-rsc-4/CxfOtg9pGWQInGVDGNI8acyWURpQO5JrF-74ajR5bbizzZ0g4V88M-4EAxTUKeyFyHhxSLAAu98RHQ9Y_SDVD51oEkmb2l3IzkiMNfJfNDEMcWYZodnobofAp_9mqLPdFFI9CGItFTsaR3WpLHJymTnyx7Q3J9Ar17PRjouAuQI?purpose=inline',
-    completedSessions: 6,
+    completedSessions: 0,
     totalSessions: 18,
     schedule: [
       {
         weekNumber: 1,
         sessions: [
-          { dayName: 'شنبه', title: 'تقویت زنجیره خلفی و تعادل تک‌پا', focus: 'همسترینگ و پل باسن', durationMinutes: 40, completed: true, drillsCount: 5 },
-          { dayName: 'دوشنبه', title: 'ثبات مرکزی و پلانک‌های ایزومتریک', focus: 'عضلات شکم و مفاصل ستون فقرات', durationMinutes: 35, completed: true, drillsCount: 4 },
-          { dayName: 'چهارشنبه', title: 'اسکوات‌های فانکشنال و تقویت چهارسر', focus: 'قدرت پایین‌تنه', durationMinutes: 45, completed: true, drillsCount: 5 },
+          { dayName: 'شنبه', title: 'تقویت زنجیره خلفی و تعادل تک‌پا', focus: 'همسترینگ و پل باسن', durationMinutes: 40, completed: false, drillsCount: 5 },
+          { dayName: 'دوشنبه', title: 'ثبات مرکزی و پلانک‌های ایزومتریک', focus: 'عضلات شکم و مفاصل ستون فقرات', durationMinutes: 35, completed: false, drillsCount: 4 },
+          { dayName: 'چهارشنبه', title: 'اسکوات‌های فانکشنال و تقویت چهارسر', focus: 'قدرت پایین‌تنه', durationMinutes: 45, completed: false, drillsCount: 5 },
         ],
       },
       {

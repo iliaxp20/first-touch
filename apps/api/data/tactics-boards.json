@@ -1,0 +1,116 @@
+[
+  {
+    "id": "tb-istk0jw2",
+    "title": "تمیز",
+    "creatorName": "کاربر گرامی",
+    "creatorPhone": "09309663349",
+    "createdAt": "2026-11-05T05:14:04.512Z",
+    "updatedAt": "2026-11-05T05:57:11.162Z",
+    "players": [
+      {
+        "id": "1",
+        "number": 1,
+        "name": "",
+        "team": "HOME",
+        "x": 8,
+        "y": 50,
+        "position": "GK"
+      },
+      {
+        "id": "2",
+        "number": 2,
+        "name": "",
+        "team": "HOME",
+        "x": 25,
+        "y": 20,
+        "position": "RB"
+      },
+      {
+        "id": "3",
+        "number": 4,
+        "name": "",
+        "team": "HOME",
+        "x": 22,
+        "y": 40,
+        "position": "CB"
+      },
+      {
+        "id": "4",
+        "number": 5,
+        "name": "",
+        "team": "HOME",
+        "x": 22,
+        "y": 60,
+        "position": "CB"
+      },
+      {
+        "id": "5",
+        "number": 3,
+        "name": "",
+        "team": "HOME",
+        "x": 25,
+        "y": 80,
+        "position": "LB"
+      },
+      {
+        "id": "6",
+        "number": 6,
+        "name": "",
+        "team": "HOME",
+        "x": 42,
+        "y": 50,
+        "position": "DM"
+      },
+      {
+        "id": "7",
+        "number": 8,
+        "name": "",
+        "team": "HOME",
+        "x": 55,
+        "y": 32,
+        "position": "CM"
+      },
+      {
+        "id": "8",
+        "number": 10,
+        "name": "",
+        "team": "HOME",
+        "x": 55,
+        "y": 68,
+        "position": "AM"
+      },
+      {
+        "id": "9",
+        "number": 7,
+        "name": "",
+        "team": "HOME",
+        "x": 75,
+        "y": 20,
+        "position": "RW"
+      },
+      {
+        "id": "10",
+        "number": 9,
+        "name": "",
+        "team": "HOME",
+        "x": 82,
+        "y": 50,
+        "position": "ST"
+      },
+      {
+        "id": "11",
+        "number": 11,
+        "name": "",
+        "team": "HOME",
+        "x": 75,
+        "y": 80,
+        "position": "LW"
+      }
+    ],
+    "drawings": [],
+    "ball": {
+      "x": 50,
+      "y": 50
+    }
+  }
+]

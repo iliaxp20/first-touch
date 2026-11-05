@@ -3,6 +3,7 @@ import { Navbar } from './Navbar';
 import { NavItemKey } from './Sidebar';
 import { LiquidGlassNav } from './LiquidGlassNav';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from 'react-router-dom';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,8 @@ interface AppLayoutProps {
   userName?: string;
   isProfileComplete?: boolean;
   userAvatar?: string;
+  hideNavbar?: boolean;
+  hideBottomNav?: boolean;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -22,8 +25,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   userName,
   isProfileComplete,
   userAvatar,
+  hideNavbar,
+  hideBottomNav,
 }) => {
   const auth = useAuth();
+  const location = useLocation();
+
+  const isTacticsActiveRoom = location.pathname.startsWith('/tactics/');
+  const shouldHideNavbar = hideNavbar ?? isTacticsActiveRoom;
+  const shouldHideBottomNav = hideBottomNav ?? isTacticsActiveRoom;
+
   const effectiveRole = activeRole ?? auth.currentUser?.role ?? 'PLAYER';
   const effectiveName = userName ?? auth.currentUser?.fullName ?? 'کاربر گرامی';
   const effectiveProfileComplete = isProfileComplete ?? auth.currentUser?.isProfileComplete ?? false;
@@ -36,27 +47,35 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <div className="fixed bottom-1/4 -left-20 w-96 h-96 rounded-full bg-violet-300/30 dark:bg-violet-900/15 blur-[140px] pointer-events-none animate-orb-2" />
 
       {/* Top Navbar */}
-      <Navbar
-        activeRole={effectiveRole}
-        userName={effectiveName}
-        isProfileComplete={effectiveProfileComplete}
-        userAvatar={effectiveAvatar}
-      />
+      {!shouldHideNavbar && (
+        <Navbar
+          activeRole={effectiveRole}
+          userName={effectiveName}
+          isProfileComplete={effectiveProfileComplete}
+          userAvatar={effectiveAvatar}
+        />
+      )}
 
-      {/* Main Content Area - Full Width without Sidebar Clutter */}
+      {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-32">
-          <div className="mx-auto max-w-7xl">
+        <main
+          className={`flex-1 overflow-y-auto ${
+            shouldHideBottomNav ? 'p-2 sm:p-4 pb-4' : 'p-4 sm:p-6 lg:p-8 pb-32'
+          }`}
+        >
+          <div className={shouldHideNavbar ? 'w-full' : 'mx-auto max-w-7xl'}>
             {children}
           </div>
         </main>
       </div>
 
       {/* Floating Liquid Glass Navigation Bar */}
-      <LiquidGlassNav
-        activeItem={activeItem}
-        onSelect={onSelectNavItem}
-      />
+      {!shouldHideBottomNav && (
+        <LiquidGlassNav
+          activeItem={activeItem}
+          onSelect={onSelectNavItem}
+        />
+      )}
     </div>
   );
 };

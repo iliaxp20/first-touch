@@ -8,6 +8,7 @@ import { PlanList } from '@/features/plans/components/PlanList';
 import { TacticsBoard } from '@/features/tactics/components/TacticsBoard';
 import { SubscriptionCard } from '@/features/subscriptions/components/SubscriptionCard';
 import { SettingsView } from '@/features/settings/SettingsView';
+import { QuizRewardsView } from '@/features/quiz/QuizRewardsView';
 import { AuthScreen } from '@/features/auth/components/AuthScreen';
 import { LockedFeatureView } from '@/components/ui/LockedFeatureView';
 import { SecretAdminPortal } from '@/features/admin/SecretAdminPortal';
@@ -135,6 +136,10 @@ export const AppRoutes: React.FC = () => {
         {/* User settings route */}
         <Route path="/settings" element={<SettingsView />} />
         <Route path="/profile" element={<Navigate to="/settings" replace />} />
+
+        {/* Quiz & Rewards game route */}
+        <Route path="/rewards" element={<QuizRewardsView />} />
+        <Route path="/quiz" element={<Navigate to="/rewards" replace />} />
       </Route>
 
       {/* Fallback route */}

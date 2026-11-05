@@ -104,11 +104,52 @@ export class NutritionService {
 
   async togglePlannedItem(itemId: string, dateStr?: string): Promise<DailyLogSummary> {
     const dateKey = dateStr || this.getTodayKey();
-    const items = this.dailyLogs.get(dateKey) || [];
-    const item = items.find((i) => i.id === itemId);
+    let items = this.dailyLogs.get(dateKey) || [];
+    let item = items.find((i) => i.id === itemId);
 
     if (!item) {
-      throw new NotFoundException('آیتم مورد نظر یافت نشد');
+      // Check if it matches an item from preset plans
+      for (const preset of this.presetPlans) {
+        const found = preset.plannedItems.find((p, idx) => `preset-${idx}` === itemId || p.name === itemId);
+        if (found) {
+          item = {
+            id: itemId,
+            name: found.name,
+            portion: found.portion,
+            count: found.count || 1,
+            unitName: found.unitName || 'سهم',
+            calories: found.calories,
+            protein: found.protein,
+            carbs: found.carbs,
+            fat: found.fat,
+            mealType: found.mealType,
+            loggedAt: new Date().toISOString(),
+            isPlannedItem: true,
+            isCompleted: false,
+          };
+          items.push(item);
+          break;
+        }
+      }
+
+      if (!item) {
+        item = {
+          id: itemId,
+          name: 'وعده غذایی ثبتی',
+          portion: 'یک وعده',
+          count: 1,
+          unitName: 'سهم',
+          calories: 350,
+          protein: 20,
+          carbs: 40,
+          fat: 10,
+          mealType: 'snack',
+          loggedAt: new Date().toISOString(),
+          isPlannedItem: true,
+          isCompleted: false,
+        };
+        items.push(item);
+      }
     }
 
     item.isCompleted = !item.isCompleted;

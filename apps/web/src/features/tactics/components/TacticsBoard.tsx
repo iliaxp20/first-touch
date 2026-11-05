@@ -1,8 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
-import { Plus, Sparkles, ArrowRight } from 'lucide-react';
+import {
+  Plus,
+  Presentation,
+  ArrowRight,
+  Trash2,
+  Share2,
+  Check,
+  Calendar,
+  Search,
+  ExternalLink,
+} from 'lucide-react';
 import { TacticalPlayer, TacticalDrawing, TacticalTool } from '../types/tactics.types';
 import { useTacticsSocket } from '../hooks/useTacticsSocket';
 import { TacticsPitch } from './TacticsPitch';
@@ -12,22 +22,32 @@ import { TacticsViewersModal } from './TacticsViewersModal';
 import { CreateBoardModal } from './CreateBoardModal';
 import { GuestPhoneModal } from './GuestPhoneModal';
 import { EditPlayerModal } from './EditPlayerModal';
+import { MicPermissionModal } from './MicPermissionModal';
 
 const DEFAULT_INITIAL_PLAYERS: TacticalPlayer[] = [
-  { id: '1', number: 1, name: 'بیرانوند', team: 'HOME', x: 8, y: 50, position: 'GK' },
-  { id: '2', number: 2, name: 'رضاییان', team: 'HOME', x: 25, y: 20, position: 'RB' },
-  { id: '3', number: 4, name: 'خلیل‌زاده', team: 'HOME', x: 22, y: 40, position: 'CB' },
-  { id: '4', number: 5, name: 'پورعلی‌گنجی', team: 'HOME', x: 22, y: 60, position: 'CB' },
-  { id: '5', number: 3, name: 'محمدی', team: 'HOME', x: 25, y: 80, position: 'LB' },
-  { id: '6', number: 6, name: 'عزت‌اللهی', team: 'HOME', x: 42, y: 50, position: 'DM' },
-  { id: '7', number: 8, name: 'نوراللهی', team: 'HOME', x: 55, y: 32, position: 'CM' },
-  { id: '8', number: 10, name: 'قدوس', team: 'HOME', x: 55, y: 68, position: 'AM' },
-  { id: '9', number: 7, name: 'جهانبخش', team: 'HOME', x: 75, y: 20, position: 'RW' },
-  { id: '10', number: 9, name: 'طارمی', team: 'HOME', x: 82, y: 50, position: 'ST' },
-  { id: '11', number: 11, name: 'قایدی', team: 'HOME', x: 75, y: 80, position: 'LW' },
+  { id: '1', number: 1, name: '', team: 'HOME', x: 8, y: 50, position: 'GK' },
+  { id: '2', number: 2, name: '', team: 'HOME', x: 25, y: 20, position: 'RB' },
+  { id: '3', number: 4, name: '', team: 'HOME', x: 22, y: 40, position: 'CB' },
+  { id: '4', number: 5, name: '', team: 'HOME', x: 22, y: 60, position: 'CB' },
+  { id: '5', number: 3, name: '', team: 'HOME', x: 25, y: 80, position: 'LB' },
+  { id: '6', number: 6, name: '', team: 'HOME', x: 42, y: 50, position: 'DM' },
+  { id: '7', number: 8, name: '', team: 'HOME', x: 55, y: 32, position: 'CM' },
+  { id: '8', number: 10, name: '', team: 'HOME', x: 55, y: 68, position: 'AM' },
+  { id: '9', number: 7, name: '', team: 'HOME', x: 75, y: 20, position: 'RW' },
+  { id: '10', number: 9, name: '', team: 'HOME', x: 82, y: 50, position: 'ST' },
+  { id: '11', number: 11, name: '', team: 'HOME', x: 75, y: 80, position: 'LW' },
 ];
 
 const GUEST_STORAGE_KEY = 'ft_tactics_guest_user';
+const SAVED_BOARDS_KEY = 'ft_saved_tactics_boards';
+
+interface SavedBoardInfo {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt?: string;
+  creatorName?: string;
+}
 
 export const TacticsBoard: React.FC = () => {
   const { boardId: paramBoardId } = useParams<{ boardId?: string }>();
@@ -50,7 +70,9 @@ export const TacticsBoard: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewersModalOpen, setIsViewersModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isZenMode, setIsZenMode] = useState(false);
+  const [isMobileLandscape, setIsMobileLandscape] = useState(false);
+  const [boardCreatorPhone, setBoardCreatorPhone] = useState('');
+  const [boardCreatorName, setBoardCreatorName] = useState('');
 
   // Tactical Drawing Tools & Player Editing State
   const [activeTool, setActiveTool] = useState<TacticalTool>('select');
@@ -62,6 +84,15 @@ export const TacticsBoard: React.FC = () => {
   const [boardTitle, setBoardTitle] = useState('تخته تاکتیک اختصاصی');
   const [players, setPlayers] = useState<TacticalPlayer[]>(DEFAULT_INITIAL_PLAYERS);
   const [joinLinkInput, setJoinLinkInput] = useState('');
+  const [isSaved, setIsSaved] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // List of created boards for the landing view
+  const [savedBoards, setSavedBoards] = useState<SavedBoardInfo[]>([]);
+  const [boardSearchQuery, setBoardSearchQuery] = useState('');
+  const [isLoadingBoards, setIsLoadingBoards] = useState(false);
+
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const activeUser = currentUser
     ? {
@@ -72,6 +103,168 @@ export const TacticsBoard: React.FC = () => {
     : guestUser
     ? guestUser
     : null;
+
+  // Load board list when on landing page
+  const fetchBoardList = useCallback(async () => {
+    setIsLoadingBoards(true);
+    let localList: SavedBoardInfo[] = [];
+    try {
+      const stored = localStorage.getItem(SAVED_BOARDS_KEY);
+      if (stored) {
+        localList = JSON.parse(stored);
+      }
+    } catch {}
+
+    try {
+      const res = await fetch('http://localhost:4000/tactics/boards');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.boards && Array.isArray(data.boards)) {
+          const remoteMap = new Map<string, SavedBoardInfo>(
+            data.boards.map((b: any) => [
+              b.id,
+              {
+                id: b.id,
+                title: b.title,
+                createdAt: b.createdAt,
+                updatedAt: b.updatedAt,
+                creatorName: b.creatorName,
+              },
+            ]),
+          );
+
+          localList.forEach((lb) => {
+            if (!remoteMap.has(lb.id)) {
+              remoteMap.set(lb.id, lb);
+            }
+          });
+
+          const merged = Array.from(remoteMap.values()).sort(
+            (a, b) =>
+              new Date(b.updatedAt || b.createdAt).getTime() -
+              new Date(a.updatedAt || a.createdAt).getTime(),
+          );
+          setSavedBoards(merged);
+          localStorage.setItem(SAVED_BOARDS_KEY, JSON.stringify(merged));
+          setIsLoadingBoards(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('API board listing unavailable, using local cache', e);
+    }
+
+    setSavedBoards(localList);
+    setIsLoadingBoards(false);
+  }, []);
+
+  useEffect(() => {
+    if (!activeBoardId) {
+      fetchBoardList();
+    }
+  }, [activeBoardId, fetchBoardList]);
+
+  // Load initial board data when activeBoardId is present
+  useEffect(() => {
+    if (!activeBoardId) return;
+
+    // 1. Try local storage first for instantaneous load
+    try {
+      const cached = localStorage.getItem(`ft_tactics_board_${activeBoardId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.title) setBoardTitle(parsed.title);
+        if (parsed.players && Array.isArray(parsed.players)) setPlayers(parsed.players);
+        if (parsed.drawings && Array.isArray(parsed.drawings)) setDrawings(parsed.drawings);
+        if (parsed.ball) setBall(parsed.ball);
+      }
+    } catch {}
+
+    // 2. Fetch from backend to ensure latest sync
+    fetch(`http://localhost:4000/tactics/boards/${activeBoardId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.board) {
+          if (data.board.title) setBoardTitle(data.board.title);
+          if (data.board.players && data.board.players.length > 0) setPlayers(data.board.players);
+          if (data.board.drawings) setDrawings(data.board.drawings);
+          if (data.board.ball) setBall(data.board.ball);
+          if (data.board.creatorPhone) setBoardCreatorPhone(data.board.creatorPhone);
+          if (data.board.creatorName) setBoardCreatorName(data.board.creatorName);
+
+          // Update local cache
+          try {
+            localStorage.setItem(
+              `ft_tactics_board_${activeBoardId}`,
+              JSON.stringify({
+                title: data.board.title,
+                players: data.board.players,
+                drawings: data.board.drawings,
+                ball: data.board.ball,
+              }),
+            );
+          } catch {}
+        }
+      })
+      .catch((e) => console.warn('Backend board fetch notice:', e));
+  }, [activeBoardId]);
+
+  // Persist board helper
+  const saveCurrentBoard = useCallback(
+    async (
+      currentPlayers = players,
+      currentDrawings = drawings,
+      currentBall = ball,
+      currentTitle = boardTitle,
+    ) => {
+      if (!activeBoardId) return;
+
+      const payload = {
+        title: currentTitle,
+        players: currentPlayers,
+        drawings: currentDrawings,
+        ball: currentBall,
+      };
+
+      // 1. Cache immediately in localStorage
+      try {
+        localStorage.setItem(`ft_tactics_board_${activeBoardId}`, JSON.stringify(payload));
+      } catch {}
+
+      // 2. Persist to API
+      try {
+        await fetch(`http://localhost:4000/tactics/boards/${activeBoardId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+      } catch (err) {
+        console.warn('API save notice:', err);
+      }
+    },
+    [activeBoardId, players, drawings, ball, boardTitle],
+  );
+
+  // Trigger debounced auto-save on change
+  const triggerAutoSave = useCallback(
+    (
+      newPlayers = players,
+      newDrawings = drawings,
+      newBall = ball,
+      newTitle = boardTitle,
+    ) => {
+      if (!activeBoardId) return;
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      autoSaveTimerRef.current = setTimeout(() => {
+        saveCurrentBoard(newPlayers, newDrawings, newBall, newTitle);
+      }, 1000);
+    },
+    [activeBoardId, ball, boardTitle, drawings, players, saveCurrentBoard],
+  );
 
   useEffect(() => {
     if (activeBoardId && !currentUser && !guestUser) {
@@ -96,15 +289,16 @@ export const TacticsBoard: React.FC = () => {
 
   // Remote updates via WebSocket
   const handleRemotePlayerMove = useCallback((playerId: string, x: number, y: number) => {
-    setPlayers((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, x, y } : p)),
-    );
+    setPlayers((prev) => {
+      const next = prev.map((p) => (p.id === playerId ? { ...p, x, y } : p));
+      return next;
+    });
   }, []);
 
   const handleRemotePlayerUpdated = useCallback(
     (playerId: string, name?: string, number?: number, position?: string) => {
-      setPlayers((prev) =>
-        prev.map((p) => {
+      setPlayers((prev) => {
+        const next = prev.map((p) => {
           if (p.id === playerId) {
             return {
               ...p,
@@ -114,8 +308,9 @@ export const TacticsBoard: React.FC = () => {
             };
           }
           return p;
-        }),
-      );
+        });
+        return next;
+      });
     },
     [],
   );
@@ -126,6 +321,10 @@ export const TacticsBoard: React.FC = () => {
 
   const handleRemoteDrawingAdded = useCallback((drawing: TacticalDrawing) => {
     setDrawings((prev) => [...prev, drawing]);
+  }, []);
+
+  const handleRemoteDrawingRemoved = useCallback((drawingId: string) => {
+    setDrawings((prev) => prev.filter((d) => d.id !== drawingId));
   }, []);
 
   const handleDrawingsCleared = useCallback(() => {
@@ -145,7 +344,7 @@ export const TacticsBoard: React.FC = () => {
       initialDrawings?: TacticalDrawing[],
       initialBall?: { x: number; y: number },
     ) => {
-      setPlayers(loadedPlayers);
+      if (loadedPlayers && loadedPlayers.length > 0) setPlayers(loadedPlayers);
       if (title) setBoardTitle(title);
       if (initialDrawings) setDrawings(initialDrawings);
       if (initialBall) setBall(initialBall);
@@ -160,12 +359,14 @@ export const TacticsBoard: React.FC = () => {
     isVoiceActive,
     isMuted,
     audioError,
+    clearAudioError,
     toggleVoice,
     toggleMute,
     sendPlayerMove,
     sendPlayerEdit,
     sendBallMove,
     sendDrawingAdd,
+    sendDrawingRemove,
     sendDrawingClear,
     sendResetBoard,
     sendMessage,
@@ -176,16 +377,19 @@ export const TacticsBoard: React.FC = () => {
     onRemotePlayerUpdated: handleRemotePlayerUpdated,
     onRemoteBallMoved: handleRemoteBallMoved,
     onRemoteDrawingAdded: handleRemoteDrawingAdded,
+    onRemoteDrawingRemoved: handleRemoteDrawingRemoved,
     onDrawingsCleared: handleDrawingsCleared,
     onBoardReset: handleBoardReset,
     onInitialBoardLoaded: handleInitialBoardLoaded,
   });
 
-  // Local actions
+  // Local actions with auto-save
   const handleLocalPlayerMove = (playerId: string, x: number, y: number) => {
-    setPlayers((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, x, y } : p)),
-    );
+    setPlayers((prev) => {
+      const next = prev.map((p) => (p.id === playerId ? { ...p, x, y } : p));
+      triggerAutoSave(next, drawings, ball);
+      return next;
+    });
     if (activeBoardId) {
       sendPlayerMove(playerId, x, y);
     }
@@ -197,30 +401,50 @@ export const TacticsBoard: React.FC = () => {
     number: number,
     position: string,
   ) => {
-    setPlayers((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, name, number, position } : p)),
-    );
+    setPlayers((prev) => {
+      const next = prev.map((p) => (p.id === playerId ? { ...p, name, number, position } : p));
+      triggerAutoSave(next, drawings, ball);
+      return next;
+    });
     if (activeBoardId) {
       sendPlayerEdit(playerId, name, number, position);
     }
   };
 
   const handleLocalBallMove = (x: number, y: number) => {
-    setBall({ x, y });
+    const nextBall = { x, y };
+    setBall(nextBall);
+    triggerAutoSave(players, drawings, nextBall);
     if (activeBoardId) {
       sendBallMove(x, y);
     }
   };
 
   const handleLocalAddDrawing = (drawing: TacticalDrawing) => {
-    setDrawings((prev) => [...prev, drawing]);
+    setDrawings((prev) => {
+      const next = [...prev, drawing];
+      triggerAutoSave(players, next, ball);
+      return next;
+    });
     if (activeBoardId) {
       sendDrawingAdd(drawing);
     }
   };
 
+  const handleLocalRemoveDrawing = (drawingId: string) => {
+    setDrawings((prev) => {
+      const next = prev.filter((d) => d.id !== drawingId);
+      triggerAutoSave(players, next, ball);
+      return next;
+    });
+    if (activeBoardId) {
+      sendDrawingRemove(drawingId);
+    }
+  };
+
   const handleLocalClearDrawings = () => {
     setDrawings([]);
+    triggerAutoSave(players, [], ball);
     if (activeBoardId) {
       sendDrawingClear();
     }
@@ -230,6 +454,7 @@ export const TacticsBoard: React.FC = () => {
     setPlayers(DEFAULT_INITIAL_PLAYERS);
     setDrawings([]);
     setBall({ x: 50, y: 50 });
+    triggerAutoSave(DEFAULT_INITIAL_PLAYERS, [], { x: 50, y: 50 });
     if (activeBoardId) {
       sendResetBoard();
     }
@@ -245,31 +470,99 @@ export const TacticsBoard: React.FC = () => {
     navigate(`/tactics/${id}`);
   };
 
+  const handleDeleteSavedBoard = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('آیا از حذف این تخته تاکتیک اطمینان دارید؟')) return;
+
+    try {
+      await fetch(`http://localhost:4000/tactics/boards/${id}`, { method: 'DELETE' });
+    } catch {}
+
+    const updated = savedBoards.filter((b) => b.id !== id);
+    setSavedBoards(updated);
+    try {
+      localStorage.setItem(SAVED_BOARDS_KEY, JSON.stringify(updated));
+      localStorage.removeItem(`ft_tactics_board_${id}`);
+    } catch {}
+  };
+
+  const handleCopyBoardLink = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/tactics/${id}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Check if current user is the coach/creator of this board
+  const isCreatedLocally =
+    typeof window !== 'undefined' &&
+    !!activeBoardId &&
+    localStorage.getItem(`ft_creator_${activeBoardId}`) === 'true';
+  const isPhoneMatch = Boolean(
+    boardCreatorPhone && activeUser?.phone && boardCreatorPhone === activeUser.phone,
+  );
+  const isNameMatch = Boolean(
+    boardCreatorName && activeUser?.name && boardCreatorName === activeUser.name,
+  );
+  const isCreator = Boolean(
+    isCreatedLocally || isPhoneMatch || isNameMatch || (!boardCreatorPhone && !boardCreatorName),
+  );
+
+  const handleToggleMobileLandscape = () => {
+    const next = !isMobileLandscape;
+    setIsMobileLandscape(next);
+    if (typeof window !== 'undefined') {
+      if (next) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+        if (screen.orientation && (screen.orientation as any).lock) {
+          (screen.orientation as any).lock('landscape').catch(() => {});
+        }
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+        if (screen.orientation && (screen.orientation as any).unlock) {
+          (screen.orientation as any).unlock();
+        }
+      }
+    }
+  };
+
+  const filteredBoards = savedBoards.filter(
+    (b) =>
+      b.title.toLowerCase().includes(boardSearchQuery.toLowerCase()) ||
+      b.id.toLowerCase().includes(boardSearchQuery.toLowerCase()),
+  );
+
   // View 1: Clean Minimalist Landing Page (when no boardId is in URL)
   if (!activeBoardId) {
     return (
-      <div className="max-w-xl mx-auto py-12 px-4 space-y-8 animate-in fade-in">
-        <div className="bg-card/70 backdrop-blur-xl border border-border/80 rounded-3xl p-8 sm:p-10 shadow-xl text-center space-y-6">
+      <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 space-y-10 animate-in fade-in">
+        {/* Main Banner Card */}
+        <div className="bg-card/75 backdrop-blur-xl border border-border/80 rounded-3xl p-6 sm:p-10 shadow-xl text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Sparkles className="h-8 w-8" />
+            <Presentation className="h-8 w-8 stroke-[2.2]" />
           </div>
 
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
               تخته تاکتیک مربیگری زنده
             </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-              طراحی سناریوهای تیمی با قلم، فلش و شیپ، چت و مکالمه صوتی زنده (WebRTC) و جابجایی هم‌زمان بازیکنان با ارسال لینک اشتراک.
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
+              رسم استراتژی‌های مسابقه، چیدمان ترکیب و انتقال زنده تاکتیک به بازیکنان و کادر فنی
             </p>
           </div>
 
-          <div className="pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Button
               type="button"
               variant="primary"
               size="lg"
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base shadow-xl shadow-primary/25 gap-2.5 hover:scale-[1.02] transition-transform"
+              className="px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base shadow-xl shadow-primary/25 gap-2.5 hover:scale-[1.02] transition-transform"
             >
               <Plus className="h-5 w-5 stroke-[2.5]" />
               ایجاد تخته تاکتیک جدید
@@ -293,11 +586,121 @@ export const TacticsBoard: React.FC = () => {
           </div>
         </div>
 
+        {/* Section: List of Created Tactics Boards */}
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-2">
+              <Presentation className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-lg font-black text-foreground">لیست تخته‌های تاکتیک من</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-bold">
+                {savedBoards.length} تخته
+              </span>
+            </div>
+
+            {savedBoards.length > 3 && (
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute right-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={boardSearchQuery}
+                  onChange={(e) => setBoardSearchQuery(e.target.value)}
+                  placeholder="جستجو در تخته‌ها..."
+                  className="w-full pr-8 pl-3 py-1.5 text-xs rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            )}
+          </div>
+
+          {isLoadingBoards ? (
+            <div className="text-center py-12 text-muted-foreground text-xs font-semibold">
+              در حال بارگذاری تخته‌ها...
+            </div>
+          ) : filteredBoards.length === 0 ? (
+            <div className="bg-card/40 border border-border/60 rounded-2xl p-8 text-center space-y-3">
+              <Presentation className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+              <p className="text-sm font-bold text-foreground">هنوز تخته تاکتیکی نساخته‌اید</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                با زدن دکمه «ایجاد تخته تاکتیک جدید» اولین تخته خود را طراحی کرده و لینک آن را برای اعضای تیم ارسال نمایید.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {filteredBoards.map((board) => (
+                <div
+                  key={board.id}
+                  onClick={() => navigate(`/tactics/${board.id}`)}
+                  className="group relative bg-card border border-border/80 hover:border-emerald-500/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-black text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+                        {board.title}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteSavedBoard(board.id, e)}
+                        className="p-1 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0"
+                        title="حذف تخته"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>{new Date(board.createdAt).toLocaleDateString('fa-IR')}</span>
+                      {board.creatorName && (
+                        <>
+                          <span>•</span>
+                          <span className="line-clamp-1">{board.creatorName}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-border/50 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => handleCopyBoardLink(board.id, e)}
+                      className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors"
+                      title="کپی لینک اشتراک"
+                    >
+                      {copiedId === board.id ? (
+                        <>
+                          <Check className="h-3 w-3 text-emerald-500" />
+                          <span className="text-emerald-600 dark:text-emerald-400">کپی شد</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="h-3 w-3" />
+                          <span>کپی لینک</span>
+                        </>
+                      )}
+                    </button>
+
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => navigate(`/tactics/${board.id}`)}
+                      className="h-7 px-3 text-xs gap-1 rounded-xl"
+                    >
+                      <span>ورود</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <CreateBoardModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           creatorName={currentUser?.fullName}
           creatorPhone={currentUser?.phoneNumber}
+          onBoardCreated={() => fetchBoardList()}
         />
       </div>
     );
@@ -306,13 +709,26 @@ export const TacticsBoard: React.FC = () => {
   // View 2: Active Tactics Room (with full WebSocket & WebRTC Pitch)
   return (
     <div
+      style={
+        isMobileLandscape
+          ? {
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              width: '100vh',
+              height: '100vw',
+              transform: 'translate(-50%, -50%) rotate(90deg)',
+              zIndex: 50,
+            }
+          : undefined
+      }
       className={
-        isZenMode
-          ? 'fixed inset-0 z-50 bg-background overflow-y-auto p-3 sm:p-6 flex flex-col justify-center animate-in fade-in'
-          : 'space-y-4 max-w-6xl mx-auto'
+        isMobileLandscape
+          ? 'fixed bg-background p-2 flex flex-col justify-between overflow-hidden shadow-2xl'
+          : 'w-full max-w-5xl mx-auto space-y-2.5 pb-20 sm:pb-8'
       }
     >
-      {/* Top Toolbar (Tools, Real-Time Stats, Voice, Chat, Fullscreen) */}
+      {/* Top Toolbar (Tools, Real-Time Stats, Voice, Chat, Mobile Landscape) */}
       <TacticsToolbar
         title={boardTitle}
         boardId={activeBoardId}
@@ -330,13 +746,17 @@ export const TacticsBoard: React.FC = () => {
         onToggleVoice={toggleVoice}
         onToggleMute={toggleMute}
         onResetBoard={handleLocalReset}
-        isZenMode={isZenMode}
-        onToggleZenMode={() => setIsZenMode(!isZenMode)}
+        isMobileLandscape={isMobileLandscape}
+        onToggleMobileLandscape={handleToggleMobileLandscape}
+        isCreator={isCreator}
+        onSaveBoard={() => saveCurrentBoard()}
+        isSaved={isSaved}
+        onBack={() => navigate('/tactics')}
       />
 
       {audioError && (
-        <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold text-center">
-          {audioError}
+        <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold text-center flex items-center justify-center gap-2">
+          <span>{audioError}</span>
         </div>
       )}
 
@@ -351,7 +771,9 @@ export const TacticsBoard: React.FC = () => {
           onPlayerMove={handleLocalPlayerMove}
           onBallMove={handleLocalBallMove}
           onAddDrawing={handleLocalAddDrawing}
+          onRemoveDrawing={handleLocalRemoveDrawing}
           onEditPlayer={(p) => setEditingPlayer(p)}
+          isRotatedLandscape={isMobileLandscape}
         />
       </div>
 
@@ -371,7 +793,7 @@ export const TacticsBoard: React.FC = () => {
         currentUserId={activeUser?.id || ''}
       />
 
-      {/* Real-time WebSocket Chat Drawer */}
+      {/* Real-time Chat Drawer */}
       <TacticsChatDrawer
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
@@ -384,6 +806,14 @@ export const TacticsBoard: React.FC = () => {
       <GuestPhoneModal
         isOpen={isGuestModalOpen}
         onSubmit={handleGuestSubmit}
+      />
+
+      {/* Microphone Permission Guide & Retry Modal */}
+      <MicPermissionModal
+        isOpen={!!audioError}
+        errorMessage={audioError}
+        onClose={clearAudioError}
+        onRetry={toggleVoice}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '../ui/ThemeToggle';
-import { Bell, User } from 'lucide-react';
+import { Bell, User, ChevronLeft } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface NavbarProps {
@@ -14,7 +14,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   activeRole = 'PLAYER',
   userName,
-  isProfileComplete = false,
   userAvatar,
 }) => {
   const roleLabel =
@@ -25,7 +24,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       : 'بخش بازیکن';
 
   const displayName = userName && userName.trim() ? userName : 'کاربر گرامی';
-  const displayStatus = isProfileComplete ? 'پروفایل تایید شده' : 'پروفایل تکمیل‌نشده';
 
   return (
     <header className="app-top-header sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 select-none">
@@ -49,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </Link>
 
-        {/* Left side: Role Badge, Theme Toggle, Notifications & Avatar */}
+        {/* Left side: Role Badge, Theme Toggle, Notifications & My Account */}
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden sm:flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
             {roleLabel}
@@ -62,19 +60,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
           </Button>
 
-          <div className="flex items-center gap-2 border-r border-border pr-2 sm:pr-3 mr-1">
-            <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-border overflow-hidden">
+          {/* My Account (حساب من) Link - Replacing static profile status */}
+          <Link
+            to="/settings"
+            className="flex items-center gap-2 sm:gap-2.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-muted/50 hover:bg-muted border border-border/70 hover:border-border transition-all group cursor-pointer"
+            title="ورود به حساب من و تنظیمات"
+          >
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/25 overflow-hidden group-hover:scale-105 transition-transform shrink-0">
               {userAvatar ? (
                 <img src={userAvatar} alt={displayName} className="h-full w-full object-cover" />
               ) : (
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
               )}
             </div>
-            <div className="hidden md:block text-right">
-              <p className="text-xs font-bold leading-none text-foreground">{displayName}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{displayStatus}</p>
+            <div className="text-right">
+              <span className="text-xs font-black text-foreground group-hover:text-primary transition-colors block leading-tight">
+                حساب من
+              </span>
+              <p className="text-[10px] text-muted-foreground font-semibold leading-none mt-0.5 truncate max-w-[90px] sm:max-w-[120px]">
+                {displayName}
+              </p>
             </div>
-          </div>
+            <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-transform group-hover:-translate-x-0.5 shrink-0 hidden sm:block" />
+          </Link>
         </div>
       </div>
     </header>

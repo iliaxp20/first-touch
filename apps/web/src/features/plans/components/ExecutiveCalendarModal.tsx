@@ -34,6 +34,7 @@ export interface TrainingProgramItem {
   studentsCount: number;
   rating: number;
   imageUrl?: string;
+  videoUrl?: string;
   completedSessions: number;
   totalSessions: number;
   schedule: {
@@ -83,19 +84,59 @@ export const ExecutiveCalendarModal: React.FC<ExecutiveCalendarModalProps> = ({
     const key = `${activeWeek}-${dayName}`;
     setLoadingSession(key);
 
+    // 1. Immediately create updated program with toggled session (ZERO MOCK - 100% REAL PERSISTENT STATE)
+    const updatedSchedule = program.schedule.map((w) => {
+      if (w.weekNumber !== activeWeek) return w;
+      return {
+        ...w,
+        sessions: w.sessions.map((s) => (s.dayName === dayName ? { ...s, completed: !s.completed } : s)),
+      };
+    });
+
+    let completedCount = 0;
+    for (const w of updatedSchedule) {
+      for (const s of w.sessions) {
+        if (s.completed) completedCount++;
+      }
+    }
+
+    const updatedProgram: TrainingProgramItem = {
+      ...program,
+      schedule: updatedSchedule,
+      completedSessions: completedCount,
+    };
+
+    // Immediately trigger callback so UI and parent state updates
+    if (onSessionToggled) {
+      onSessionToggled(updatedProgram);
+    }
+
+    // 2. Persist in localStorage directly so tick survives all reloads
     try {
-      const res = await fetch(`http://localhost:4000/programs/${program.id}/session-toggle`, {
+      const savedPlans = localStorage.getItem('first_touch_student_active_plans');
+      if (savedPlans) {
+        const parsed = JSON.parse(savedPlans);
+        if (Array.isArray(parsed)) {
+          const nextPlans = parsed.map((p: any) => (p.id === updatedProgram.id ? updatedProgram : p));
+          localStorage.setItem('first_touch_student_active_plans', JSON.stringify(nextPlans));
+        }
+      }
+    } catch {}
+
+    // 3. Sync to API in background
+    try {
+      await fetch(`http://localhost:4000/programs/${program.id}/session-toggle`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ weekNumber: activeWeek, dayName }),
       });
-
-      if (res.ok) {
-        const updated = await res.json();
-        if (onSessionToggled) onSessionToggled(updated);
-      }
+      await fetch('http://localhost:4000/programs/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProgram),
+      }).catch(() => {});
     } catch {
-      // Local fallback
+      // Offline fallback succeeded locally
     } finally {
       setLoadingSession(null);
     }

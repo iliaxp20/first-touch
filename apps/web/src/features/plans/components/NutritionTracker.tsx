@@ -19,6 +19,7 @@ import {
   Scale,
   Target,
   Sparkles,
+  Droplets,
 } from 'lucide-react';
 
 export interface FoodCalorieItem {
@@ -116,6 +117,26 @@ export const NutritionTracker: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const dateKey = useMemo(() => selectedDate.toISOString().split('T')[0], [selectedDate]);
   const isToday = useMemo(() => new Date().toDateString() === selectedDate.toDateString(), [selectedDate]);
+
+  // Water Hydration State (Persistent across days - Calculated in glasses: حداقل ۸ لیوان آب)
+  const [waterGlasses, setWaterGlasses] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('ft_player_water_glasses');
+      if (saved !== null && !isNaN(Number(saved))) return Number(saved);
+      const oldMl = localStorage.getItem('ft_player_water_ml');
+      if (oldMl !== null && !isNaN(Number(oldMl))) return Math.min(16, Math.round(Number(oldMl) / 250));
+      return 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ft_player_water_glasses', String(waterGlasses));
+      localStorage.setItem('ft_player_water_ml', String(waterGlasses * 250));
+    } catch {}
+  }, [waterGlasses]);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -619,6 +640,84 @@ export const NutritionTracker: React.FC = () => {
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
+      </div>
+
+      {/* 2. DAILY WATER TRACKER (ثبت مصرف آب روزانه - بدون حروف انگلیسی) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+              <Droplets className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                مصرف آب روزانه
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                هدف پیشنهادی فوتبال: حداقل ۸ لیوان آب در روز
+              </p>
+            </div>
+          </div>
+          <div className="text-left">
+            <span className="text-xs font-black text-sky-600 dark:text-sky-400">
+              {waterGlasses} از ۸ لیوان ({Math.min(100, Math.round((waterGlasses / 8) * 100))}٪)
+            </span>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all duration-300 rounded-full"
+            style={{ width: `${Math.min(100, Math.round((waterGlasses / 8) * 100))}%` }}
+          />
+        </div>
+
+        {/* 8 mini glass indicators */}
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span
+              key={i}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                i < waterGlasses ? 'bg-sky-500' : 'bg-slate-100 dark:bg-slate-800'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Quick log buttons - Completely Persian, NO English letters */}
+        <div className="flex items-center gap-2 flex-wrap pt-1">
+          <button
+            type="button"
+            onClick={() => setWaterGlasses((prev) => Math.min(20, prev + 1))}
+            className="py-1.5 px-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 text-xs font-bold transition-colors cursor-pointer"
+          >
+            +۱ لیوان آب
+          </button>
+          <button
+            type="button"
+            onClick={() => setWaterGlasses((prev) => Math.min(20, prev + 2))}
+            className="py-1.5 px-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 text-xs font-bold transition-colors cursor-pointer"
+          >
+            +۲ لیوان آب
+          </button>
+          <button
+            type="button"
+            onClick={() => setWaterGlasses((prev) => Math.max(0, prev - 1))}
+            className="py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+          >
+            -۱ لیوان
+          </button>
+          {waterGlasses > 0 && (
+            <button
+              type="button"
+              onClick={() => setWaterGlasses(0)}
+              className="py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-rose-500 text-xs font-bold transition-colors cursor-pointer mr-auto"
+            >
+              صفر کردن
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 2. TOP STATS BAR (ACTIVE WHEN PLAN OR TARGET IS SET) */}

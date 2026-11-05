@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { X, Copy, Check, Share2, Sparkles, ArrowLeft } from 'lucide-react';
+import { X, Copy, Check, Share2, Presentation, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CreateBoardModalProps {
@@ -9,6 +9,7 @@ interface CreateBoardModalProps {
   onClose: () => void;
   creatorName?: string;
   creatorPhone?: string;
+  onBoardCreated?: (board: any) => void;
 }
 
 export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
@@ -16,6 +17,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
   onClose,
   creatorName,
   creatorPhone,
+  onBoardCreated,
 }) => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
@@ -52,6 +54,26 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
         throw new Error(data.message || 'خطا در ایجاد تخته تاکتیک');
       }
 
+      // Persist to local storage list
+      try {
+        const savedListStr = localStorage.getItem('ft_saved_tactics_boards');
+        const currentList = savedListStr ? JSON.parse(savedListStr) : [];
+        const updatedList = [
+          {
+            id: data.board.id,
+            title: data.board.title || title.trim(),
+            createdAt: data.board.createdAt || new Date().toISOString(),
+            creatorName: data.board.creatorName || creatorName || 'مربی',
+          },
+          ...currentList.filter((b: any) => b.id !== data.board.id),
+        ];
+        localStorage.setItem('ft_saved_tactics_boards', JSON.stringify(updatedList));
+        localStorage.setItem(`ft_creator_${data.board.id}`, 'true');
+      } catch (e) {
+        console.warn('Could not save board to localStorage', e);
+      }
+
+      onBoardCreated?.(data.board);
       setCreatedBoardId(data.board.id);
     } catch (err: any) {
       setError(err.message || 'خطا در ارتباط با سرور.');
@@ -91,11 +113,11 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
         {!createdBoardId ? (
           <div>
             <div className="flex items-center gap-2 mb-3 text-emerald-600 dark:text-emerald-400">
-              <Sparkles className="h-6 w-6" />
+              <Presentation className="h-6 w-6" />
               <h2 className="text-xl font-black text-foreground">ایجاد تخته تاکتیک جدید</h2>
             </div>
             <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
-              تخته تاکتیک اختصاصی با امکان چت آنلاین، وویس زنده و حرکت هم‌زمان بازیکنان بین مربی و شاگردان.
+              تخته اختصاصی با امکان چیدمان بازیکنان، رسم استراتژی، مکالمه صوتی تیمی و هماهنگی آنلاین با بازیکنان.
             </p>
 
             <form onSubmit={handleCreate} className="space-y-4">
@@ -119,22 +141,28 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                 <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                   انصراف
                 </Button>
-                <Button type="submit" variant="primary" size="sm" disabled={isLoading}>
-                  {isLoading ? 'در حال ایجاد...' : 'ایجاد و دریافت لینک'}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={isLoading || !title.trim()}
+                  className="px-5 font-bold"
+                >
+                  {isLoading ? 'در حال ساخت...' : 'ایجاد تخته'}
                 </Button>
               </div>
             </form>
           </div>
         ) : (
-          <div className="text-center py-2 space-y-4">
+          <div className="text-center space-y-4 py-2">
             <div className="mx-auto w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Check className="h-6 w-6 stroke-[3]" />
+              <Check className="h-6 w-6 stroke-[2.5]" />
             </div>
 
             <div>
-              <h3 className="text-lg font-black text-foreground">تخته تاکتیک آماده است!</h3>
+              <h3 className="text-lg font-black text-foreground">تخته تاکتیک با موفقیت ایجاد شد!</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                لینک زیر را کپی کنید و برای بازیکنان یا کادر فنی بفرستید تا بدون دردسر به تخته ملحق شوند.
+                لینک زیر را برای بازیکنان یا کادر فنی ارسال نمایید تا هم‌زمان روی تخته حضور پیدا کنند.
               </p>
             </div>
 
@@ -143,41 +171,41 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                 type="text"
                 readOnly
                 value={shareUrl}
+                className="flex-1 bg-transparent text-xs text-muted-foreground px-2 focus:outline-none select-all text-left font-mono"
                 dir="ltr"
-                className="w-full bg-transparent text-xs font-mono text-foreground px-2 outline-none select-all"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="shrink-0 gap-1.5 text-xs"
+                className="gap-1 text-xs shrink-0"
               >
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? 'کپی شد' : 'کپی'}
+                <span>{copied ? 'کپی شد' : 'کپی'}</span>
               </Button>
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="flex gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="flex-1 gap-1.5"
+                className="flex-1 gap-1 text-xs"
               >
-                <Share2 className="h-4 w-4" />
-                اشتراک‌گذاری
+                <Share2 className="h-3.5 w-3.5" />
+                <span>اشتراک با تیم</span>
               </Button>
               <Button
                 type="button"
                 variant="primary"
                 size="sm"
                 onClick={handleEnterRoom}
-                className="flex-1 gap-1.5"
+                className="flex-1 gap-1 text-xs font-bold"
               >
-                ورود به تخته
-                <ArrowLeft className="h-4 w-4" />
+                <span>ورود به تخته</span>
+                <ArrowLeft className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
