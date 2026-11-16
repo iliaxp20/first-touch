@@ -32,8 +32,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const location = useLocation();
 
   const isPracticePage = location.pathname === '/practice' || location.pathname.startsWith('/plans');
+  const isNutritionPage = location.pathname === '/nutrition' || location.pathname.startsWith('/diet') || location.pathname.startsWith('/meals');
   const isTacticsActiveRoom = location.pathname.startsWith('/tactics/');
-  const shouldHideNavbar = hideNavbar ?? (isTacticsActiveRoom || isPracticePage);
+  const shouldHideNavbar = hideNavbar ?? (isTacticsActiveRoom || isPracticePage || isNutritionPage);
   const shouldHideBottomNav = hideBottomNav ?? isTacticsActiveRoom;
 
   const effectiveRole = activeRole ?? auth.currentUser?.role ?? 'PLAYER';
@@ -43,8 +44,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#030d07] text-foreground transition-colors duration-200 relative overflow-x-hidden">
-      {/* Stadium Floodlight Green Luminous Atmosphere (روی صفحه تمرینات غیرفعال تا روی اسلایدر رنگ سبز نیفتد) */}
-      {!isPracticePage && (
+      {/* Stadium Floodlight Green Luminous Atmosphere (روی صفحات تمرین و تغذیه غیرفعال تا رنگ تداخل نداشته باشد) */}
+      {!isPracticePage && !isNutritionPage && (
         <>
           <div 
             className="fixed -top-28 left-1/2 -translate-x-1/2 w-[650px] sm:w-[950px] h-[500px] sm:h-[620px] rounded-full pointer-events-none z-0 opacity-20 dark:opacity-100 transition-opacity"

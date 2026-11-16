@@ -262,13 +262,25 @@ export const PlanList: React.FC = () => {
 
       {/* =========================================================================
           SUGGESTED DRILLS SECTION (تمرینات پیشنهادی دقیقاً مطابق تصویر کاربر)
+          - همراه با هاله سبز نئونی استادیومی در سمت چپ بالای تمرینات
           ========================================================================= */}
-      <div className="w-full mt-6 mb-3 flex items-center justify-between" dir="rtl">
-        <div className="flex items-center gap-1.5">
-          <h3 className="text-sm sm:text-base font-black text-slate-100 tracking-tight">
-            تمرینات پیشنهادی
-          </h3>
-          <span className="text-amber-400 text-sm animate-pulse">✨</span>
+      <div className="relative w-full mt-6 mb-3" dir="rtl">
+        {/* هاله سبز نئونی استادیومی بالای تمرینات پیشنهادی سمت چپ */}
+        <div
+          className="absolute -top-8 -left-8 w-64 sm:w-80 h-36 rounded-full pointer-events-none opacity-85 z-0"
+          style={{
+            background: 'radial-gradient(ellipse at 30% 45%, rgba(16, 185, 129, 0.50) 0%, rgba(5, 150, 105, 0.26) 45%, rgba(4, 120, 87, 0.10) 65%, transparent 80%)',
+            filter: 'blur(30px)',
+          }}
+        />
+
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm sm:text-base font-black text-slate-100 tracking-tight">
+              تمرینات پیشنهادی
+            </h3>
+            <span className="text-amber-400 text-sm animate-pulse">✨</span>
+          </div>
         </div>
       </div>
 
@@ -340,13 +352,22 @@ export const PlanList: React.FC = () => {
       {/* =========================================================================
           PRO LEVEL TROPHY BANNER (به سطح بالاتری برس)
           ========================================================================= */}
-      <div className="w-full mt-2 mb-8">
+      <div className="relative w-full mt-2 mb-8">
+        {/* هاله سبز زمردی ملایم در زمینه بنر جام */}
+        <div
+          className="absolute -bottom-6 -right-6 w-64 h-28 rounded-full pointer-events-none opacity-65 z-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.42) 0%, rgba(5, 150, 105, 0.20) 48%, transparent 75%)',
+            filter: 'blur(30px)',
+          }}
+        />
+
         <motion.div
           whileHover={{ scale: 1.015, y: -2 }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 450, damping: 25 }}
           onClick={triggerHaptic}
-          className="relative w-full cursor-pointer rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.5)]"
+          className="relative z-10 w-full cursor-pointer rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.5)]"
         >
           <img
             src="/pro-trophy-banner.png"
