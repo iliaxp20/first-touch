@@ -171,6 +171,51 @@ export class DrillsService implements OnModuleInit {
     return newDrill;
   }
 
+  async update(id: string, dto: Partial<CreateDrillDto>): Promise<AgilityDrillItem | null> {
+    const index = this.memoryDrills.findIndex((d) => d.id === id);
+    if (index === -1) return null;
+
+    const existing = this.memoryDrills[index];
+    const updated: AgilityDrillItem = {
+      ...existing,
+      persianName: dto.persianName ?? existing.persianName,
+      englishName: dto.englishName ?? existing.englishName,
+      categoryTitle: dto.categoryTitle ?? existing.categoryTitle,
+      categoryIndex: dto.categoryIndex ?? existing.categoryIndex,
+      difficulty: dto.difficulty ?? existing.difficulty,
+      description: dto.description ?? existing.description,
+      imageUrl: dto.imageUrl ?? existing.imageUrl,
+      videoUrl: dto.videoUrl ?? existing.videoUrl,
+      equipment: dto.equipment ?? existing.equipment,
+      targetSkill: dto.targetSkill ?? existing.targetSkill,
+    };
+
+    this.memoryDrills[index] = updated;
+    this.saveToDisk();
+
+    try {
+      if ((this.prisma as any).agilityDrill) {
+        await (this.prisma as any).agilityDrill.update({
+          where: { id },
+          data: {
+            persianName: updated.persianName,
+            englishName: updated.englishName,
+            categoryTitle: updated.categoryTitle,
+            categoryIndex: updated.categoryIndex,
+            difficulty: updated.difficulty,
+            description: updated.description,
+            imageUrl: updated.imageUrl,
+            videoUrl: updated.videoUrl,
+            equipment: updated.equipment,
+            targetSkill: updated.targetSkill,
+          },
+        });
+      }
+    } catch {}
+
+    return updated;
+  }
+
   async delete(id: string): Promise<boolean> {
     const initialLen = this.memoryDrills.length;
     this.memoryDrills = this.memoryDrills.filter((d) => d.id !== id);

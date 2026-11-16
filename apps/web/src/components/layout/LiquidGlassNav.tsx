@@ -8,9 +8,11 @@ interface LiquidGlassNavProps {
   onSelect?: (item: NavItemKey) => void;
 }
 
-// 1. Solid Pentagonal House Icon with Door
+// 1. Solid Pentagonal House Icon with Door (Explicit Width & Height to prevent mobile SVG jumping)
 const SolidHomeIcon = ({ className }: { className?: string }) => (
   <svg
+    width="22"
+    height="22"
     viewBox="0 0 24 24"
     fill="currentColor"
     className={className}
@@ -20,9 +22,11 @@ const SolidHomeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// 2. Football Tactics Pitch Icon (زمین فوتبال شیک، مینی‌مال و استاندارد مطابق سبک سایر آیکون‌ها)
+// 2. Football Tactics Pitch Icon (Explicit Width & Height to prevent mobile SVG jumping)
 const FootballTacticsIcon = ({ className }: { className?: string }) => (
   <svg
+    width="22"
+    height="22"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -136,11 +140,11 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
 
   return (
     <nav
-      className="liquid-glass-nav fixed bottom-3 sm:bottom-6 left-0 right-0 z-50 flex justify-center items-center pointer-events-none px-3 select-none"
+      className="liquid-glass-nav fixed bottom-3 sm:bottom-6 left-0 right-0 z-50 flex justify-center items-center pointer-events-none px-2 select-none"
       aria-label="ناوبری اصلی شیشه‌ای فرست تاچ"
     >
       <div
-        className="pointer-events-auto relative flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:p-2 rounded-[36px] bg-white/80 dark:bg-[#030d07]/85 backdrop-blur-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.25),0_0_30px_rgba(34,197,94,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_30px_rgba(34,197,94,0.12)] transition-colors duration-300"
+        className="pointer-events-auto relative flex items-center justify-center gap-1 sm:gap-2.5 p-1 sm:p-2 rounded-[36px] bg-white/80 dark:bg-[#030d07]/85 backdrop-blur-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.25),0_0_30px_rgba(34,197,94,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_30px_rgba(34,197,94,0.12)] transition-colors duration-300 max-w-[calc(100vw-12px)] overflow-hidden"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -152,10 +156,10 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
               key={tab.key}
               type="button"
               onClick={() => handleTabClick(tab)}
-              className={`relative flex items-center justify-center outline-none focus:outline-none cursor-pointer transition-all duration-300 ease-out h-12 sm:h-14 ${
+              className={`relative flex items-center justify-center shrink-0 outline-none focus:outline-none cursor-pointer transition-all duration-300 ease-out h-11 sm:h-14 ${
                 isActive
-                  ? 'px-4 sm:px-5 rounded-full bg-gradient-to-r from-[#A3E635] via-[#4ADE80] to-[#22D3EE] text-slate-950 shadow-[0_4px_25px_rgba(74,222,128,0.5)] font-black'
-                  : 'w-12 sm:w-14 rounded-full bg-slate-100/80 dark:bg-white/[0.08] hover:bg-slate-200/90 dark:hover:bg-white/[0.14] text-slate-700 dark:text-white/90 border border-slate-200/60 dark:border-white/15 shadow-[0_4px_15px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_25px_rgba(0,0,0,0.4)]'
+                  ? 'px-3.5 sm:px-5 rounded-full bg-gradient-to-r from-[#A3E635] via-[#4ADE80] to-[#22D3EE] text-slate-950 shadow-[0_4px_25px_rgba(74,222,128,0.5)] font-black'
+                  : 'w-11 sm:w-14 rounded-full bg-slate-100/80 dark:bg-white/[0.08] hover:bg-slate-200/90 dark:hover:bg-white/[0.14] text-slate-700 dark:text-white/90 border border-slate-200/60 dark:border-white/15 shadow-[0_4px_15px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_25px_rgba(0,0,0,0.4)]'
               }`}
               title={tab.persianLabel}
             >
@@ -173,11 +177,11 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
                 <div className="absolute -bottom-1 inset-x-2 h-3.5 rounded-b-full bg-gradient-to-t from-rose-500/35 via-amber-500/20 to-transparent blur-[2px] pointer-events-none" />
               )}
 
-              {/* 3. Icon & Stable Label (با تفکیک آیکون‌های توپر و خطی تا هرگز توپر مشکی نشوند) */}
+              {/* 3. Icon & Stable Label (اندازه صریح و ثابت 22px جهت جلوگیری از پرش و ناپدید شدن در موبایل) */}
               <div className="relative z-10 flex items-center gap-1.5 sm:gap-2 shrink-0">
-                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                <div className="w-[22px] h-[22px] sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
                   <Icon
-                    className={`h-5.5 w-5.5 sm:h-6 sm:w-6 transition-colors shrink-0 ${
+                    className={`w-[22px] h-[22px] sm:w-6 sm:h-6 transition-colors shrink-0 ${
                       isActive
                         ? isSolidIcon
                           ? 'text-slate-950 fill-current'

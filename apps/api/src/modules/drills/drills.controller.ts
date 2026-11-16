@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Query, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { DrillsService } from './drills.service';
 import { CreateDrillDto } from './dto/create-drill.dto';
@@ -36,6 +36,13 @@ export class DrillsController {
   @ApiResponse({ status: 201, description: 'تمرین با موفقیت ایجاد شد' })
   async createDrill(@Body() dto: CreateDrillDto) {
     return this.drillsService.create(dto);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'ویرایش تمرین چابکی' })
+  @ApiResponse({ status: 200, description: 'تمرین با موفقیت به‌روزرسانی شد' })
+  async updateDrill(@Param('id') id: string, @Body() dto: Partial<CreateDrillDto>) {
+    return this.drillsService.update(id, dto);
   }
 
   @Delete(':id')

@@ -268,6 +268,34 @@ export const addTrainingDrill = (drill: Omit<FreeDrill, 'id'>): FreeDrill => {
   return newDrill;
 };
 
+export const updateTrainingDrill = (updatedDrill: FreeDrill): void => {
+  const current = getTrainingDrills();
+  const next = current.map((d) => (d.id === updatedDrill.id ? updatedDrill : d));
+  saveTrainingDrills(next);
+
+  // Sync update with API
+  try {
+    fetch(`${API_BASE_URL}/drills/${updatedDrill.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        categoryTitle: updatedDrill.categoryTitle,
+        persianName: updatedDrill.title,
+        englishName: updatedDrill.englishTitle || 'Custom Drill',
+        imageUrl: updatedDrill.thumbnailUrl,
+        videoUrl: updatedDrill.videoUrl,
+        description: updatedDrill.description,
+        difficulty: updatedDrill.difficulty === 'مبتدی' ? 'BEGINNER' : updatedDrill.difficulty === 'پیشرفته' ? 'ADVANCED' : 'INTERMEDIATE',
+        equipment: updatedDrill.equipment,
+        targetSkill: updatedDrill.targetSkill,
+        categoryKey: updatedDrill.categoryKey,
+        duration: updatedDrill.duration,
+        setsReps: updatedDrill.setsReps,
+      }),
+    }).catch(() => {});
+  } catch {}
+};
+
 export const deleteTrainingDrill = (id: string): void => {
   const current = getTrainingDrills();
   saveTrainingDrills(current.filter((d) => d.id !== id));

@@ -15,6 +15,18 @@ export const getWsUrl = (): string => {
   return `${protocol}//${window.location.host}/ws/tactics`;
 };
 
+export const resolveMediaUrl = (url?: string): string => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  const clean = url.startsWith('/') ? url : `/${url}`;
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return `http://localhost:4000${clean}`;
+  }
+  return clean;
+};
+
 export async function uploadFile(file: File): Promise<{ success: boolean; url: string; filename: string }> {
   const formData = new FormData();
   formData.append('file', file);
