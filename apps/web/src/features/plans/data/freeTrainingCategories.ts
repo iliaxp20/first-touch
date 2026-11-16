@@ -309,7 +309,7 @@ export const syncDrillsWithServer = async (): Promise<FreeDrill[]> => {
     const res = await fetch(`${API_BASE_URL}/drills`);
     if (res.ok) {
       const serverDrills: any[] = await res.json();
-      if (Array.isArray(serverDrills) && serverDrills.length > 0) {
+      if (Array.isArray(serverDrills)) {
         const mapped: FreeDrill[] = serverDrills.map((d: any) => ({
           id: d.id,
           categoryKey: d.categoryKey || (d.categoryIndex === 1 ? 'agility' : d.categoryIndex === 2 ? 'strength' : 'speed'),
@@ -330,11 +330,8 @@ export const syncDrillsWithServer = async (): Promise<FreeDrill[]> => {
           commonMistakes: d.commonMistakes || '',
         }));
 
-        const local = getTrainingDrills();
-        const serverIds = new Set(mapped.map((m) => m.id));
-        const merged = [...mapped, ...local.filter((l) => !serverIds.has(l.id))];
-        saveTrainingDrills(merged);
-        return merged;
+        saveTrainingDrills(mapped);
+        return mapped;
       }
     }
   } catch (err) {

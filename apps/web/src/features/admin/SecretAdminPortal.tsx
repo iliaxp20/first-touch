@@ -45,6 +45,7 @@ import {
   addTrainingDrill,
   updateTrainingDrill,
   deleteTrainingDrill,
+  syncDrillsWithServer,
   FreeDrill,
   TrainingCategoryMeta,
 } from '../plans/data/freeTrainingCategories';
@@ -162,9 +163,14 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   // Load Data
   // ---------------------------------------------------------------------------
   const loadAllData = async () => {
-    // Drills
-    const localDrills = getTrainingDrills();
-    setDrills(localDrills);
+    // Drills - Direct sync from server
+    try {
+      const serverDrills = await syncDrillsWithServer();
+      setDrills(serverDrills);
+    } catch {
+      const localDrills = getTrainingDrills();
+      setDrills(localDrills);
+    }
     const cats = getTrainingCategories();
     setCategories(cats);
 
@@ -186,40 +192,6 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
       if (res && res.ok) {
         const u = await res.json();
         if (Array.isArray(u)) setUsersList(u);
-      }
-    } catch {}
-
-    // Also sync drills from backend API if available
-    try {
-      const apiDrillsRes = await fetch(`${API_BASE_URL}/drills`).catch(() => null);
-      if (apiDrillsRes && apiDrillsRes.ok) {
-        const apiDrills = await apiDrillsRes.json();
-        if (Array.isArray(apiDrills) && apiDrills.length > 0) {
-          const mapped: FreeDrill[] = apiDrills.map((d: any) => ({
-            id: d.id,
-            categoryKey: d.categoryKey || 'agility',
-            categoryTitle: d.categoryTitle || 'تمرین چابکی',
-            subCategory: d.categoryTitle || '',
-            title: d.persianName || d.title,
-            englishTitle: d.englishName || '',
-            difficulty: d.difficulty === 'ADVANCED' ? 'پیشرفته' : d.difficulty === 'BEGINNER' ? 'مبتدی' : 'متوسط',
-            duration: d.duration || '۱۵ دقیقه',
-            setsReps: d.setsReps || '۴ ست',
-            equipment: d.equipment || 'توپ',
-            targetSkill: d.targetSkill || '',
-            videoUrl: d.videoUrl || '',
-            thumbnailUrl: d.imageUrl || '',
-            description: d.description || '',
-            steps: [],
-            coachingTips: '',
-            commonMistakes: '',
-          }));
-          setDrills((prev) => {
-            const ids = new Set(prev.map((x) => x.id));
-            const fresh = mapped.filter((m) => !ids.has(m.id));
-            return [...prev, ...fresh];
-          });
-        }
       }
     } catch {}
   };

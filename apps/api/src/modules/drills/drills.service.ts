@@ -8,7 +8,7 @@ import * as path from 'path';
 @Injectable()
 export class DrillsService implements OnModuleInit {
   private readonly logger = new Logger(DrillsService.name);
-  private memoryDrills: AgilityDrillItem[] = [...INITIAL_AGILITY_DRILLS];
+  private memoryDrills: AgilityDrillItem[] = [];
   private readonly storageFilePath = path.resolve(process.cwd(), 'data', 'drills.json');
 
   constructor(private readonly prisma: PrismaService) {
@@ -55,29 +55,10 @@ export class DrillsService implements OnModuleInit {
     try {
       if ((this.prisma as any).agilityDrill) {
         const count = await (this.prisma as any).agilityDrill.count();
-        if (count === 0) {
-          this.logger.log('Seeding agility drills into PostgreSQL...');
-          for (const drill of INITIAL_AGILITY_DRILLS) {
-            await (this.prisma as any).agilityDrill.create({
-              data: {
-                id: drill.id,
-                categoryIndex: drill.categoryIndex,
-                categoryTitle: drill.categoryTitle,
-                englishName: drill.englishName,
-                persianName: drill.persianName,
-                imageUrl: drill.imageUrl,
-                equipment: drill.equipment,
-                targetSkill: drill.targetSkill,
-                difficulty: drill.difficulty,
-                description: drill.description,
-              },
-            });
-          }
-          this.logger.log(`Successfully seeded ${INITIAL_AGILITY_DRILLS.length} agility drills to PostgreSQL.`);
-        }
+        this.logger.log(`Current agility drills in PostgreSQL: ${count}`);
       }
     } catch {
-      this.logger.warn('PostgreSQL not accessible for seeding drills. Operating with in-memory drill library.');
+      this.logger.warn('PostgreSQL check notice for drills.');
     }
   }
 
