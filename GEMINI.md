@@ -106,3 +106,14 @@ Coaches and trainees actively use mobile phones and tablets on the football pitc
 2. **Early Returns**: Keep nesting under 2 levels; return early on validation failures or empty states.
 3. **Strict Typing**: Never use `any`. Use generics, union types, or `unknown` with type guards.
 4. **No Side Effects in Render**: React components must be pure during rendering; side effects belong in `useEffect` or event handlers.
+
+---
+
+## 6. Minimalist & Compact UI Standards (قوانین اپ خلوت و جمع‌وجور)
+
+1. **Zero Fluff & Concise Text**: Avoid long, wordy paragraphs. All titles, subtitles, placeholders, and buttons must be short (2 to 5 words maximum), direct, and punchy.
+2. **Positive & Action-Oriented Empty States**: Never use negative/frustrating sentences (e.g. «هنوز برنامه تمرینی دریافت نکرده‌اید»). Use clean titles like «برنامه تمرینی اختصاصی» with a clear CTA button.
+3. **No Redundant / Duplicated Cards**: Never show two adjacent empty-state cards for the same section. Keep it to one single, compact card.
+4. **Compact Spacing on Mobile**: Use tight paddings (`p-3.5` or `p-4`) on mobile, avoid excessive blank vertical margins, and avoid nested box-inside-a-box patterns.
+5. **High-Contrast Touch Controls**: Close buttons (X), week-day selectors, and action buttons must have clear borders, distinct backgrounds, and easy-to-tap targets.
+

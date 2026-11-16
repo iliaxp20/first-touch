@@ -4,13 +4,27 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // 1. HTTP Security Headers with Helmet
+  // 1. Static Uploads Folder Serving
+  const uploadsPath = path.resolve(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsPath));
+
+  // 2. Body Parser Size Limits (100MB for video/media transfers)
+  app.use(express.json({ limit: '100mb' }));
+  app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+  // 3. HTTP Security Headers with Helmet
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -19,8 +33,21 @@ async function bootstrap() {
           scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'http://localhost:3000', 'http://localhost:4000', 'http://localhost:5173', 'ws://localhost:4001', 'ws:', 'wss:'],
+          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          mediaSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          connectSrc: [
+            "'self'",
+            'http://localhost:3000',
+            'http://localhost:4000',
+            'http://localhost:5173',
+            'ws://localhost:4001',
+            'https://firsttouchapp.ir',
+            'http://firsttouchapp.ir',
+            'http://87.107.164.61',
+            'https://87.107.164.61',
+            'ws:',
+            'wss:',
+          ],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -28,10 +55,10 @@ async function bootstrap() {
     }),
   );
 
-  // 2. Cookie Parser
+  // 4. Cookie Parser
   app.use(cookieParser());
 
-  // 3. Strict CORS configuration
+  // 5. Strict CORS configuration
   const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
   const defaultAllowed = ['http://localhost:3000', 'http://localhost:5173'];
   const allowedOrigins = allowedOriginsEnv
@@ -52,10 +79,10 @@ async function bootstrap() {
     maxAge: 3600,
   });
 
-  // 4. Global Exception Filter (Error Sanitization)
+  // 6. Global Exception Filter (Error Sanitization)
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // 5. Global Validation Pipe with DTO transformation & Non-whitelisted rejection
+  // 7. Global Validation Pipe with DTO transformation & Non-whitelisted rejection
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -65,7 +92,7 @@ async function bootstrap() {
     }),
   );
 
-  // 6. Swagger API Documentation (Disabled or scoped)
+  // 8. Swagger API Documentation (Disabled or scoped)
   if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true') {
     const config = new DocumentBuilder()
       .setTitle('First Touch (فرست تاچ) API')

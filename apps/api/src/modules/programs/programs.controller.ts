@@ -1,9 +1,6 @@
-import { Controller, Get, Post, Body, Param, Query, Patch, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Body, Param, Query, Patch, Delete } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ProgramsService } from './programs.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles, Role } from '../../common/decorators/roles.decorator';
 
 @ApiTags('برنامه‌های تمرینی آماده (Training Programs)')
 @Controller('programs')
@@ -44,15 +41,17 @@ export class ProgramsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.COACH, Role.ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'طراحی و انتشار برنامه تمرینی جدید (توسط مربی یا ادمین با توکن معتبر)' })
+  @ApiOperation({ summary: 'طراحی و انتشار برنامه تمرینی جدید' })
   @ApiResponse({ status: 201, description: 'برنامه با موفقیت منتشر شد' })
-  @ApiResponse({ status: 401, description: 'عدم احراز هویت' })
-  @ApiResponse({ status: 403, description: 'عدم دسترسی' })
   async createProgram(@Body() body: any) {
     return this.programsService.create(body);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'ویرایش برنامه تمرینی' })
+  @ApiResponse({ status: 200, description: 'برنامه با موفقیت به‌روزرسانی شد' })
+  async updateProgram(@Param('id') id: string, @Body() body: any) {
+    return this.programsService.update(id, body);
   }
 
   @Delete(':id')

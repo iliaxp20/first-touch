@@ -111,14 +111,16 @@ export class NutritionController {
   }
 
   @Post('foods')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.COACH, Role.ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'افزودن غذای جدید به بانک (تنها توسط مربی یا ادمین)' })
+  @ApiOperation({ summary: 'افزودن غذای جدید به بانک غذاها' })
   @ApiResponse({ status: 201, description: 'غذا افزوده شد' })
-  @ApiResponse({ status: 401, description: 'عدم احراز هویت' })
-  @ApiResponse({ status: 403, description: 'عدم دسترسی' })
   async addFood(@Body() body: Omit<FoodCalorieItem, 'id'>) {
     return this.nutritionService.addFoodItem(body);
+  }
+
+  @Delete('foods/:id')
+  @ApiOperation({ summary: 'حذف غذای سفارشی از بانک' })
+  @ApiResponse({ status: 200, description: 'غذا با موفقیت حذف شد' })
+  async deleteFood(@Param('id') id: string) {
+    return this.nutritionService.deleteFoodItem(id);
   }
 }

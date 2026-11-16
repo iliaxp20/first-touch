@@ -15,6 +15,8 @@ export interface AuthUser {
   bicep?: string;
   calf?: string;
   chest?: string;
+  thigh?: string;
+  bodyPhotoUrl?: string;
   experienceYears?: string;
   preferredFoot?: string;
   position?: string;
@@ -22,14 +24,7 @@ export interface AuthUser {
 
 interface AuthContextType {
   currentUser: AuthUser | null;
-  login: (user: {
-    token?: string;
-    phoneNumber: string;
-    role: UserRole;
-    isProfileComplete?: boolean;
-    fullName?: string;
-    avatarUrl?: string;
-  }) => void;
+  login: (user: Partial<AuthUser> & { phoneNumber: string; role: UserRole }) => void;
   logout: () => void;
   updateUser: (updates: Partial<AuthUser>) => void;
   isProfileModalOpen: boolean;
@@ -94,22 +89,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = (user: {
-    token?: string;
-    phoneNumber: string;
-    role: UserRole;
-    isProfileComplete?: boolean;
-    fullName?: string;
-    avatarUrl?: string;
-  }) => {
-    setCurrentUser({
-      token: user.token,
+  const login = (user: Partial<AuthUser> & { phoneNumber: string; role: UserRole }) => {
+    setCurrentUser((prev) => ({
+      ...prev,
+      ...user,
+      token: user.token ?? prev?.token,
       phoneNumber: user.phoneNumber,
       role: user.role,
-      isProfileComplete: user.isProfileComplete || false,
-      fullName: user.fullName || 'کاربر گرامی',
-      avatarUrl: user.avatarUrl,
-    });
+      isProfileComplete: user.isProfileComplete ?? prev?.isProfileComplete ?? false,
+      fullName: user.fullName || prev?.fullName || 'کاربر گرامی',
+      avatarUrl: user.avatarUrl ?? prev?.avatarUrl,
+      nationalId: user.nationalId ?? prev?.nationalId,
+      age: user.age ?? prev?.age,
+      height: user.height ?? prev?.height,
+      weight: user.weight ?? prev?.weight,
+      preferredFoot: user.preferredFoot ?? prev?.preferredFoot,
+      position: user.position ?? prev?.position,
+      experienceYears: user.experienceYears ?? prev?.experienceYears,
+      bicep: user.bicep ?? prev?.bicep,
+      calf: user.calf ?? prev?.calf,
+      chest: user.chest ?? prev?.chest,
+      thigh: user.thigh ?? prev?.thigh,
+      bodyPhotoUrl: user.bodyPhotoUrl ?? prev?.bodyPhotoUrl,
+    }));
   };
 
   const logout = () => {

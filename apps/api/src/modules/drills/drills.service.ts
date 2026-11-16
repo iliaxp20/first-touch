@@ -2,16 +2,53 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { INITIAL_AGILITY_DRILLS, AgilityDrillItem } from './drills.data';
 import { CreateDrillDto } from './dto/create-drill.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class DrillsService implements OnModuleInit {
   private readonly logger = new Logger(DrillsService.name);
   private memoryDrills: AgilityDrillItem[] = [...INITIAL_AGILITY_DRILLS];
+  private readonly storageFilePath = path.resolve(process.cwd(), 'data', 'drills.json');
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {
+    this.loadFromDisk();
+  }
 
   async onModuleInit() {
     await this.seedDrillsIfEmpty();
+  }
+
+  private loadFromDisk() {
+    try {
+      if (fs.existsSync(this.storageFilePath)) {
+        const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
+        const customDrills: AgilityDrillItem[] = JSON.parse(raw);
+        if (Array.isArray(customDrills) && customDrills.length > 0) {
+          // Merge custom drills at top of memoryDrills, avoiding duplicates
+          const customIds = new Set(customDrills.map((d) => d.id));
+          const remaining = this.memoryDrills.filter((d) => !customIds.has(d.id));
+          this.memoryDrills = [...customDrills, ...remaining];
+          this.logger.log(`Loaded ${customDrills.length} custom drills from disk.`);
+        }
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed loading drills from disk: ${err.message}`);
+    }
+  }
+
+  private saveToDisk() {
+    try {
+      const dir = path.dirname(this.storageFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      // Save all custom drills (those created via admin or having non-standard ids)
+      const customDrills = this.memoryDrills.filter((d) => d.id.startsWith('drill-adm-') || d.id.includes('-17'));
+      fs.writeFileSync(this.storageFilePath, JSON.stringify(customDrills, null, 2), 'utf-8');
+    } catch (err: any) {
+      this.logger.error(`Failed saving drills to disk: ${err.message}`);
+    }
   }
 
   private async seedDrillsIfEmpty() {
@@ -101,16 +138,17 @@ export class DrillsService implements OnModuleInit {
 
   async create(dto: CreateDrillDto): Promise<AgilityDrillItem> {
     const newDrill: AgilityDrillItem = {
-      id: `drill-${dto.categoryIndex}-${Date.now()}`,
-      categoryIndex: dto.categoryIndex,
-      categoryTitle: dto.categoryTitle,
-      englishName: dto.englishName,
+      id: `drill-adm-${Date.now()}`,
+      categoryIndex: dto.categoryIndex || 1,
+      categoryTitle: dto.categoryTitle || 'تمرین تخصصی',
+      englishName: dto.englishName || 'Custom Drill',
       persianName: dto.persianName,
-      imageUrl: dto.imageUrl,
-      description: dto.description || 'تمرین تخصصی ثبت شده توسط مربی/ادمین',
+      imageUrl: dto.imageUrl || 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80',
+      videoUrl: dto.videoUrl || undefined,
+      description: dto.description || 'تمرین تخصصی ثبت شده توسط مدیر',
       difficulty: dto.difficulty || 'INTERMEDIATE',
-      equipment: dto.equipment || 'تجهیزات ورزشی',
-      targetSkill: dto.targetSkill || 'چابکی و لمس اول',
+      equipment: dto.equipment || 'توپ، مخروط',
+      targetSkill: dto.targetSkill || dto.persianName,
     };
 
     try {
@@ -121,14 +159,28 @@ export class DrillsService implements OnModuleInit {
           },
         });
         this.memoryDrills.unshift(saved);
+        this.saveToDisk();
         return saved;
       }
     } catch {
-      this.logger.warn('Saved drill in-memory (PostgreSQL offline).');
+      // PostgreSQL offline
     }
 
     this.memoryDrills.unshift(newDrill);
+    this.saveToDisk();
     return newDrill;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const initialLen = this.memoryDrills.length;
+    this.memoryDrills = this.memoryDrills.filter((d) => d.id !== id);
+    this.saveToDisk();
+    try {
+      if ((this.prisma as any).agilityDrill) {
+        await (this.prisma as any).agilityDrill.delete({ where: { id } });
+      }
+    } catch {}
+    return this.memoryDrills.length < initialLen;
   }
 
   async getCategories() {

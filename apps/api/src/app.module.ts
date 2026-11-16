@@ -9,6 +9,8 @@ import { ProgramsModule } from './modules/programs/programs.module';
 import { NutritionModule } from './modules/nutrition/nutrition.module';
 import { CoachesModule } from './modules/coaches/coaches.module';
 import { TacticsModule } from './modules/tactics/tactics.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { QuizModule } from './modules/quiz/quiz.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { TacticsModule } from './modules/tactics/tactics.module';
     NutritionModule,
     CoachesModule,
     TacticsModule,
+    UploadModule,
+    QuizModule,
   ],
   controllers: [AppController],
   providers: [

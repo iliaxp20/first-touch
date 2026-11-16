@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -104,48 +105,43 @@ export const TacticsBoard: React.FC = () => {
     ? guestUser
     : null;
 
-  // Load board list when on landing page
+  const userPhone = currentUser?.phoneNumber || guestUser?.phone || '';
+  const userStorageKey = userPhone ? `ft_saved_tactics_boards_${userPhone}` : SAVED_BOARDS_KEY;
+
+  // Load board list when on landing page (strictly scoped to current user's boards)
   const fetchBoardList = useCallback(async () => {
     setIsLoadingBoards(true);
+
+    if (!userPhone) {
+      setSavedBoards([]);
+      setIsLoadingBoards(false);
+      return;
+    }
+
     let localList: SavedBoardInfo[] = [];
     try {
-      const stored = localStorage.getItem(SAVED_BOARDS_KEY);
+      const stored = localStorage.getItem(userStorageKey);
       if (stored) {
         localList = JSON.parse(stored);
       }
     } catch {}
 
     try {
-      const res = await fetch('http://localhost:4000/tactics/boards');
+      const url = `${API_BASE_URL}/tactics/boards?creatorPhone=${encodeURIComponent(userPhone)}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data.boards && Array.isArray(data.boards)) {
-          const remoteMap = new Map<string, SavedBoardInfo>(
-            data.boards.map((b: any) => [
-              b.id,
-              {
-                id: b.id,
-                title: b.title,
-                createdAt: b.createdAt,
-                updatedAt: b.updatedAt,
-                creatorName: b.creatorName,
-              },
-            ]),
-          );
+          const remoteList: SavedBoardInfo[] = data.boards.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            createdAt: b.createdAt,
+            updatedAt: b.updatedAt,
+            creatorName: b.creatorName,
+          }));
 
-          localList.forEach((lb) => {
-            if (!remoteMap.has(lb.id)) {
-              remoteMap.set(lb.id, lb);
-            }
-          });
-
-          const merged = Array.from(remoteMap.values()).sort(
-            (a, b) =>
-              new Date(b.updatedAt || b.createdAt).getTime() -
-              new Date(a.updatedAt || a.createdAt).getTime(),
-          );
-          setSavedBoards(merged);
-          localStorage.setItem(SAVED_BOARDS_KEY, JSON.stringify(merged));
+          setSavedBoards(remoteList);
+          localStorage.setItem(userStorageKey, JSON.stringify(remoteList));
           setIsLoadingBoards(false);
           return;
         }
@@ -156,7 +152,7 @@ export const TacticsBoard: React.FC = () => {
 
     setSavedBoards(localList);
     setIsLoadingBoards(false);
-  }, []);
+  }, [userPhone, userStorageKey]);
 
   useEffect(() => {
     if (!activeBoardId) {
@@ -181,7 +177,7 @@ export const TacticsBoard: React.FC = () => {
     } catch {}
 
     // 2. Fetch from backend to ensure latest sync
-    fetch(`http://localhost:4000/tactics/boards/${activeBoardId}`)
+    fetch(`${API_BASE_URL}/tactics/boards/${activeBoardId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.board) {
@@ -233,7 +229,7 @@ export const TacticsBoard: React.FC = () => {
 
       // 2. Persist to API
       try {
-        await fetch(`http://localhost:4000/tactics/boards/${activeBoardId}`, {
+        await fetch(`${API_BASE_URL}/tactics/boards/${activeBoardId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -411,6 +407,32 @@ export const TacticsBoard: React.FC = () => {
     }
   };
 
+  const handleLocalPlayerDelete = (playerId: string) => {
+    setPlayers((prev) => {
+      const next = prev.filter((p) => p.id !== playerId);
+      triggerAutoSave(next, drawings, ball);
+      return next;
+    });
+  };
+
+  const handleLocalAddPlayer = (team: 'HOME' | 'AWAY' = 'HOME') => {
+    setPlayers((prev) => {
+      const highestNum = prev.reduce((max, p) => (p.number > max ? p.number : max), 0);
+      const newPlayer: TacticalPlayer = {
+        id: `ply-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        number: highestNum + 1 <= 99 ? highestNum + 1 : 12,
+        name: '',
+        team,
+        x: team === 'HOME' ? 35 : 65,
+        y: 50,
+        position: 'SUB',
+      };
+      const next = [...prev, newPlayer];
+      triggerAutoSave(next, drawings, ball);
+      return next;
+    });
+  };
+
   const handleLocalBallMove = (x: number, y: number) => {
     const nextBall = { x, y };
     setBall(nextBall);
@@ -475,13 +497,13 @@ export const TacticsBoard: React.FC = () => {
     if (!window.confirm('آیا از حذف این تخته تاکتیک اطمینان دارید؟')) return;
 
     try {
-      await fetch(`http://localhost:4000/tactics/boards/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/tactics/boards/${id}`, { method: 'DELETE' });
     } catch {}
 
     const updated = savedBoards.filter((b) => b.id !== id);
     setSavedBoards(updated);
     try {
-      localStorage.setItem(SAVED_BOARDS_KEY, JSON.stringify(updated));
+      localStorage.setItem(userStorageKey, JSON.stringify(updated));
       localStorage.removeItem(`ft_tactics_board_${id}`);
     } catch {}
   };
@@ -542,7 +564,7 @@ export const TacticsBoard: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 space-y-10 animate-in fade-in">
         {/* Main Banner Card */}
-        <div className="bg-card/75 backdrop-blur-xl border border-border/80 rounded-3xl p-6 sm:p-10 shadow-xl text-center space-y-6">
+        <div className="bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 rounded-[28px] p-6 sm:p-10 shadow-xl shadow-emerald-950/20 text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Presentation className="h-8 w-8 stroke-[2.2]" />
           </div>
@@ -629,7 +651,7 @@ export const TacticsBoard: React.FC = () => {
                 <div
                   key={board.id}
                   onClick={() => navigate(`/tactics/${board.id}`)}
-                  className="group relative bg-card border border-border/80 hover:border-emerald-500/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3"
+                  className="group relative bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-emerald-500/40 rounded-2xl p-4 shadow-lg shadow-emerald-950/15 transition-all cursor-pointer flex flex-col justify-between gap-3"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
@@ -752,6 +774,7 @@ export const TacticsBoard: React.FC = () => {
         onSaveBoard={() => saveCurrentBoard()}
         isSaved={isSaved}
         onBack={() => navigate('/tactics')}
+        onAddPlayer={handleLocalAddPlayer}
       />
 
       {audioError && (
@@ -783,6 +806,7 @@ export const TacticsBoard: React.FC = () => {
         onClose={() => setEditingPlayer(null)}
         player={editingPlayer}
         onSave={handleLocalPlayerEditSave}
+        onDelete={handleLocalPlayerDelete}
       />
 
       {/* Real-time Viewers Modal */}

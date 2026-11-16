@@ -20,10 +20,13 @@ export interface TrainingProgramItem {
   equipment: string[];
   description: string;
   price: string;
+  priceNumber?: number;
   isFree: boolean;
   studentsCount: number;
   rating: number;
   imageUrl?: string;
+  videoUrl?: string;
+  drillsSummary?: string[];
   completedSessions: number;
   totalSessions: number;
   schedule: {
@@ -75,7 +78,7 @@ export const INITIAL_TRAINING_PROGRAMS: TrainingProgramItem[] = [
     id: 'prog-2',
     title: 'افزایش قدرت بدنی با وزن بدن برای فوتبالیست',
     coachName: 'دکتر علیرضا سلیمانی',
-    coachTitle: 'متخصص فیزیولوژی ورزشی آکادمی ملی فوتبال',
+    coachTitle: 'متخصص فیزیولوژی ورزشی فرست تاچ ملی فوتبال',
     goal: 'تقویت تنه، همسترینگ، چهارسر و ثبات مچ و زانو بدون نیاز به دمبل و وزنه',
     difficulty: 'مبتدی',
     ageGroup: 'عمومی (۱۰ سال به بالا)',
@@ -144,7 +147,7 @@ export const INITIAL_TRAINING_PROGRAMS: TrainingProgramItem[] = [
     id: 'prog-4',
     title: 'افزایش چابکی تخصصی و رفلکس‌های چندجهته',
     coachName: 'استاد مهدی مهدوی‌کیا',
-    coachTitle: 'آکادمی کیا - کارشناس تمرینات رده‌های پایه',
+    coachTitle: 'فرست تاچ کیا - کارشناس تمرینات رده‌های پایه',
     goal: 'حداکثرسازی چابکی بدون توپ، هماهنگی عصبی و رفلکس گام در کورس‌های سرعتی',
     difficulty: 'پیشرفته',
     ageGroup: 'نوجوانان و بزرگسالان',

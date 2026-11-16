@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   IRANIAN_FOOD_DATABASE,
   DEFAULT_NUTRITION_TARGET,
@@ -33,6 +35,40 @@ export class NutritionService {
   private foodDatabase: FoodCalorieItem[] = [...IRANIAN_FOOD_DATABASE];
   private dailyTarget: DailyNutritionTarget = { ...DEFAULT_NUTRITION_TARGET };
   private presetPlans: PresetNutritionPlan[] = [...PRESET_NUTRITION_PLANS];
+  private customFoods: FoodCalorieItem[] = [];
+
+  constructor() {
+    this.loadCustomFoods();
+  }
+
+  private getCustomFoodsPath(): string {
+    const dataDir = path.resolve(__dirname, '../../../data');
+    if (!fs.existsSync(dataDir)) {
+      try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
+    }
+    return path.join(dataDir, 'custom-foods.json');
+  }
+
+  private loadCustomFoods() {
+    try {
+      const p = this.getCustomFoodsPath();
+      if (fs.existsSync(p)) {
+        const raw = fs.readFileSync(p, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          this.customFoods = parsed;
+          this.foodDatabase = [...this.customFoods, ...IRANIAN_FOOD_DATABASE];
+        }
+      }
+    } catch {}
+  }
+
+  private saveCustomFoods() {
+    try {
+      const p = this.getCustomFoodsPath();
+      fs.writeFileSync(p, JSON.stringify(this.customFoods, null, 2), 'utf-8');
+    } catch {}
+  }
 
   // Store logs by date string (YYYY-MM-DD), starts empty
   private dailyLogs: Map<string, LoggedFoodItem[]> = new Map();
@@ -203,17 +239,26 @@ export class NutritionService {
     const newItem: FoodCalorieItem = {
       id: `f-custom-${Date.now()}`,
       name: food.name,
-      category: food.category || 'غذاهای اصلی',
-      portion: food.portion || '۱ عدد',
-      unitName: food.unitName || 'عدد',
+      category: food.category || 'پروتئین‌ها',
+      portion: food.portion || '۱ پرس',
+      unitName: food.unitName || 'پرس',
       calories: Number(food.calories) || 0,
       protein: Number(food.protein) || 0,
       carbs: Number(food.carbs) || 0,
       fat: Number(food.fat) || 0,
       isCustom: true,
     };
+    this.customFoods.unshift(newItem);
     this.foodDatabase.unshift(newItem);
+    this.saveCustomFoods();
     return newItem;
+  }
+
+  async deleteFoodItem(id: string): Promise<{ success: boolean }> {
+    this.customFoods = this.customFoods.filter((f) => f.id !== id);
+    this.foodDatabase = this.foodDatabase.filter((f) => f.id !== id);
+    this.saveCustomFoods();
+    return { success: true };
   }
 
   async getDailyTarget(): Promise<DailyNutritionTarget> {

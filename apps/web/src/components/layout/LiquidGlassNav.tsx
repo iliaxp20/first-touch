@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion, LayoutGroup } from 'framer-motion';
-import { Home, Presentation, CalendarCheck2, Trophy } from 'lucide-react';
+import { Star, Dumbbell, Apple } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavItemKey } from './Sidebar';
 
@@ -9,9 +8,47 @@ interface LiquidGlassNavProps {
   onSelect?: (item: NavItemKey) => void;
 }
 
+// 1. Solid Pentagonal House Icon with Door
+const SolidHomeIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M12 3.2L3 10.6v9.2a1.2 1.2 0 0 0 1.2 1.2h15.6a1.2 1.2 0 0 0 1.2-1.2v-9.2L12 3.2zm2 14.6h-4v-2.2h4v2.2z" />
+  </svg>
+);
+
+// 2. Football Tactics Pitch Icon (زمین فوتبال شیک، مینی‌مال و استاندارد مطابق سبک سایر آیکون‌ها)
+const FootballTacticsIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* کادر مستطیل زمین با گوشه‌های نرم */}
+    <rect x="4" y="2" width="16" height="20" rx="2.5" />
+    {/* خط میانه زمین */}
+    <line x1="4" y1="12" x2="20" y2="12" />
+    {/* دایره سنتر */}
+    <circle cx="12" cy="12" r="3" />
+    {/* محوطه جریمه بالا */}
+    <path d="M8 2v3.5h8V2" />
+    {/* محوطه جریمه پایین */}
+    <path d="M8 22v-3.5h8V22" />
+  </svg>
+);
+
 interface NavTab {
   key: NavItemKey;
   label: string;
+  persianLabel: string;
   icon: React.ElementType;
   path: string;
 }
@@ -23,17 +60,20 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
 
+  // تمام عناوین کاملاً فارسی مطابق درخواست کاربر
   const tabs: NavTab[] = [
-    { key: 'dashboard', label: 'داشبورد', icon: Home, path: '/' },
-    { key: 'tactics', label: 'تخته تاکتیک', icon: Presentation, path: '/tactics' },
-    { key: 'plans', label: 'تمرینات', icon: CalendarCheck2, path: '/practice' },
-    { key: 'rewards', label: 'بازی و جوایز', icon: Trophy, path: '/rewards' },
+    { key: 'dashboard', label: 'خانه', persianLabel: 'خانه', icon: SolidHomeIcon, path: '/' },
+    { key: 'plans', label: 'تمرینات', persianLabel: 'تمرینات', icon: Dumbbell, path: '/practice' },
+    { key: 'nutrition', label: 'تغذیه', persianLabel: 'تغذیه', icon: Apple, path: '/nutrition' },
+    { key: 'rewards', label: 'جوایز', persianLabel: 'جوایز', icon: Star, path: '/rewards' },
+    { key: 'tactics', label: 'تاکتیک', persianLabel: 'تاکتیک', icon: FootballTacticsIcon, path: '/tactics' },
   ];
 
   const getCurrentActiveKey = (): NavItemKey => {
     const path = location.pathname;
-    if (path === '/tactics') return 'tactics';
-    if (path === '/practice' || path.startsWith('/plans') || path.startsWith('/exercises')) return 'plans';
+    if (path === '/tactics' || path.startsWith('/tactics')) return 'tactics';
+    if (path === '/practice' || path.startsWith('/plans') || path.startsWith('/exercises') || path.startsWith('/training')) return 'plans';
+    if (path === '/nutrition' || path.startsWith('/diet') || path.startsWith('/meals')) return 'nutrition';
     if (path === '/rewards' || path === '/quiz') return 'rewards';
     if (path === '/settings' || path === '/profile') return 'settings';
     if (path === '/subscriptions') return 'subscriptions';
@@ -43,91 +83,94 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
 
   const currentActive = getCurrentActiveKey();
 
+  // بازخورد لمسی (Haptic Feedback)
+  const triggerHaptic = () => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([14]);
+      } catch {}
+    }
+  };
+
   const handleTabClick = (tab: NavTab) => {
+    triggerHaptic();
     navigate(tab.path);
     if (onSelect) {
       onSelect(tab.key);
     }
   };
 
-  // When inside a tactics room, completely hide the bottom navbar so the pitch is unobstructed
+  // مخفی شدن فقط در اتاق ترسیم تاکتیک تمام‌صفحه
   if (location.pathname.startsWith('/tactics/')) {
     return null;
   }
 
   return (
     <nav
-      className="liquid-glass-nav fixed bottom-4 sm:bottom-6 left-0 right-0 z-50 flex justify-center items-center pointer-events-none px-4 select-none"
-      aria-label="ناوبری اصلی اپلیکیشن فرست تاچ"
+      className="liquid-glass-nav fixed bottom-3 sm:bottom-6 left-0 right-0 z-50 flex justify-center items-center pointer-events-none px-3 select-none"
+      aria-label="ناوبری اصلی شیشه‌ای فرست تاچ"
     >
-      <LayoutGroup id="bottomNavGroup">
-        {/* Outer Apple VisionOS / iOS Liquid Glass Capsule */}
-        <motion.div
-          className="pointer-events-auto relative flex items-center p-1.5 rounded-full overflow-hidden backdrop-blur-2xl bg-white/90 dark:bg-[#120e24]/90 border border-white/80 dark:border-white/15 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.14),0_4px_16px_rgba(0,0,0,0.06),inset_0_1.5px_1px_rgba(255,255,255,0.95)] dark:shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),inset_0_1.5px_1.5px_rgba(255,255,255,0.18),inset_0_-1.5px_2px_rgba(0,0,0,0.5)] transition-all duration-300"
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-        >
-          <div className="flex items-center gap-1 sm:gap-1.5 relative">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = currentActive === tab.key;
+      <div
+        className="pointer-events-auto relative flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:p-2 rounded-[36px] bg-white/80 dark:bg-[#030d07]/85 backdrop-blur-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.25),0_0_30px_rgba(34,197,94,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_30px_rgba(34,197,94,0.12)] transition-colors duration-300"
+      >
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = currentActive === tab.key;
+          const isSolidIcon = tab.key === 'dashboard';
 
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => handleTabClick(tab)}
-                  className={`relative px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex flex-col items-center justify-center transition-colors duration-200 min-w-[4.6rem] sm:min-w-[5.2rem] outline-none focus:outline-none cursor-pointer ${
-                    isActive
-                      ? 'text-purple-800 dark:text-purple-200 font-black'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-semibold'
-                  }`}
-                >
-                  {/* Fluid Sliding Droplet Pill */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="liquidNavPill"
-                      className="absolute inset-0 rounded-full bg-purple-100/90 dark:bg-purple-900/40 border border-purple-200/90 dark:border-purple-500/30 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.8),0_4px_12px_-2px_rgba(124,58,237,0.18)] dark:shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.2),0_4px_16px_rgba(0,0,0,0.5)] -z-0"
-                      transition={{
-                        type: 'spring',
-                        stiffness: 450,
-                        damping: 32,
-                        mass: 0.7,
-                      }}
-                    />
-                  )}
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => handleTabClick(tab)}
+              className={`relative flex items-center justify-center outline-none focus:outline-none cursor-pointer transition-all duration-300 ease-out h-12 sm:h-14 ${
+                isActive
+                  ? 'px-4 sm:px-5 rounded-full bg-gradient-to-r from-[#A3E635] via-[#4ADE80] to-[#22D3EE] text-slate-950 shadow-[0_4px_25px_rgba(74,222,128,0.5)] font-black'
+                  : 'w-12 sm:w-14 rounded-full bg-slate-100/80 dark:bg-white/[0.08] hover:bg-slate-200/90 dark:hover:bg-white/[0.14] text-slate-700 dark:text-white/90 border border-slate-200/60 dark:border-white/15 shadow-[0_4px_15px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_25px_rgba(0,0,0,0.4)]'
+              }`}
+              title={tab.persianLabel}
+            >
+              {/* 1. Specular Liquid Glass Top Reflection Sheen */}
+              <div
+                className={`absolute inset-x-1.5 top-1 h-[45%] rounded-t-full pointer-events-none ${
+                  isActive
+                    ? 'bg-gradient-to-b from-white/40 via-white/10 to-transparent'
+                    : 'bg-gradient-to-b from-white/25 via-white/5 to-transparent'
+                }`}
+              />
 
-                  {/* Icon & Label */}
-                  <motion.div
-                    className="relative z-10 flex flex-col items-center justify-center gap-1"
-                    animate={{
-                      scale: isActive ? 1.05 : 1,
-                    }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              {/* 2. Chromatic Refraction Glow on Tactics */}
+              {tab.key === 'tactics' && !isActive && (
+                <div className="absolute -bottom-1 inset-x-2 h-3.5 rounded-b-full bg-gradient-to-t from-rose-500/35 via-amber-500/20 to-transparent blur-[2px] pointer-events-none" />
+              )}
+
+              {/* 3. Icon & Stable Label (با تفکیک آیکون‌های توپر و خطی تا هرگز توپر مشکی نشوند) */}
+              <div className="relative z-10 flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                  <Icon
+                    className={`h-5.5 w-5.5 sm:h-6 sm:w-6 transition-colors shrink-0 ${
+                      isActive
+                        ? isSolidIcon
+                          ? 'text-slate-950 fill-current'
+                          : 'text-slate-950 stroke-[2.4] fill-none'
+                        : isSolidIcon
+                        ? 'text-slate-700 dark:text-white/90 fill-current'
+                        : 'text-slate-700 dark:text-white/90 stroke-[1.8] fill-none'
+                    }`}
+                  />
+                </div>
+                {isActive && (
+                  <span
+                    className="text-xs sm:text-sm font-black text-slate-950 whitespace-nowrap tracking-tight select-none animate-in fade-in duration-200"
                   >
-                    <Icon
-                      className={`h-5 w-5 transition-colors duration-200 ${
-                        isActive
-                          ? 'text-purple-700 dark:text-purple-300 stroke-[2.4]'
-                          : 'text-slate-600 dark:text-slate-400 stroke-[1.8]'
-                      }`}
-                    />
-                    <span
-                      className={`text-[0.72rem] tracking-tight leading-none transition-colors duration-200 ${
-                        isActive
-                          ? 'text-purple-800 dark:text-purple-200 font-black'
-                          : 'text-slate-600 dark:text-slate-400 font-semibold'
-                      }`}
-                    >
-                      {tab.label}
-                    </span>
-                  </motion.div>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      </LayoutGroup>
+                    {tab.label}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 };

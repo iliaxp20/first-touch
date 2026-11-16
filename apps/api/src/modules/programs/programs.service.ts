@@ -1,9 +1,47 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { INITIAL_TRAINING_PROGRAMS, TrainingProgramItem, ProgramSession } from './programs.data';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { INITIAL_TRAINING_PROGRAMS, TrainingProgramItem } from './programs.data';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ProgramsService {
+  private readonly logger = new Logger(ProgramsService.name);
   private programs: TrainingProgramItem[] = [...INITIAL_TRAINING_PROGRAMS];
+  private readonly storageFilePath = path.resolve(process.cwd(), 'data', 'programs.json');
+
+  constructor() {
+    this.loadFromDisk();
+  }
+
+  private loadFromDisk() {
+    try {
+      if (fs.existsSync(this.storageFilePath)) {
+        const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
+        const list: TrainingProgramItem[] = JSON.parse(raw);
+        if (Array.isArray(list) && list.length > 0) {
+          this.programs = list;
+          this.logger.log(`Loaded ${list.length} training programs from disk.`);
+          return;
+        }
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed loading programs from disk: ${err.message}`);
+    }
+    // Save defaults to disk if not exists
+    this.saveToDisk();
+  }
+
+  private saveToDisk() {
+    try {
+      const dir = path.dirname(this.storageFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(this.storageFilePath, JSON.stringify(this.programs, null, 2), 'utf-8');
+    } catch (err: any) {
+      this.logger.error(`Failed saving programs to disk: ${err.message}`);
+    }
+  }
 
   async findAll(difficulty?: string, isFree?: boolean, search?: string): Promise<TrainingProgramItem[]> {
     let result = this.programs;
@@ -21,7 +59,7 @@ export class ProgramsService {
           p.title.includes(q) ||
           p.coachName.includes(q) ||
           p.goal.includes(q) ||
-          p.description.includes(q)
+          p.description.includes(q),
       );
     }
 
@@ -36,7 +74,7 @@ export class ProgramsService {
 
   async create(data: Partial<TrainingProgramItem>): Promise<TrainingProgramItem> {
     const newProg: TrainingProgramItem = {
-      id: `prog-${Date.now()}`,
+      id: data.id || `prog-${Date.now()}`,
       title: data.title || 'برنامه تمرینی جدید فوتبال',
       coachName: data.coachName || 'مربی رسمی فرست تاچ',
       coachTitle: data.coachTitle || 'مربی تخصصی فوتبال',
@@ -46,14 +84,19 @@ export class ProgramsService {
       durationWeeks: data.durationWeeks || 4,
       sessionsPerWeek: data.sessionsPerWeek || 3,
       equipment: data.equipment || ['توپ فوتبال', 'مخروط'],
-      description: data.description || 'برنامه طراحی شده توسط کادر فنی آکادمی',
+      description: data.description || 'برنامه طراحی شده توسط کادر فنی فرست تاچ',
       price: data.price || 'رایگان',
+      priceNumber: (data as any).priceNumber || 0,
       isFree: data.price === 'رایگان' || data.isFree === true,
-      studentsCount: 1,
-      rating: 5.0,
+      studentsCount: data.studentsCount || 1,
+      rating: data.rating || 5.0,
       completedSessions: 0,
       totalSessions: (data.durationWeeks || 4) * (data.sessionsPerWeek || 3),
-      imageUrl: data.imageUrl || 'https://images.openai.com/static-rsc-4/qr3bFQNLQ-6RnlAK30bK7sB2zv_wOR8ua0bYy2A6pz6NaS-REUyRJHehDjPdZGFLgIZr8LAC2UNzudc8JIjYfEGucgJ4GoGeiaQPMJRfmb5mdYVSqFKriMqUkrzijmKHl6mPLbbzwT7o7bJOlDEnxBOtvBhh7wroNSOvPDbPwWo?purpose=inline',
+      imageUrl:
+        data.imageUrl ||
+        'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80',
+      videoUrl: (data as any).videoUrl || undefined,
+      drillsSummary: (data as any).drillsSummary || [],
       schedule: data.schedule || [
         {
           weekNumber: 1,
@@ -66,13 +109,27 @@ export class ProgramsService {
       ],
     };
 
+    // Remove existing if duplicate id
+    this.programs = this.programs.filter((p) => p.id !== newProg.id);
     this.programs.unshift(newProg);
+    this.saveToDisk();
     return newProg;
+  }
+
+  async update(id: string, data: Partial<TrainingProgramItem>): Promise<TrainingProgramItem> {
+    const idx = this.programs.findIndex((p) => p.id === id);
+    if (idx === -1) {
+      return this.create({ ...data, id });
+    }
+    this.programs[idx] = { ...this.programs[idx], ...data, id };
+    this.saveToDisk();
+    return this.programs[idx];
   }
 
   async delete(id: string): Promise<boolean> {
     const initialLen = this.programs.length;
     this.programs = this.programs.filter((p) => p.id !== id);
+    this.saveToDisk();
     return this.programs.length < initialLen;
   }
 
@@ -80,9 +137,11 @@ export class ProgramsService {
     const existingIdx = this.programs.findIndex((p) => p.id === program.id);
     if (existingIdx >= 0) {
       this.programs[existingIdx] = { ...this.programs[existingIdx], ...program };
+      this.saveToDisk();
       return this.programs[existingIdx];
     } else {
       this.programs.unshift(program);
+      this.saveToDisk();
       return program;
     }
   }
@@ -90,12 +149,11 @@ export class ProgramsService {
   async toggleSession(programId: string, weekNumber: number, dayName: string): Promise<TrainingProgramItem> {
     let prog = this.programs.find((p) => p.id === programId);
     if (!prog) {
-      // Auto-register program if not found in server cache
       prog = {
         id: programId,
         title: 'برنامه تمرینی شاگرد (۴ هفته - ۱۲ جلسه)',
-        coachName: 'کادر فنی آکادمی',
-        coachTitle: 'آکادمی فوتبال فرست تاچ',
+        coachName: 'کادر فنی فرست تاچ',
+        coachTitle: 'باشگاه فوتبال فرست تاچ',
         goal: 'ارتقای توان بدنی و مهارتی شاگرد',
         difficulty: 'متوسط',
         ageGroup: 'تمامی رده‌ها',
@@ -147,7 +205,6 @@ export class ProgramsService {
 
     session.completed = !session.completed;
 
-    // Recalculate completed sessions
     let completedCount = 0;
     for (const w of prog.schedule) {
       for (const s of w.sessions) {
@@ -155,6 +212,7 @@ export class ProgramsService {
       }
     }
     prog.completedSessions = completedCount;
+    this.saveToDisk();
 
     return prog;
   }
@@ -164,7 +222,6 @@ export class ProgramsService {
     const primaryProg = this.programs[0];
     const weekSessions = primaryProg?.schedule?.[0]?.sessions || [];
 
-    // Persian calendar day index: Saturday is 0, Friday is 6
     const now = new Date();
     const dayOfWeek = (now.getDay() + 1) % 7;
 

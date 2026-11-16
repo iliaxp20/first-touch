@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
@@ -15,12 +16,12 @@ import {
   Star,
   Users,
   Apple,
+  Plus,
 } from 'lucide-react';
 import {
-  FREE_TRAINING_DRILLS,
   FreeDrill,
-  getTrainingCategories,
-  TrainingCategoryMeta,
+  getTrainingDrills,
+  syncDrillsWithServer,
 } from '../data/freeTrainingCategories';
 import {
   NUTRITION_CATEGORIES_FREE,
@@ -29,6 +30,7 @@ import {
 import {
   getReadyTrainingPlans,
   getReadyNutritionPlans,
+  syncProgramsWithServer,
   ReadyTrainingPlan,
   ReadyNutritionPlan,
   saveUnlockedPlan,
@@ -62,12 +64,11 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   }, [currentUser?.age]);
 
   // --- FREE TAB STATE ---
+  const [drillSearchText, setDrillSearchText] = useState('');
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string>(
     mode === 'training' ? 'agility' : 'hydration'
   );
-  const [trainingCategories, setTrainingCategories] = useState<TrainingCategoryMeta[]>(() =>
-    getTrainingCategories()
-  );
+  const [trainingDrills, setTrainingDrills] = useState<FreeDrill[]>(() => getTrainingDrills());
   const [freeDrillDetail, setFreeDrillDetail] = useState<FreeDrill | null>(null);
   const [selectedFreeItems, setSelectedFreeItems] = useState<string[]>([]);
 
@@ -75,20 +76,13 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   const [calendarDays, setCalendarDays] = useState<string[]>(['شنبه', 'دوشنبه', 'چهارشنبه']);
 
   // --- READY TAB STATE ---
-  const [readyAgeFilter, setReadyAgeFilter] = useState<string>('همه');
   const [readyTrainingPlans, setReadyTrainingPlans] = useState<ReadyTrainingPlan[]>([]);
   const [readyNutritionPlans, setReadyNutritionPlans] = useState<ReadyNutritionPlan[]>([]);
 
   // --- CUSTOM COACH TAB STATE ---
   const [coachSearch, setCoachSearch] = useState('');
   const [coaches, setCoaches] = useState<any[]>([]);
-  const [selectedCoach, setSelectedCoach] = useState<any | null>(null);
-  const [coachForm, setCoachForm] = useState({
-    playerName: '',
-    playerAge: '۱۶ سال',
-    playerPosition: 'هافبک میانی / بازیساز',
-    goals: 'بهبود دید محیطی، لمس اول جهت‌دار و آمادگی بدنی ۹۰ دقیقه‌ای',
-  });
+
 
   // --- PROFILE-COMPLETION-STYLE ANIMATION STATE ---
   const [isProcessing, setIsProcessing] = useState(false);
@@ -99,59 +93,39 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   const [isFinished, setIsFinished] = useState(false);
   const [completedPlanResult, setCompletedPlanResult] = useState<any | null>(null);
 
-  // Load Ready Plans from Store (Synchronized with Secret Admin)
+  // Load Ready Plans & Drills from Store (Synchronized with Secret Admin & Backend)
   useEffect(() => {
     if (!isOpen) return;
     setReadyTrainingPlans(getReadyTrainingPlans());
     setReadyNutritionPlans(getReadyNutritionPlans());
+    setTrainingDrills(getTrainingDrills());
+
+    syncProgramsWithServer().then((plans) => {
+      if (plans && plans.length > 0) setReadyTrainingPlans(plans);
+    });
+
+    syncDrillsWithServer().then((drills) => {
+      if (drills && drills.length > 0) setTrainingDrills(drills);
+    });
+
+    const handleDrillsUpdate = () => {
+      setTrainingDrills(getTrainingDrills());
+    };
+    window.addEventListener('ft_drills_updated', handleDrillsUpdate);
 
     // Fetch Coaches
     const fetchCoaches = async () => {
       try {
-        const res = await fetch('http://localhost:4000/coaches');
+        const res = await fetch(`${API_BASE_URL}/coaches`);
         if (res.ok) {
           const data = await res.json();
-          setCoaches(data);
+          setCoaches(Array.isArray(data) ? data : []);
           return;
         }
       } catch {
-        // Fallback
+        setCoaches([]);
       }
-      setCoaches([
-        {
-          id: 'c-1',
-          fullName: 'استاد علیرضا رضایی',
-          title: 'سرمربی ارشد آکادمی فرست تاچ',
-          license: 'UEFA A License & AFC Pro',
-          specialty: ['تکنیک لمس اول', 'چابکی تخصصی', 'هوش محیطی هافبک‌ها'],
-          experienceYears: 14,
-          rating: 4.9,
-          studentsCount: 340,
-          bio: 'مدرس رسمی دوره‌های بدنسازی پایه فوتبال و مربی پیشین رده‌های ملی جوانان.',
-        },
-        {
-          id: 'c-2',
-          fullName: 'دکتر مریم شمس',
-          title: 'متخصص فیزیولوژی و تغذیه فوتبال حرفه‌ای',
-          license: 'Ph.D Sports Nutrition & UEFA Fitness',
-          specialty: ['رژیم مسابقاتی', 'ریکاوری گلیکوژن', 'عضله‌سازی بدون چربی'],
-          experienceYears: 11,
-          rating: 5.0,
-          studentsCount: 420,
-          bio: 'مشاور تغذیه چندین باشگاه لیگ برتری و طراح برنامه‌های غذایی رده‌های سنی.',
-        },
-        {
-          id: 'c-3',
-          fullName: 'کاپیتان بهروز رستمی',
-          title: 'مربی تخصصی شتاب و توان انفجاری',
-          license: 'UEFA B & فیفا فیتنس پرو',
-          specialty: ['سرعت انفجاری', 'شاتل‌های RSA', 'پیشگیری از آسیب همسترینگ'],
-          experienceYears: 9,
-          rating: 4.8,
-          studentsCount: 215,
-          bio: 'سرمربی اسبق بدنسازی تیم‌های پایه و طراح متدهای پلیومتریک فوتبال.',
-        },
-      ]);
+      setCoaches([]);
     };
 
     fetchCoaches();
@@ -188,7 +162,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
           );
         } else if (next < 88) {
           setProgressStatus(
-            'ثبت رسمی در پایگاه داده آکادمی و اتصال به کارتابل شاگرد...'
+            'ثبت رسمی در پایگاه داده فرست تاچ و اتصال به کارتابل شاگرد...'
           );
         } else {
           setProgressStatus('آماده‌سازی نهایی و صدور تقویم اجرایی برنامه...');
@@ -215,15 +189,6 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
       document.body.classList.remove('has-modal-open');
     };
   }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setTrainingCategories(getTrainingCategories());
-      if (userAgeGroup) {
-        setReadyAgeFilter(userAgeGroup);
-      }
-    }
-  }, [isOpen, userAgeGroup]);
 
   if (!isOpen) return null;
 
@@ -259,101 +224,62 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
         if (prev.length <= 1) return prev;
         return prev.filter((d) => d !== day);
       } else {
-        if (prev.length >= 3) {
-          return [...prev.slice(1), day];
-        }
         return [...prev, day];
       }
     });
   };
 
   const handleConfirmFreeCalendarPlan = () => {
-    const days = calendarDays.length === 3 ? calendarDays : ['شنبه', 'دوشنبه', 'چهارشنبه'];
+    const days = calendarDays.length > 0 ? calendarDays : ['شنبه', 'دوشنبه', 'چهارشنبه'];
+    const totalSessions = days.length * 4;
 
-    const weekFocuses = [
-      {
-        weekNum: 1,
-        title1: 'تمرین لمس اول و شتاب اولیه',
-        foc1: 'شتاب اولیه و کنترل جهت‌دار',
-        title2: 'تمرین چابکی و انتقال توپ',
-        foc2: 'چابکی و انتقال پرسرعت',
-        title3: 'تمرین تاکتیک و شوت‌زنی',
-        foc3: 'دقت ضربه و موقعیت‌سنجی',
-      },
-      {
-        weekNum: 2,
-        title1: 'تمرین سرعت واکنش و استارت کوتاه',
-        foc1: 'شروع انفجاری و زمان واکنش',
-        title2: 'تمرین پلیومتریک و پرش‌های کنترلی',
-        foc2: 'قدرت انفجاری پرش و فرود',
-        title3: 'تمرین دقت پاس و چرخش ۹۰ درجه',
-        foc3: 'پاس تک‌ضرب تحت فشار',
-      },
-      {
-        weekNum: 3,
-        title1: 'تمرین شاتل متوالی و استقامت سرعت',
-        foc1: 'استقامت در شتاب و ریکاوری',
-        title2: 'تمرین کنترل هوایی و لمس اول',
-        foc2: 'کنترل با سینه و روی پا',
-        title3: 'تمرین حفظ توپ در فضای فشرده',
-        foc3: 'تصمیم‌گیری سریع و تمام‌کنندگی',
-      },
-      {
-        weekNum: 4,
-        title1: 'تمرین بیشینه سرعت و استارت انفجاری',
-        foc1: 'بیشینه سرعت خطی',
-        title2: 'تمرین چابکی ترکیبی با موانع',
-        foc2: 'فرکانس گام و تعادل پویا',
-        title3: 'سنجش آمادگی و مسابقه تمرینی نهایی',
-        foc3: 'ارزیابی نهایی دوره و رکوردگیری',
-      },
+    const pickedDrills = trainingDrills.filter((d) => selectedFreeItems.includes(d.id));
+    const drillTitles = pickedDrills.map((d) => d.title);
+
+    const sessionTemplates = [
+      { title: 'تمرین لمس اول و شتاب اولیه', focus: 'شتاب اولیه و کنترل جهت‌دار' },
+      { title: 'تمرین چابکی و انتقال توپ', focus: 'چابکی و انتقال پرسرعت' },
+      { title: 'تمرین تاکتیک و شوت‌زنی', focus: 'دقت ضربه و موقعیت‌سنجی' },
+      { title: 'تمرین سرعت واکنش و استارت کوتاه', focus: 'شروع انفجاری و زمان واکنش' },
+      { title: 'تمرین پلیومتریک و پرش‌های کنترلی', focus: 'قدرت انفجاری پرش و فرود' },
+      { title: 'تمرین دقت پاس و چرخش', focus: 'پاس تک‌ضرب تحت فشار' },
+      { title: 'تمرین شاتل و استقامت سرعت', focus: 'استقامت در شتاب و ریکاوری' },
     ];
 
-    const schedule = weekFocuses.map((wf) => ({
-      weekNumber: wf.weekNum,
-      sessions: [
-        {
-          dayName: days[0],
-          title: wf.title1,
-          focus: wf.foc1,
+    const schedule = [1, 2, 3, 4].map((weekNum) => ({
+      weekNumber: weekNum,
+      sessions: days.map((dayName, idx) => {
+        const tmpl = sessionTemplates[(idx + weekNum - 1) % sessionTemplates.length];
+        const sTitle = drillTitles.length > 0
+          ? drillTitles[(idx + weekNum - 1) % drillTitles.length]
+          : tmpl.title;
+        return {
+          dayName,
+          title: sTitle,
+          focus: tmpl.focus,
           durationMinutes: 50,
           completed: false,
-          drillsCount: 3,
-        },
-        {
-          dayName: days[1],
-          title: wf.title2,
-          focus: wf.foc2,
-          durationMinutes: 50,
-          completed: false,
-          drillsCount: 3,
-        },
-        {
-          dayName: days[2],
-          title: wf.title3,
-          focus: wf.foc3,
-          durationMinutes: 50,
-          completed: false,
-          drillsCount: 4,
-        },
-      ],
+          drillsCount: drillTitles.length > 0 ? drillTitles.length : 3,
+        };
+      }),
     }));
 
     const titleSuffix = selectedFreeItems.length > 0 ? ` (${selectedFreeItems.length} تمرین انتخابی)` : '';
     const newPlan = {
       id: `free-plan-${Date.now()}`,
-      title: `برنامه تمرینی رایگان ۴ هفته‌ای${titleSuffix}`,
-      coachName: 'کادر فنی آکادمی فرست تاچ',
-      coachTitle: 'آکادمی فوتبال فرست تاچ',
+      title: `برنامه تمرینی ${days.length} روز در هفته${titleSuffix}`,
+      coachName: 'کادر فنی فرست تاچ',
+      coachTitle: 'مجموعه تخصصی فرست تاچ',
       price: 'رایگان',
       isFree: true,
       difficulty: 'متوسط',
       durationWeeks: 4,
-      sessionsPerWeek: 3,
-      totalSessions: 12,
+      sessionsPerWeek: days.length,
+      totalSessions: totalSessions,
       completedSessions: 0,
       goal: 'ارتقای شتاب اولیه، لمس اول و آمادگی بدنی پایه فوتبال',
-      description: `برنامه تقویمی ۴ هفته‌ای (۱۲ جلسه) بر اساس روزهای ${days.join('، ')}. تمام جلسات دارای چک‌لیست تقویمی و امکان تیک زدن با ماندگاری کامل هستند.`,
+      description: `برنامه تقویمی ۴ هفته‌ای (${totalSessions} جلسه) بر اساس روزهای ${days.join('، ')}. تمام جلسات دارای چک‌لیست تقویمی و امکان تیک زدن با ماندگاری کامل هستند.`,
+      drillsSummary: drillTitles.length > 0 ? drillTitles : undefined,
       schedule,
     };
 
@@ -362,10 +288,89 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
     onClose();
   };
 
-  // Filtered Drills for Category
-  const activeCategoryDrills = FREE_TRAINING_DRILLS.filter(
-    (d) => d.categoryKey === selectedCategoryKey
-  );
+  const handleAddSingleDrillToActivePlan = (drill: FreeDrill) => {
+    const days = ['شنبه', 'دوشنبه', 'چهارشنبه'];
+    const activePlansRaw = localStorage.getItem('first_touch_student_active_plans');
+    let currentPrograms: any[] = [];
+    try {
+      if (activePlansRaw) {
+        currentPrograms = JSON.parse(activePlansRaw);
+      }
+    } catch {}
+
+    if (Array.isArray(currentPrograms) && currentPrograms.length > 0) {
+      const prog = currentPrograms[0];
+      const updatedSchedule = (prog.schedule || []).map((week: any) => ({
+        ...week,
+        sessions: (week.sessions || []).map((s: any) => ({
+          ...s,
+          title: s.title ? `${s.title} + ${drill.title}` : drill.title,
+          drillsCount: (s.drillsCount || 3) + 1,
+        })),
+      }));
+      const updatedProg = {
+        ...prog,
+        schedule: updatedSchedule,
+        drillsSummary: Array.from(new Set([...(prog.drillsSummary || []), drill.title])),
+      };
+      const updatedList = [updatedProg, ...currentPrograms.slice(1)];
+      localStorage.setItem('first_touch_student_active_plans', JSON.stringify(updatedList));
+      onPlanActivated(updatedProg);
+    } else {
+      const newPlan = {
+        id: `free-plan-${Date.now()}`,
+        title: `برنامه تمرینی ${drill.title}`,
+        coachName: 'کادر فنی فرست تاچ',
+        coachTitle: 'مجموعه تخصصی فرست تاچ',
+        price: 'رایگان',
+        isFree: true,
+        difficulty: drill.difficulty || 'متوسط',
+        durationWeeks: 4,
+        sessionsPerWeek: 3,
+        totalSessions: 12,
+        completedSessions: 0,
+        goal: drill.targetSkill || 'ارتقای مهارت و چابکی فوتبال',
+        description: drill.description || `برنامه تمرینی متمرکز بر ${drill.title}`,
+        drillsSummary: [drill.title],
+        schedule: [1, 2, 3, 4].map((w) => ({
+          weekNumber: w,
+          sessions: days.map((dayName) => ({
+            dayName,
+            title: drill.title,
+            focus: drill.targetSkill || 'چابکی و مهارت',
+            durationMinutes: 50,
+            completed: false,
+            drillsCount: 3,
+          })),
+        })),
+      };
+      saveUnlockedPlan(newPlan.id, newPlan.title);
+      localStorage.setItem('first_touch_student_active_plans', JSON.stringify([newPlan]));
+      onPlanActivated(newPlan);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('ft_student_plan_updated'));
+    }
+    onClose();
+  };
+
+  // Filtered Drills for Search & Category (Reactive with Admin additions)
+  const activeCategoryDrills = useMemo(() => {
+    if (drillSearchText.trim()) {
+      const q = drillSearchText.trim().toLowerCase();
+      return trainingDrills.filter(
+        (d) =>
+          (d.title && d.title.toLowerCase().includes(q)) ||
+          (d.subCategory && d.subCategory.toLowerCase().includes(q)) ||
+          (d.categoryTitle && d.categoryTitle.toLowerCase().includes(q)) ||
+          (d.description && d.description.toLowerCase().includes(q)) ||
+          (d.targetSkill && d.targetSkill.toLowerCase().includes(q)) ||
+          (d.difficulty && d.difficulty.toLowerCase().includes(q))
+      );
+    }
+    return trainingDrills;
+  }, [trainingDrills, drillSearchText]);
 
   // Filtered Nutrition Items
   const activeNutritionItems = FREE_NUTRITION_ITEMS.filter(
@@ -383,11 +388,11 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-5 bg-slate-950/95 sm:bg-slate-950/98 backdrop-blur-xl overflow-y-auto select-none">
-      <Card className="w-full max-w-4xl border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl shadow-purple-950/30 relative overflow-hidden rounded-3xl my-2 sm:my-6 flex flex-col max-h-[96vh] sm:max-h-[90vh]">
+      <Card className="w-full max-w-4xl border border-emerald-500/20 dark:border-white/10 bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl shadow-2xl shadow-emerald-950/40 relative overflow-hidden rounded-3xl my-2 sm:my-6 flex flex-col max-h-[96vh] sm:max-h-[90vh]">
         {/* Top Header - Streamlined & Compact */}
-        <div className="p-3.5 sm:p-5 border-b border-border/80 flex items-center justify-between bg-gradient-to-r from-purple-50/70 via-white to-purple-50/40 dark:from-slate-950/80 dark:via-purple-950/20 dark:to-slate-950/80 shrink-0">
+        <div className="p-3.5 sm:p-5 border-b border-emerald-500/15 dark:border-white/10 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent dark:from-[#091b12] dark:via-[#07160e] dark:to-[#040e08] shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/25 shrink-0">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/25 shrink-0">
               {mode === 'training' ? (
                 <Dumbbell className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
@@ -448,18 +453,18 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 onClick={() => setActiveTab('ready')}
                 className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === 'ready'
-                    ? 'text-purple-800 dark:text-purple-200'
+                    ? 'text-emerald-800 dark:text-emerald-200'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {activeTab === 'ready' && (
                   <motion.div
                     layoutId="modalAcquisitionTabPill"
-                    className="absolute inset-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-purple-500/30"
+                    className="absolute inset-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-emerald-500/30"
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <Calendar className="h-3.5 w-3.5 text-purple-600 relative z-10 shrink-0" />
+                <Calendar className="h-3.5 w-3.5 text-emerald-600 relative z-10 shrink-0" />
                 <span className="relative z-10 hidden sm:inline">برنامه آماده (۱۹۹ ت)</span>
                 <span className="relative z-10 sm:hidden">آماده (۱۹۹ ت)</span>
               </button>
@@ -495,8 +500,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
         {isTransitioning && (
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-4">
             <div className="relative">
-              <div className="h-16 w-16 rounded-full border-4 border-purple-200 dark:border-purple-900 border-t-purple-600 animate-spin" />
-              <Sparkles className="h-6 w-6 text-purple-600 absolute inset-0 m-auto animate-pulse" />
+              <div className="h-16 w-16 rounded-full border-4 border-emerald-200 dark:border-emerald-900 border-t-emerald-600 animate-spin" />
+              <Sparkles className="h-6 w-6 text-emerald-600 absolute inset-0 m-auto animate-pulse" />
             </div>
             <p className="text-sm font-black text-slate-800 dark:text-slate-200 animate-pulse">
               {transitionMsg}
@@ -521,7 +526,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                   cx="72"
                   cy="72"
                   r="60"
-                  className="stroke-purple-600 transition-all duration-300"
+                  className="stroke-emerald-500 transition-all duration-300"
                   strokeWidth="8"
                   strokeDasharray={2 * Math.PI * 60}
                   strokeDashoffset={2 * Math.PI * 60 * (1 - progress / 100)}
@@ -530,7 +535,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 />
               </svg>
               <div className="absolute flex flex-col items-center">
-                <span className="text-3xl font-black text-purple-700 dark:text-purple-300">
+                <span className="text-3xl font-black text-emerald-700 dark:text-emerald-300">
                   {progress}٪
                 </span>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
@@ -551,9 +556,9 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
             </div>
 
             {isFinished && completedPlanResult && (
-              <div className="w-full max-w-md p-4 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 text-right space-y-3 animate-in zoom-in-95 duration-300">
+              <div className="w-full max-w-md p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-right space-y-3 animate-in zoom-in-95 duration-300">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-purple-700 dark:text-purple-300">
+                  <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">
                     عنوان برنامه فعال شده:
                   </span>
                   <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
@@ -569,7 +574,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 <Button
                   variant="primary"
                   onClick={handleFinishAndApply}
-                  className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs h-11 shadow-lg shadow-purple-500/25 cursor-pointer"
+                  className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs h-11 shadow-lg shadow-emerald-500/25 cursor-pointer"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   ورود به کارتابل و مشاهده تقویم جلسات
@@ -600,45 +605,45 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                   <div className="space-y-3.5">
                     {mode === 'training' ? (
                       <>
-                        {/* 1. Schedule Selection: 4 Weeks, 3 Sessions/Week, 12 Total Sessions */}
-                        <div className="p-4 rounded-3xl bg-purple-50/50 dark:bg-slate-800/80 border border-purple-200/80 dark:border-purple-800/40 space-y-3.5 shadow-xs">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-100 dark:border-white/5 pb-2.5">
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                        {/* 1. Schedule Selection: Choose training days */}
+                        <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/50 dark:bg-slate-800/80 border border-emerald-200/80 dark:border-emerald-800/40 space-y-3 shadow-xs">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-100 dark:border-white/5 pb-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
                                 <Calendar className="h-4 w-4" />
                               </div>
                               <div>
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                  برنامه تمرینی رایگان (۴ هفته • ۳ جلسه در هفته • ۱۲ جلسه کل)
+                                  در هفته چقدر می‌خوای تمرین کنی؟
                                 </h3>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                  ۳ روز تمرینی هفته را مشخص کنید تا برنامه ۱۲ جلسه‌ای صادر شود
+                                  روزهای تمرین را انتخاب کنید ({calendarDays.length} روز • {calendarDays.length * 4} جلسه در ماه)
                                 </p>
                               </div>
                             </div>
                             <Button
                               type="button"
                               variant="primary"
-                              disabled={calendarDays.length !== 3}
+                              disabled={calendarDays.length === 0}
                               onClick={handleConfirmFreeCalendarPlan}
-                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-black px-4 h-9 rounded-xl shadow-md cursor-pointer self-start sm:self-auto gap-1.5"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 h-9 rounded-xl shadow-md cursor-pointer self-stretch sm:self-auto justify-center gap-1.5"
                             >
                               <CheckCircle2 className="h-4 w-4" />
-                              فعال‌سازی برنامه (۱۲ جلسه)
+                              فعال‌سازی ({calendarDays.length * 4} جلسه)
                             </Button>
                           </div>
 
-                          {/* 7 Days of the Week Selection */}
+                          {/* Days Selection - Responsive: 4 cols on mobile, 7 cols on desktop */}
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
                               <span className="font-bold text-slate-700 dark:text-slate-300 text-[11px]">
-                                روزهای جلسات تمرین در طول هفته (۳ روز):
+                                روزهای جلسات تمرین در طول هفته:
                               </span>
-                              <span className={`text-[11px] font-black ${calendarDays.length === 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                                ({calendarDays.length} از ۳ روز انتخاب شده)
+                              <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">
+                                {calendarDays.length} روز در هفته
                               </span>
                             </div>
-                            <div className="grid grid-cols-7 gap-1.5">
+                            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                               {['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'].map((day) => {
                                 const isPicked = calendarDays.includes(day);
                                 return (
@@ -646,10 +651,10 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                                     key={day}
                                     type="button"
                                     onClick={() => handleToggleCalendarDay(day)}
-                                    className={`py-2 px-1 text-center rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                                    className={`py-2.5 sm:py-2 px-1 text-center rounded-xl text-xs font-black transition-all border cursor-pointer min-h-[44px] flex items-center justify-center ${
                                       isPicked
-                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-purple-400'
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm ring-1 ring-emerald-500'
+                                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-emerald-400'
                                     }`}
                                   >
                                     {day}
@@ -657,11 +662,6 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                                 );
                               })}
                             </div>
-                            {calendarDays.length !== 3 && (
-                              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">
-                                لطفاً ۳ روز در هفته را انتخاب فرمایید تا ۱۲ جلسه فعال گردد.
-                              </p>
-                            )}
                           </div>
                         </div>
 
@@ -674,7 +674,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             <Button
                               variant="primary"
                               onClick={handleConfirmFreeCalendarPlan}
-                              disabled={calendarDays.length !== 3}
+                              disabled={calendarDays.length === 0}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3.5 h-8 shadow-sm cursor-pointer gap-1.5"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -683,26 +683,16 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           </div>
                         )}
 
-                        {/* Category Horizontal Pills (Dynamic from Admin / Clean & Compact) */}
-                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                          {trainingCategories.map((cat, idx) => {
-                            const isSel = selectedCategoryKey === cat.key;
-                            return (
-                              <button
-                                key={cat.key}
-                                type="button"
-                                onClick={() => setSelectedCategoryKey(cat.key)}
-                                className={`px-2.5 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all border flex items-center gap-1 cursor-pointer ${
-                                  isSel
-                                    ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-slate-700 hover:border-purple-300'
-                                }`}
-                              >
-                                <span className="text-[10px] opacity-70">{idx + 1}.</span>
-                                <span>{cat.title}</span>
-                              </button>
-                            );
-                          })}
+                        {/* Search Input replacing Category Bar (با توضیحات کم) */}
+                        <div className="relative">
+                          <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <input
+                            type="text"
+                            value={drillSearchText}
+                            onChange={(e) => setDrillSearchText(e.target.value)}
+                            placeholder="جستجو (چابکی، سرعت، شوت...)"
+                            className="w-full pr-10 pl-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
                         </div>
 
                         {/* Drills Grid (Clean, Responsive, Mobile-friendly) */}
@@ -715,7 +705,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                         className={`p-4 rounded-2xl border transition-all flex flex-col justify-between bg-white dark:bg-slate-800/60 ${
                           isPicked
                             ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md'
-                            : 'border-slate-200 dark:border-slate-700/80 hover:border-purple-300'
+                            : 'border-slate-200 dark:border-slate-700/80 hover:border-emerald-300'
                         }`}
                       >
                         <div className="space-y-3">
@@ -730,8 +720,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <div className="h-10 w-10 rounded-full bg-white/90 text-purple-700 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play className="h-5 w-5 fill-purple-700 ml-0.5" />
+                              <div className="h-10 w-10 rounded-full bg-white/90 text-emerald-700 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <Play className="h-5 w-5 fill-emerald-700 ml-0.5" />
                               </div>
                             </div>
                             <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/70 text-white backdrop-blur-xs">
@@ -741,7 +731,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
                                 سطح: {drill.difficulty}
                               </span>
                               <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
@@ -752,7 +742,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             <h4 className="text-sm font-black text-slate-900 dark:text-white">
                               {drill.title}
                             </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                               {drill.description}
                             </p>
                           </div>
@@ -762,33 +752,34 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           <button
                             type="button"
                             onClick={() => setFreeDrillDetail(drill)}
-                            className="flex-1 py-1.5 px-2.5 rounded-lg border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                            className="py-1.5 px-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
                           >
-                            مشاهده ویدیو و جزئیات
+                            ویدیو
                           </button>
                           <button
                             type="button"
                             onClick={() => {
                               setSelectedFreeItems((prev) =>
-                                prev.includes(drill.id)
-                                  ? prev.filter((id) => id !== drill.id)
-                                  : [...prev, drill.id]
+                                prev.includes(drill.id) ? prev.filter((id) => id !== drill.id) : [...prev, drill.id]
                               );
                             }}
-                            className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                            className={`p-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                               isPicked
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-400'
                             }`}
+                            title={isPicked ? 'انتخاب شده برای صدور چندتایی' : 'انتخاب'}
                           >
-                            {isPicked ? (
-                              <>
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                انتخاب شد
-                              </>
-                            ) : (
-                              'افزودن به برنامه'
-                            )}
+                            <CheckCircle2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSingleDrillToActivePlan(drill)}
+                            className="flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                            title="افزودن این تمرین مستقیم به بخش تمرینات من"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>افزودن تمرین</span>
                           </button>
                         </div>
                       </div>
@@ -807,8 +798,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                       onClick={() => setSelectedCategoryKey(n.key)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all border cursor-pointer ${
                         selectedCategoryKey === n.key
-                          ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-transparent hover:border-purple-300'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-transparent hover:border-emerald-300'
                       }`}
                     >
                       {n.title}
@@ -820,18 +811,18 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                   {activeNutritionItems.map((item) => (
                     <div
                       key={item.id}
-                      className="p-4 rounded-2xl border border-purple-100 dark:border-slate-700 bg-white dark:bg-slate-800/60 space-y-3"
+                      className="p-4 rounded-2xl border border-emerald-100 dark:border-slate-700 bg-white dark:bg-slate-800/60 space-y-3"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                             {item.categoryTitle}
                           </span>
                           <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1">
                             {item.title}
                           </h4>
                         </div>
-                        <span className="text-xs font-black text-purple-600 dark:text-purple-400">
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
                           کالری تقریبی: {item.approxCalories}
                         </span>
                       </div>
@@ -839,7 +830,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                         {item.summary}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-white/5">
+                        <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-white/5">
                           <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                             مواد لازم و فرمول:
                           </span>
@@ -849,7 +840,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             ))}
                           </ul>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-white/5">
+                        <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-white/5">
                           <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                             زمان مصرف ایده‌آل:
                           </span>
@@ -871,7 +862,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             goal: item.summary,
                           })
                         }
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-black cursor-pointer"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer"
                       >
                         فعال‌سازی این راهنمای غذایی در پنل من
                       </Button>
@@ -884,55 +875,21 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
         )}
 
         {/* =========================================================================
-            TAB 2: READY PLANS (199K) - STREAMLINED & DECLUTTERED
+            TAB 2: READY PLANS (199K) - FILTERED BY USER PROFILE AGE AUTOMATICALLY
             ========================================================================= */}
         {activeTab === 'ready' && (
           <div className="space-y-3.5">
-            {/* User Age Group Match Banner */}
-            {userAgeGroup && (
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-xs font-bold">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 shrink-0 text-purple-500" />
-                  <span>
-                    رده سنی متناسب با پرونده شما ({currentUser?.age} سال):{' '}
-                    <strong className="font-black text-foreground">{userAgeGroup}</strong>
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setReadyAgeFilter(userAgeGroup)}
-                  className="text-[11px] font-black underline cursor-pointer"
-                >
-                  نمایش رده شما
-                </button>
+            {/* Automatic Age Match Indicator without Any Manual Selectors */}
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-bold">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 shrink-0 text-emerald-500" />
+                <span>
+                  {userAgeGroup
+                    ? `برنامه‌های متناسب با سن شما در پروفایل (${currentUser?.age} سال • ${userAgeGroup})`
+                    : 'برنامه‌های تمرینی تخصصی فرست تاچ'}
+                </span>
               </div>
-            )}
-
-            {/* Clean Age Group Filter & Subtle Price Indicator */}
-            <div className="flex items-center justify-between pb-1 gap-2">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {[
-                  'همه',
-                  'نونهالان (زیر ۱۲ سال)',
-                  'نوجوانان (۱۲ تا ۱۵ سال)',
-                  'جوانان (۱۶ تا ۱۹ سال)',
-                  'بزرگسالان (+۱۹ سال)',
-                ].map((age) => (
-                  <button
-                    key={age}
-                    type="button"
-                    onClick={() => setReadyAgeFilter(age)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-colors border cursor-pointer ${
-                      readyAgeFilter === age
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent hover:border-purple-300'
-                    }`}
-                  >
-                    {age}
-                  </button>
-                ))}
-              </div>
-              <span className="hidden sm:inline-block text-xs font-black text-purple-700 dark:text-purple-300 shrink-0 mr-2">
+              <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 shrink-0 mr-2">
                 تعرفه: ۱۹۹ هزار تومان
               </span>
             </div>
@@ -943,8 +900,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 {readyTrainingPlans
                   .filter(
                     (p) =>
-                      readyAgeFilter === 'همه' ||
-                      p.ageGroup.includes(readyAgeFilter) ||
+                      !userAgeGroup ||
+                      p.ageGroup.includes(userAgeGroup) ||
                       p.ageGroup === 'تمامی رده‌ها'
                   )
                   .map((plan) => {
@@ -955,12 +912,12 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                         className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
                           isUnlocked
                             ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-sm'
-                            : 'border-purple-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
+                            : 'border-emerald-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
                         }`}
                       >
                         <div className="space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
                               {plan.ageGroup}
                             </span>
                             {isUnlocked ? (
@@ -980,7 +937,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
                           {/* Video Indicator if video attached */}
                           {plan.videoUrl && (
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                               <Play className="h-3 w-3 fill-current" />
                               <span>دارای ویدیوی اختصاصی آموزش تمرین</span>
                             </div>
@@ -1010,7 +967,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             </div>
                           )}
 
-                          <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 text-center text-xs">
+                          <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 text-center text-xs">
                             <div>
                               <span className="text-[10px] text-slate-400 block">مدت دوره</span>
                               <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -1057,7 +1014,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           className={`w-full gap-2 text-xs font-black h-10 cursor-pointer ${
                             isUnlocked
                               ? 'border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm'
-                              : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20'
                           }`}
                         >
                           <Sparkles className="h-4 w-4" />
@@ -1075,8 +1032,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 {readyNutritionPlans
                   .filter(
                     (p) =>
-                      readyAgeFilter === 'همه' ||
-                      p.ageGroup.includes(readyAgeFilter) ||
+                      !userAgeGroup ||
+                      p.ageGroup.includes(userAgeGroup) ||
                       p.ageGroup === 'تمامی رده‌ها'
                   )
                   .map((nutPlan) => {
@@ -1087,12 +1044,12 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                         className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
                           isNutUnlocked
                             ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-sm'
-                            : 'border-purple-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
+                            : 'border-emerald-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
                         }`}
                       >
                         <div className="space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                            <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
                               {nutPlan.ageGroup}
                             </span>
                             {isNutUnlocked ? (
@@ -1113,10 +1070,10 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             {nutPlan.goal}
                           </p>
 
-                          <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-white/5 space-y-1 text-xs">
+                          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-white/5 space-y-1 text-xs">
                             <div className="flex justify-between">
                               <span className="text-slate-500">کالری روزانه هدف:</span>
-                              <span className="font-black text-purple-700 dark:text-purple-300">
+                              <span className="font-black text-emerald-700 dark:text-emerald-300">
                                 {nutPlan.dailyCalories} کیلوکالری
                               </span>
                             </div>
@@ -1138,7 +1095,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                                   key={idx}
                                   className="flex justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-[11px]"
                                 >
-                                  <span className="font-bold text-purple-700 dark:text-purple-300">
+                                  <span className="font-bold text-emerald-700 dark:text-emerald-300">
                                     {m.name}:
                                   </span>
                                   <span className="text-slate-600 dark:text-slate-300 truncate max-w-[200px]">
@@ -1156,7 +1113,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           className={`w-full gap-2 text-xs font-black h-10 cursor-pointer ${
                             isNutUnlocked
                               ? 'border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm'
-                              : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20'
                           }`}
                         >
                           <Sparkles className="h-4 w-4" />
@@ -1176,184 +1133,87 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
             TAB CONTENT: TAB 3 - PERSONAL COACH CUSTOM PLAN (399,000 TOMANS)
             ========================================================================= */}
         {activeTab === 'custom-coach' && (
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {/* Search Input with subtle price tag */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="h-4 w-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="جستجوی مربی بر اساس نام، مدرک (UEFA)، تخصص (چابکی، سرعت، تکنیک)..."
+                  placeholder="جستجوی مربی..."
                   value={coachSearch}
                   onChange={(e) => setCoachSearch(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-purple-600"
+                  className="w-full pr-10 pl-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
                 />
               </div>
-              <span className="hidden sm:inline-block text-xs font-black text-amber-600 dark:text-amber-400 shrink-0 px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                تعرفه: ۳۹۹ هزار تومان
+              <span className="text-xs font-black text-amber-600 dark:text-amber-400 shrink-0 px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                ۳۹۹ هزار تومان
               </span>
             </div>
 
-            {/* Coaches List & Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredCoaches.map((coach) => {
-                const isSelected = selectedCoach?.id === coach.id;
-                return (
-                  <div
-                    key={coach.id}
-                    onClick={() => setSelectedCoach(coach)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-                      isSelected
-                        ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20 shadow-md ring-2 ring-amber-500/20'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:border-amber-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 font-black flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800">
-                        <Users className="h-6 w-6" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
-                            {coach.fullName}
-                          </h4>
-                          <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
-                            <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                            {coach.rating}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-purple-700 dark:text-purple-300 font-bold mt-0.5">
-                          {coach.title}
-                        </p>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                          مدرک: {coach.license} ({coach.experienceYears} سال سابقه)
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
-                      {coach.bio}
-                    </p>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {coach.specialty.map((s: string, idx: number) => (
-                        <span
-                          key={idx}
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800"
-                        >
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-500">
-                        {coach.studentsCount} شاگرد فعال
-                      </span>
-                      <span
-                        className={`text-xs font-black px-2.5 py-1 rounded-lg ${
-                          isSelected
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        {isSelected ? 'مربی انتخاب شد' : 'انتخاب این مربی'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Custom Request Form if Coach Selected */}
-            {selectedCoach && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-4 animate-in slide-in-from-top-2">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-amber-600" />
-                  <h4 className="text-sm font-black text-slate-900 dark:text-white">
-                    ثبت درخواست برنامه اختصاصی با {selectedCoach.fullName} (۳۹۹,۰۰۰ تومان)
-                  </h4>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      نام شاگرد:
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="نام و نام خانوادگی..."
-                      value={coachForm.playerName}
-                      onChange={(e) =>
-                        setCoachForm({ ...coachForm, playerName: e.target.value })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      رده سنی:
-                    </label>
-                    <input
-                      type="text"
-                      value={coachForm.playerAge}
-                      onChange={(e) =>
-                        setCoachForm({ ...coachForm, playerAge: e.target.value })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      پست تخصصی در زمین:
-                    </label>
-                    <input
-                      type="text"
-                      value={coachForm.playerPosition}
-                      onChange={(e) =>
-                        setCoachForm({ ...coachForm, playerPosition: e.target.value })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block text-xs mb-1">
-                    اهداف و اولویت‌های تمرینی شما برای مربی:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={coachForm.goals}
-                    onChange={(e) =>
-                      setCoachForm({ ...coachForm, goals: e.target.value })
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <Button
-                  variant="primary"
-                  onClick={() =>
-                    triggerActivationFlow({
-                      id: `coach-custom-${Date.now()}`,
-                      title: `برنامه اختصاصی با ${selectedCoach.fullName}`,
-                      coachName: selectedCoach.fullName,
-                      price: '۳۹۹,۰۰۰ تومان',
-                      priceNumber: 399000,
-                      durationWeeks: 6,
-                      sessionsPerWeek: 4,
-                      totalSessions: 24,
-                      difficulty: 'پیشرفته',
-                      goal: coachForm.goals,
-                    })
-                  }
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-black text-xs h-11 shadow-lg shadow-amber-500/25 cursor-pointer"
+            {/* Coaches List - Just Rating, Name, and Buy */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filteredCoaches.map((coach) => (
+                <div
+                  key={coach.id}
+                  className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-amber-400 transition-all flex items-center justify-between gap-3 shadow-xs"
                 >
-                  تایید نهایی و دریافت برنامه اختصاصی (۳۹۹ هزار تومان)
-                </Button>
-              </div>
-            )}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 font-black flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                        {coach.fullName}
+                      </h4>
+                      <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+                        <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                        <span>{coach.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tName = currentUser?.fullName || 'شاگرد';
+                      const tPhone = currentUser?.phoneNumber || '';
+                      const tId = (currentUser as any)?.id || currentUser?.phoneNumber || `tr-${Date.now()}`;
+                      fetch(`${API_BASE_URL}/coaches/request`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          coachId: coach.id,
+                          coachName: coach.fullName,
+                          traineeId: tId,
+                          playerName: tName,
+                          playerPhone: tPhone,
+                          goals: `تمرینات اختصاصی تحت نظارت ${coach.fullName}`,
+                          planTitle: `برنامه اختصاصی با ${coach.fullName}`,
+                        }),
+                      }).catch(() => {});
+
+                      triggerActivationFlow({
+                        id: `coach-custom-${coach.id}-${Date.now()}`,
+                        coachId: coach.id,
+                        title: `برنامه اختصاصی با ${coach.fullName}`,
+                        coachName: coach.fullName,
+                        price: '۳۹۹,۰۰۰ تومان',
+                        priceNumber: 399000,
+                        durationWeeks: 6,
+                        sessionsPerWeek: 4,
+                        totalSessions: 24,
+                        difficulty: 'پیشرفته',
+                        goal: `تمرینات اختصاصی تحت نظارت ${coach.fullName}`,
+                      });
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-4 py-2 rounded-xl transition-all shadow-md shadow-amber-500/20 cursor-pointer shrink-0 active:scale-95"
+                  >
+                    خرید
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </motion.div>

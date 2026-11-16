@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import {
@@ -52,10 +53,10 @@ export const NutritionSection: React.FC = () => {
     const fetchNutritionData = async () => {
       try {
         const [ageRes, goalRes, timingRes, foodsRes] = await Promise.all([
-          fetch('http://localhost:4000/nutrition/age-plans'),
-          fetch('http://localhost:4000/nutrition/goal-plans'),
-          fetch('http://localhost:4000/nutrition/timing'),
-          fetch('http://localhost:4000/nutrition/foods'),
+          fetch(`${API_BASE_URL}/nutrition/age-plans`),
+          fetch(`${API_BASE_URL}/nutrition/goal-plans`),
+          fetch(`${API_BASE_URL}/nutrition/timing`),
+          fetch(`${API_BASE_URL}/nutrition/foods`),
         ]);
 
         if (ageRes.ok) setAgePlans(await ageRes.json());
@@ -88,7 +89,7 @@ export const NutritionSection: React.FC = () => {
           onClick={() => setSubTab('age-plans')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === 'age-plans'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
               : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
           }`}
         >
@@ -101,7 +102,7 @@ export const NutritionSection: React.FC = () => {
           onClick={() => setSubTab('goals')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === 'goals'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
               : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
           }`}
         >
@@ -114,7 +115,7 @@ export const NutritionSection: React.FC = () => {
           onClick={() => setSubTab('workout-timing')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === 'workout-timing'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
               : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
           }`}
         >
@@ -127,7 +128,7 @@ export const NutritionSection: React.FC = () => {
           onClick={() => setSubTab('calorie-table')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
             subTab === 'calorie-table'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
               : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
           }`}
         >
@@ -150,23 +151,23 @@ export const NutritionSection: React.FC = () => {
                   onClick={() => setSelectedAgePlanId(plan.id)}
                   className={`p-3 rounded-2xl border text-right transition-all flex flex-col justify-between ${
                     isSelected
-                      ? 'border-purple-600 bg-purple-50/80 dark:bg-purple-950/40 shadow-sm ring-2 ring-purple-500/20'
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:border-purple-300'
+                      ? 'border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-sm ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:border-emerald-300'
                   }`}
                 >
                   <span className="text-xs font-black text-slate-900 dark:text-white block">{plan.ageGroup}</span>
-                  <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 mt-1">{plan.ageRange}</span>
+                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">{plan.ageRange}</span>
                 </button>
               );
             })}
           </div>
 
           {activeAgePlan && (
-            <Card className="border border-purple-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 sm:p-7 space-y-6">
+            <Card className="border border-emerald-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 sm:p-7 space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 text-right">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                    <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                       رده {activeAgePlan.ageGroup} ({activeAgePlan.ageRange})
                     </span>
                     {activeAgePlan.dailyCalories && (
@@ -182,7 +183,7 @@ export const NutritionSection: React.FC = () => {
 
                 <div className="flex flex-wrap gap-1.5">
                   {activeAgePlan.keyNutrients.map((n, i) => (
-                    <span key={i} className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    <span key={i} className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                       {n}
                     </span>
                   ))}
@@ -210,7 +211,7 @@ export const NutritionSection: React.FC = () => {
                       className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-1"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-purple-700 dark:text-purple-300">{meal.mealName}</span>
+                        <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{meal.mealName}</span>
                         {meal.approxCalories && (
                           <span className="text-[11px] font-bold text-slate-500">{meal.approxCalories} کالری</span>
                         )}
@@ -240,19 +241,19 @@ export const NutritionSection: React.FC = () => {
                   onClick={() => setSelectedGoalId(goal.id)}
                   className={`flex-1 p-4 rounded-2xl border text-right transition-all ${
                     isSelected
-                      ? 'border-purple-600 bg-purple-50/80 dark:bg-purple-950/40 shadow-sm ring-2 ring-purple-500/20'
+                      ? 'border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-sm ring-2 ring-emerald-500/20'
                       : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
                   }`}
                 >
                   <h4 className="text-sm font-black text-slate-900 dark:text-white">{goal.title}</h4>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 font-bold mt-1">حدود {goal.dailyCalories} کالری روزانه</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">حدود {goal.dailyCalories} کالری روزانه</p>
                 </button>
               );
             })}
           </div>
 
           {activeGoalPlan && (
-            <Card className="border border-purple-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 sm:p-7 space-y-5">
+            <Card className="border border-emerald-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 sm:p-7 space-y-5">
               <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 className="text-base font-black text-slate-900 dark:text-white">{activeGoalPlan.title}</h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{activeGoalPlan.description}</p>
@@ -261,7 +262,7 @@ export const NutritionSection: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {activeGoalPlan.meals.map((m: any, idx: number) => (
                   <div key={idx} className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
-                    <span className="text-xs font-black text-purple-700 dark:text-purple-300 block mb-1">{m.mealName}</span>
+                    <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 block mb-1">{m.mealName}</span>
                     <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">{m.foods}</p>
                   </div>
                 ))}
@@ -275,7 +276,7 @@ export const NutritionSection: React.FC = () => {
       {subTab === 'workout-timing' && workoutTiming && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
           {/* Pre */}
-          <Card className="p-5 border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 rounded-3xl space-y-4">
+          <Card className="p-5 border border-emerald-200/90 dark:border-white/10 bg-white dark:bg-slate-900 rounded-3xl space-y-4">
             <div className="h-10 w-10 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-black">
               <Clock className="h-5 w-5" />
             </div>
@@ -294,7 +295,7 @@ export const NutritionSection: React.FC = () => {
           </Card>
 
           {/* Intra */}
-          <Card className="p-5 border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 rounded-3xl space-y-4">
+          <Card className="p-5 border border-emerald-200/90 dark:border-white/10 bg-white dark:bg-slate-900 rounded-3xl space-y-4">
             <div className="h-10 w-10 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center font-black">
               <Droplets className="h-5 w-5" />
             </div>
@@ -313,8 +314,8 @@ export const NutritionSection: React.FC = () => {
           </Card>
 
           {/* Post */}
-          <Card className="p-5 border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 rounded-3xl space-y-4">
-            <div className="h-10 w-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center font-black">
+          <Card className="p-5 border border-emerald-200/90 dark:border-white/10 bg-white dark:bg-slate-900 rounded-3xl space-y-4">
+            <div className="h-10 w-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-black">
               <Zap className="h-5 w-5" />
             </div>
             <div>
@@ -335,7 +336,7 @@ export const NutritionSection: React.FC = () => {
 
       {/* 4. IRANIAN CALORIE TABLE */}
       {subTab === 'calorie-table' && (
-        <Card className="border border-purple-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 sm:p-6 space-y-5 text-right">
+        <Card className="border border-emerald-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 sm:p-6 space-y-5 text-right">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-black text-slate-900 dark:text-white">بانک کالری مواد غذایی ایرانی</h3>
@@ -346,10 +347,10 @@ export const NutritionSection: React.FC = () => {
               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="جستجوی ماده غذایی (سنگک، مرغ، موز)..."
+                placeholder="جستجو..."
                 value={foodSearch}
                 onChange={(e) => setFoodSearch(e.target.value)}
-                className="w-full h-10 pr-10 pl-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:outline-none focus:border-purple-600"
+                className="w-full h-10 pr-10 pl-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:outline-none focus:border-emerald-600"
               />
             </div>
           </div>
@@ -363,7 +364,7 @@ export const NutritionSection: React.FC = () => {
                 onClick={() => setFoodCategory(cat)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                   foodCategory === cat
-                    ? 'bg-purple-600 text-white shadow-sm'
+                    ? 'bg-emerald-600 text-white shadow-sm'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
@@ -385,9 +386,9 @@ export const NutritionSection: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredFoods.map((item) => (
-                  <tr key={item.id} className="hover:bg-purple-50/40 dark:hover:bg-purple-950/20 transition-colors">
+                  <tr key={item.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition-colors">
                     <td className="p-3 font-bold text-slate-900 dark:text-white">{item.name}</td>
-                    <td className="p-3 text-purple-600 dark:text-purple-400 font-semibold">{item.category}</td>
+                    <td className="p-3 text-emerald-600 dark:text-emerald-400 font-semibold">{item.category}</td>
                     <td className="p-3 text-slate-500 dark:text-slate-400">{item.portion}</td>
                     <td className="p-3 font-black text-slate-900 dark:text-white text-left dir-ltr">{item.calories} kcal</td>
                   </tr>

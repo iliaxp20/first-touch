@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -48,7 +49,7 @@ export const PersonalCoachSection: React.FC = () => {
   useEffect(() => {
     const fetchCoaches = async () => {
       try {
-        const res = await fetch('http://localhost:4000/coaches');
+        const res = await fetch(`${API_BASE_URL}/coaches`);
         if (res.ok) {
           const data = await res.json();
           setCoaches(data);
@@ -72,7 +73,7 @@ export const PersonalCoachSection: React.FC = () => {
     if (!selectedCoach) return;
 
     try {
-      await fetch('http://localhost:4000/coaches/request', {
+      await fetch(`${API_BASE_URL}/coaches/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -92,7 +93,7 @@ export const PersonalCoachSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Hero Service Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-700 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-purple-900/15">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-700 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-emerald-900/15">
         <div className="relative z-10 max-w-2xl space-y-3 text-right">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
             <Sparkles className="h-3.5 w-3.5 text-amber-300" />
@@ -107,19 +108,19 @@ export const PersonalCoachSection: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur text-xs">
-              <MessageSquare className="h-4 w-4 text-purple-300" />
+              <MessageSquare className="h-4 w-4 text-emerald-300" />
               <span>چت مستقیم با مربی</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur text-xs">
-              <Video className="h-4 w-4 text-purple-300" />
+              <Video className="h-4 w-4 text-emerald-300" />
               <span>آنالیز ویدیوی تمرین</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur text-xs">
-              <Calendar className="h-4 w-4 text-purple-300" />
+              <Calendar className="h-4 w-4 text-emerald-300" />
               <span>تقویم اختصاصی</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur text-xs">
-              <ShieldCheck className="h-4 w-4 text-purple-300" />
+              <ShieldCheck className="h-4 w-4 text-emerald-300" />
               <span>تایید صلاحیت و نظارت اولیا</span>
             </div>
           </div>
@@ -131,16 +132,16 @@ export const PersonalCoachSection: React.FC = () => {
         {coaches.map((coach) => (
           <Card
             key={coach.id}
-            className="flex flex-col justify-between border border-purple-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden"
+            className="flex flex-col justify-between border border-emerald-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden"
           >
             <div>
               {/* Coach Image and Title */}
               <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4 text-right">
-                <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-purple-100 dark:bg-purple-950/60 border-2 border-purple-300 dark:border-purple-800 shrink-0">
+                <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-emerald-100 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 shrink-0">
                   {coach.avatarUrl ? (
                     <img src={coach.avatarUrl} alt={coach.fullName} className="h-full w-full object-cover" />
                   ) : (
-                    <Users className="h-8 w-8 text-purple-600 m-auto" />
+                    <Users className="h-8 w-8 text-emerald-600 m-auto" />
                   )}
                 </div>
                 <div>
@@ -156,7 +157,7 @@ export const PersonalCoachSection: React.FC = () => {
                   <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">
                     {coach.fullName}
                   </h3>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-0.5">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
                     {coach.title}
                   </p>
                 </div>
@@ -187,7 +188,7 @@ export const PersonalCoachSection: React.FC = () => {
                 <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   {coach.features.map((feat, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
-                      <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                       <span>{feat}</span>
                     </div>
                   ))}
@@ -199,13 +200,13 @@ export const PersonalCoachSection: React.FC = () => {
             <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between gap-3">
               <div className="text-right">
                 <span className="text-[10px] text-slate-500 block">شهریه اشتراک ماهانه</span>
-                <span className="text-sm font-black text-purple-700 dark:text-purple-300">{coach.monthlyFee}</span>
+                <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">{coach.monthlyFee}</span>
               </div>
 
               <Button
                 variant="primary"
                 onClick={() => handleOpenRequest(coach)}
-                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-purple-500/25"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-emerald-500/25"
               >
                 انتخاب مربی و شروع
               </Button>
@@ -217,10 +218,10 @@ export const PersonalCoachSection: React.FC = () => {
       {/* COACH REQUEST DIALOG MODAL */}
       {isModalOpen && selectedCoach && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm select-none overflow-y-auto">
-          <Card className="w-full max-w-lg border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl rounded-3xl overflow-hidden my-4">
-            <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-purple-50/50 dark:bg-purple-950/40">
+          <Card className="w-full max-w-lg border border-emerald-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl rounded-3xl overflow-hidden my-4">
+            <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/40">
               <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-purple-600" />
+                <Award className="h-5 w-5 text-emerald-600" />
                 <h3 className="text-sm font-black text-slate-900 dark:text-white">
                   درخواست برنامه اختصاصی از {selectedCoach.fullName}
                 </h3>
@@ -244,7 +245,7 @@ export const PersonalCoachSection: React.FC = () => {
                 <Button
                   variant="primary"
                   onClick={() => setIsModalOpen(false)}
-                  className="bg-purple-600 text-white text-xs font-bold px-6"
+                  className="bg-emerald-600 text-white text-xs font-bold px-6"
                 >
                   متوجه شدم
                 </Button>
@@ -259,7 +260,7 @@ export const PersonalCoachSection: React.FC = () => {
                     placeholder="نام کامل خود را وارد فرمایید"
                     value={formData.playerName}
                     onChange={(e) => setFormData({ ...formData, playerName: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-purple-600 focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-emerald-600 focus:outline-none"
                   />
                 </div>
 
@@ -270,7 +271,7 @@ export const PersonalCoachSection: React.FC = () => {
                       type="text"
                       value={formData.playerAge}
                       onChange={(e) => setFormData({ ...formData, playerAge: e.target.value })}
-                      className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-purple-600 focus:outline-none"
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -279,7 +280,7 @@ export const PersonalCoachSection: React.FC = () => {
                       type="text"
                       value={formData.playerPosition}
                       onChange={(e) => setFormData({ ...formData, playerPosition: e.target.value })}
-                      className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-purple-600 focus:outline-none"
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-emerald-600 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -290,17 +291,17 @@ export const PersonalCoachSection: React.FC = () => {
                     rows={3}
                     value={formData.goals}
                     onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-purple-600 focus:outline-none leading-relaxed"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium focus:border-emerald-600 focus:outline-none leading-relaxed"
                   />
                 </div>
 
-                <div className="p-3 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-950/20 flex items-center gap-2">
+                <div className="p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="parentApproval"
                     checked={formData.parentApproval}
                     onChange={(e) => setFormData({ ...formData, parentApproval: e.target.checked })}
-                    className="h-4 w-4 rounded accent-purple-600"
+                    className="h-4 w-4 rounded accent-emerald-600"
                   />
                   <label htmlFor="parentApproval" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                     تایید نظارت اولیا برای سنین زیر ۱۸ سال الزامی و مورد تایید است
@@ -311,7 +312,7 @@ export const PersonalCoachSection: React.FC = () => {
                   <Button
                     type="submit"
                     variant="primary"
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold h-11"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-11"
                   >
                     ثبت درخواست و پرداخت شهریه ماهانه ({selectedCoach.monthlyFee})
                   </Button>

@@ -1,5 +1,6 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import {
   CheckCircle2,
@@ -7,12 +8,10 @@ import {
   Dumbbell,
   Apple,
   Droplets,
-  Clock,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   Calendar,
-  Bot,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
@@ -49,8 +48,9 @@ export const DashboardView: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [dailyTab, setDailyTab] = useState<'training' | 'nutrition'>('training');
 
   // Real Training Program State from API
   const [activeProgram, setActiveProgram] = useState<any>(null);
@@ -95,16 +95,11 @@ export const DashboardView: React.FC = () => {
     } catch {}
   }, [waterGlasses]);
 
-  // Persian date format
-  const todayPersianFormatted = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat('fa-IR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }).format(new Date());
-    } catch {
-      return 'امروز';
+  const triggerHaptic = useCallback(() => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([12]);
+      } catch {}
     }
   }, []);
 
@@ -193,7 +188,7 @@ export const DashboardView: React.FC = () => {
   // Fetch real nutrition logs for selected date (CALENDAR SUPPORT)
   const fetchNutritionForDate = useCallback(async (dateKeyStr: string) => {
     try {
-      const nutRes = await fetch(`http://localhost:4000/nutrition/daily-log?date=${dateKeyStr}`);
+      const nutRes = await fetch(`${API_BASE_URL}/nutrition/daily-log?date=${dateKeyStr}`);
       if (nutRes.ok) {
         const nutData = await nutRes.json();
 
@@ -238,7 +233,7 @@ export const DashboardView: React.FC = () => {
 
         if (allItems.length === 0) {
           try {
-            const presetsRes = await fetch('http://localhost:4000/nutrition/preset-plans');
+            const presetsRes = await fetch(`${API_BASE_URL}/nutrition/preset-plans`);
             if (presetsRes.ok) {
               const presets = await presetsRes.json();
               if (presets && presets.length > 0) {
@@ -294,7 +289,7 @@ export const DashboardView: React.FC = () => {
       }
 
       if (!prog) {
-        const progRes = await fetch('http://localhost:4000/programs');
+        const progRes = await fetch(`${API_BASE_URL}/programs`);
         if (progRes.ok) {
           const progs = await progRes.json();
           if (Array.isArray(progs) && progs.length > 0) {
@@ -331,7 +326,7 @@ export const DashboardView: React.FC = () => {
 
     // 3. Fetch Real Weekly Performance from API
     try {
-      const perfRes = await fetch('http://localhost:4000/programs/weekly-performance');
+      const perfRes = await fetch(`${API_BASE_URL}/programs/weekly-performance`);
       if (perfRes.ok) {
         const perfData = await perfRes.json();
         if (perfData.points && Array.isArray(perfData.points)) {
@@ -404,19 +399,19 @@ export const DashboardView: React.FC = () => {
 
       // Server Sync
       try {
-        const res = await fetch(`http://localhost:4000/programs/${activeProgram.id}/session-toggle`, {
+        const res = await fetch(`${API_BASE_URL}/programs/${activeProgram.id}/session-toggle`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ weekNumber: 1, dayName }),
         });
-        await fetch('http://localhost:4000/programs/sync', {
+        await fetch(`${API_BASE_URL}/programs/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedProgram),
         }).catch(() => {});
 
         if (res.ok) {
-          fetch('http://localhost:4000/programs/weekly-performance')
+          fetch(`${API_BASE_URL}/programs/weekly-performance`)
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => d?.points && setWeeklyPerformanceData(d.points))
             .catch(() => {});
@@ -451,7 +446,7 @@ export const DashboardView: React.FC = () => {
     });
 
     try {
-      await fetch(`http://localhost:4000/nutrition/toggle-item/${mealId}?date=${nutritionDateKey}`, {
+      await fetch(`${API_BASE_URL}/nutrition/toggle-item/${mealId}?date=${nutritionDateKey}`, {
         method: 'PATCH',
       });
     } catch {}
@@ -608,123 +603,144 @@ export const DashboardView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-40 sm:pb-48 select-none animate-in fade-in duration-300">
-      {/* 1. Ultra Clean Header (No streak badge, no winger/number, no duplicate tactics button) */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-1">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
-            <span>پنل اختصاصی عملکرد بازیکن</span>
-            <span>•</span>
-            <span className="text-foreground font-semibold flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 text-primary" />
-              <span>{todayPersianFormatted}</span>
-            </span>
-          </div>
-
-          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-            {playerName}
-          </h1>
-        </div>
-
-        {/* Real Readiness Score Indicator & AI Coach Button */}
-        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setIsAiModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-violet-500/10 hover:from-purple-500/20 hover:to-violet-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-xs text-xs font-black transition-all group cursor-pointer"
-            title="گفتگو با دستیار هوش مصنوعی فرست تاچ"
-          >
-            <div className="w-5 h-5 rounded-lg bg-purple-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
-              <Bot className="h-3.5 w-3.5" />
-            </div>
-            <span>دستیار هوش مصنوعی</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          </button>
-
-          <div
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border shadow-sm text-xs font-bold transition-all ${readinessMeta.bgClass}`}
-          >
-            <span className={`w-2.5 h-2.5 rounded-full ${readinessMeta.dotClass}`} />
-            <span className="text-muted-foreground">شاخص آمادگی:</span>
-            <span className={`font-black text-sm ${readinessMeta.colorClass}`}>
-              {readinessScore}٪ ({readinessMeta.label})
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Real Metrics Linear Progress Bars (Computed from API) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="space-y-4 max-w-5xl mx-auto pb-32 sm:pb-36 select-none animate-in fade-in duration-300">
+      {/* 1. Real Metrics Cards (شیشه‌ای و جمع‌وجور) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {/* Metric 1: Workout Progress */}
-        <div className="rounded-2xl bg-card border border-border/80 p-3.5 shadow-sm space-y-2">
+        <motion.div 
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-emerald-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
+        >
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
             <span className="flex items-center gap-1.5 text-foreground">
-              <Dumbbell className="h-3.5 w-3.5 text-purple-500" />
+              <Dumbbell className="h-4 w-4 text-emerald-500" />
               <span>پیشرفت تمرینات</span>
             </span>
-            <span>{workoutPercent}٪</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-black">{workoutPercent}٪</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              style={{ width: `${workoutPercent}%` }}
-              className="h-full rounded-full bg-purple-500 transition-all duration-300"
-            />
-          </div>
-          <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
-            <span>
-              {completedSessionsCount} از {totalSessionsCount} جلسه
-            </span>
-            <span className="text-purple-500 font-bold">کامل شد</span>
-          </div>
-        </div>
+
+          {!activeProgram ? (
+            <div className="py-2 text-center space-y-2">
+              <p className="text-[11px] text-muted-foreground font-semibold">هنوز برنامه‌ای فعال نشده</p>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => navigate('/practice')}
+                className="w-full h-8 text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs cursor-pointer"
+              >
+                دریافت برنامه
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  style={{ width: `${workoutPercent}%` }}
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-lime-300 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
+                />
+              </div>
+              <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
+                <span>{completedSessionsCount} از {totalSessionsCount} جلسه</span>
+                <span className="text-emerald-500 font-bold">کامل شد</span>
+              </div>
+            </>
+          )}
+        </motion.div>
 
         {/* Metric 2: Calorie Intake */}
-        <div className="rounded-2xl bg-card border border-border/80 p-3.5 shadow-sm space-y-2">
+        <motion.div 
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-amber-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
+        >
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
             <span className="flex items-center gap-1.5 text-foreground">
-              <Apple className="h-3.5 w-3.5 text-amber-500" />
+              <Apple className="h-4 w-4 text-amber-500" />
               <span>کالری سوخت</span>
             </span>
-            <span>{calPercent}٪</span>
+            <span className="text-amber-600 dark:text-amber-400 font-black">{calPercent}٪</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              style={{ width: `${calPercent}%` }}
-              className="h-full rounded-full bg-amber-500 transition-all duration-300"
-            />
-          </div>
-          <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
-            <span>{consumedNutrition.calories} kcal</span>
-            <span className="text-muted-foreground">از {nutritionTarget.calories}</span>
-          </div>
-        </div>
+
+          {!activeProgram && consumedNutrition.calories === 0 ? (
+            <div className="py-2 text-center space-y-2">
+              <p className="text-[11px] text-muted-foreground font-semibold">برنامه غذایی ثبت نشده</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/practice')}
+                className="w-full h-8 text-xs font-black border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-xl cursor-pointer"
+              >
+                دریافت برنامه
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  style={{ width: `${calPercent}%` }}
+                  className="h-full rounded-full bg-amber-500 transition-all duration-300"
+                />
+              </div>
+              <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
+                <span>{consumedNutrition.calories} kcal</span>
+                <span>از {nutritionTarget.calories}</span>
+              </div>
+            </>
+          )}
+        </motion.div>
 
         {/* Metric 3: Protein Intake */}
-        <div className="rounded-2xl bg-card border border-border/80 p-3.5 shadow-sm space-y-2">
+        <motion.div 
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-emerald-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
+        >
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
             <span className="flex items-center gap-1.5 text-foreground">
-              <Apple className="h-3.5 w-3.5 text-emerald-500" />
+              <Apple className="h-4 w-4 text-emerald-500" />
               <span>پروتئین عضلانی</span>
             </span>
-            <span>{proteinPercent}٪</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-black">{proteinPercent}٪</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              style={{ width: `${proteinPercent}%` }}
-              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-            />
-          </div>
-          <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
-            <span>{consumedNutrition.protein}g</span>
-            <span className="text-muted-foreground">از {nutritionTarget.protein}g</span>
-          </div>
-        </div>
 
-        {/* Metric 4: Water Hydration (Calculated in glasses - NO English letters) */}
-        <div className="rounded-2xl bg-card border border-border/80 p-3.5 shadow-sm space-y-2">
+          {!activeProgram && consumedNutrition.protein === 0 ? (
+            <div className="py-2 text-center space-y-2">
+              <p className="text-[11px] text-muted-foreground font-semibold">محاسبه بر اساس برنامه</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/practice')}
+                className="w-full h-8 text-xs font-black border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-xl cursor-pointer"
+              >
+                دریافت برنامه
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  style={{ width: `${proteinPercent}%` }}
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                />
+              </div>
+              <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
+                <span>{consumedNutrition.protein}g</span>
+                <span>از {nutritionTarget.protein}g</span>
+              </div>
+            </>
+          )}
+        </motion.div>
+
+        {/* Metric 4: Water Hydration */}
+        <motion.div 
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-sky-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
+        >
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
             <span className="flex items-center gap-1.5 text-foreground">
-              <Droplets className="h-3.5 w-3.5 text-sky-500" />
+              <Droplets className="h-4 w-4 text-sky-500" />
               <span>مصرف آب روزانه</span>
             </span>
             <div className="flex items-center gap-1">
@@ -742,29 +758,19 @@ export const DashboardView: React.FC = () => {
                 type="button"
                 onClick={() => setWaterGlasses((prev) => Math.max(0, prev - 1))}
                 className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 font-black hover:bg-sky-500/20 cursor-pointer"
-                title="کاهش یک لیوان آب"
               >
-                -۱ لیوان
+                -۱
               </button>
               <button
                 type="button"
                 onClick={() => setWaterGlasses((prev) => Math.min(20, prev + 1))}
                 className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 font-black hover:bg-sky-500/20 cursor-pointer"
-                title="ثبت یک لیوان آب"
               >
-                +۱ لیوان
-              </button>
-              <button
-                type="button"
-                onClick={() => setWaterGlasses((prev) => Math.min(20, prev + 2))}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-700 dark:text-sky-300 font-black hover:bg-sky-500/30 cursor-pointer"
-                title="ثبت دو لیوان آب"
-              >
-                +۲ لیوان
+                +۱
               </button>
             </div>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
             <div
               style={{ width: `${waterPercent}%` }}
               className="h-full rounded-full bg-sky-500 transition-all duration-300"
@@ -772,10 +778,9 @@ export const DashboardView: React.FC = () => {
           </div>
           <div className="text-[11px] font-semibold text-muted-foreground flex justify-between items-center">
             <span className="font-bold text-foreground">{waterGlasses} لیوان</span>
-            <span className="text-muted-foreground">از حداقل ۸ لیوان ({waterPercent}٪)</span>
+            <span className="text-muted-foreground">از ۸ لیوان ({waterPercent}٪)</span>
           </div>
 
-          {/* 8 mini glass indicators */}
           <div className="flex items-center gap-1 pt-0.5">
             {Array.from({ length: 8 }).map((_, i) => (
               <span
@@ -786,340 +791,270 @@ export const DashboardView: React.FC = () => {
               />
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* 2.5. AI Assistant Interactive Showcase Card */}
-      <div className="rounded-3xl bg-gradient-to-r from-purple-500/[0.08] via-indigo-500/[0.08] to-violet-500/[0.08] dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-violet-950/30 border border-purple-500/25 p-4 sm:p-5 shadow-sm relative overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-purple-500/25 shrink-0">
-              <Bot className="h-6 w-6" />
-            </div>
-            <div className="space-y-0.5 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm sm:text-base font-black text-foreground">
-                  دستیار مربی هوش مصنوعی (FirstTouch AI)
-                </h3>
-                <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  آنلاین
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground font-semibold leading-relaxed line-clamp-1 sm:line-clamp-none">
-                تحلیل وضعیت بدنی، راهکارهای افزایش لمس اول و تغذیه مسابقاتی با هوش مصنوعی
-              </p>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            onClick={() => setIsAiModalOpen(true)}
-            className="rounded-2xl text-xs font-black gap-2 h-9 sm:h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 shrink-0"
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>شروع گفتگو با دستیار</span>
-          </Button>
-        </div>
+        </motion.div>
       </div>
 
       {/* 3. Smooth Attractive Linear Curve Performance Chart (Real API Data) */}
-      <LinearPerformanceChart data={weeklyPerformanceData} />
+      <LinearPerformanceChart
+        data={weeklyPerformanceData}
+        hasActiveProgram={Boolean(activeProgram)}
+        onGetProgram={() => navigate('/practice')}
+      />
 
-      {/* 4. Dual Action Plan: Real Training Programs & Real Registered Meals (Max 3 Items) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Right Column: Training Program with Live Persian Calendar & Max 3 Sessions */}
-        <div className="rounded-3xl bg-card border border-border/80 p-5 shadow-sm space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-border/50">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <Dumbbell className="h-4 w-4 text-purple-500" />
-                <h3 className="text-sm font-black text-foreground">برنامه تمرینات تخصصی</h3>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
-                  {trainingSessions.filter((s) => s.completed).length}/{trainingSessions.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Calendar className="h-3 w-3 text-purple-500" />
-                <span>{formattedTrainingPersianDate}</span>
-                {activeProgram?.title && (
-                  <>
-                    <span>•</span>
-                    <span className="line-clamp-1">{activeProgram.title}</span>
-                  </>
-                )}
-              </div>
-            </div>
-
+      {/* 4. Unified Daily Action Card (تمرین و تغذیه در یک کارت جمع‌وجور بدون اسکرول) */}
+      <div className="w-full rounded-3xl bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 p-4 sm:p-5 shadow-2xl shadow-emerald-950/20 space-y-3">
+        {/* Top Header with Tab Switcher */}
+        <div className="flex items-center justify-between pb-2 border-b border-border/50 gap-2">
+          <div className="flex items-center p-0.5 rounded-xl bg-slate-100/80 dark:bg-black/50 backdrop-blur-md border border-white/10 text-xs font-bold">
             <button
               type="button"
-              onClick={() => navigate('/practice')}
-              className="text-xs text-primary font-bold hover:underline flex items-center shrink-0"
+              onClick={() => {
+                triggerHaptic();
+                setDailyTab('training');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                dailyTab === 'training'
+                  ? 'bg-emerald-600 text-white shadow-xs font-black'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
-              <span>تقویم تمرین</span>
-              <ChevronLeft className="h-3 w-3" />
+              <Dumbbell className="h-3.5 w-3.5" />
+              <span>تمرینات امروز</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic();
+                setDailyTab('nutrition');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                dailyTab === 'nutrition'
+                  ? 'bg-emerald-600 text-white shadow-xs font-black'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Apple className="h-3.5 w-3.5" />
+              <span>وعده‌های غذایی</span>
             </button>
           </div>
 
-          {/* Training Calendar Date Navigation Bar */}
-          <div className="flex items-center justify-between p-2 rounded-2xl bg-muted/30 border border-border/60 text-xs select-none">
-            <button
-              type="button"
-              onClick={handleTrainingPrevDay}
-              className="p-1.5 rounded-xl bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 transition-colors"
-              title="روز قبل"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-
-            <div className="flex items-center gap-1.5 font-bold">
-              <Calendar className="h-3.5 w-3.5 text-purple-500" />
-              <span className="text-foreground">{formattedTrainingPersianDate}</span>
-              {isTrainingToday ? (
-                <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                  امروز
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleTrainingGoToday}
-                  className="px-1.5 py-0.2 rounded-md bg-primary/10 text-primary text-[10px] font-black hover:bg-primary/20"
-                >
-                  برو به امروز
-                </button>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleTrainingNextDay}
-              className="p-1.5 rounded-xl bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 transition-colors"
-              title="روز بعد"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {isLoading ? (
-              <div className="text-center py-6 text-xs text-muted-foreground">در حال بارگذاری تمرینات...</div>
-            ) : trainingSessions.length === 0 ? (
-              <div className="text-center py-6 text-xs text-muted-foreground">جلسه تمرینی ثبت نشده است.</div>
-            ) : (
-              <AnimatePresence>
-                {trainingSessions.slice(0, 3).map((s) => (
-                  <div
-                    key={s.id}
-                    onClick={() => handleToggleSession(s.dayName)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
-                      s.completed
-                        ? 'bg-purple-500/[0.04] border-purple-500/25'
-                        : 'bg-muted/40 hover:bg-muted/80 border-border/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <button
-                        type="button"
-                        className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-                      >
-                        {s.completed ? (
-                          <CheckCircle2 className="h-5 w-5 text-purple-500 stroke-[2.5]" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground/60 stroke-[1.8]" />
-                        )}
-                      </button>
-                      <div className="min-w-0">
-                        <p
-                          className={`text-xs font-bold line-clamp-1 transition-colors ${
-                            s.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                          }`}
-                        >
-                          {s.title}
-                        </p>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                          <span className="font-bold text-primary">{s.dayName}</span>
-                          <span>•</span>
-                          <span className="flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" />
-                            <span>{s.durationMinutes} دقیقه</span>
-                          </span>
-                          <span>•</span>
-                          <span className="line-clamp-1">{s.focus}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
-                        s.completed
-                          ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {s.completed ? 'انجام شد' : `${s.drillsCount} حرکت`}
-                    </span>
-                  </div>
-                ))}
-              </AnimatePresence>
-            )}
-          </div>
-
-          {/* Button to view full workouts list */}
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={() => navigate('/practice')}
-            className="w-full text-xs font-bold gap-1.5 h-9 rounded-2xl bg-muted/40 hover:bg-muted text-foreground border-border/70"
+            className="text-xs text-primary font-bold hover:underline flex items-center shrink-0 cursor-pointer"
           >
-            <span>مشاهده کامل در بخش تمرینات</span>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+            <span>برنامه کامل</span>
+            <ChevronLeft className="h-3 w-3" />
+          </button>
         </div>
 
-        {/* Left Column: Registered Nutrition Meals with Live Persian Calendar Bar (Max 3 Items) */}
-        <div className="rounded-3xl bg-card border border-border/80 p-5 shadow-sm space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-border/50">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <Apple className="h-4 w-4 text-emerald-500" />
-                <h3 className="text-sm font-black text-foreground">وعده‌های ثبتی تغذیه</h3>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
-                  {loggedMeals.filter((m) => m.isCompleted).length}/{loggedMeals.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Calendar className="h-3 w-3 text-emerald-500" />
-                <span>{formattedNutritionPersianDate}</span>
-                <span>•</span>
-                <span>{consumedNutrition.calories} کالری مصرفی</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigate('/practice')}
-              className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center shrink-0"
-            >
-              <span>کالری‌شمار</span>
-              <ChevronLeft className="h-3 w-3" />
-            </button>
-          </div>
-
-          {/* Nutrition Calendar Date Navigation Bar (CALENDAR FOR MEALS!) */}
-          <div className="flex items-center justify-between p-2 rounded-2xl bg-muted/30 border border-border/60 text-xs select-none">
-            <button
-              type="button"
-              onClick={handleNutritionPrevDay}
-              className="p-1.5 rounded-xl bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 transition-colors cursor-pointer"
-              title="روز قبل"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-
-            <div className="flex items-center gap-1.5 font-bold">
-              <Calendar className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-foreground">{formattedNutritionPersianDate}</span>
-              {isNutritionToday ? (
-                <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                  امروز
-                </span>
-              ) : (
-                <button
+        {/* Tab 1: Training Content */}
+        {dailyTab === 'training' && (
+          <div className="space-y-2.5">
+            {!activeProgram ? (
+              <div className="py-5 text-center space-y-2 bg-muted/20 rounded-2xl border border-dashed border-border/70 p-3">
+                <Dumbbell className="h-6 w-6 text-emerald-500 mx-auto" />
+                <p className="text-xs font-bold text-muted-foreground">
+                  هنوز برنامه تمرینی فعال نکرده‌اید
+                </p>
+                <Button
                   type="button"
-                  onClick={handleNutritionGoToday}
-                  className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black hover:bg-emerald-500/20 cursor-pointer"
+                  variant="primary"
+                  onClick={() => navigate('/practice')}
+                  className="bg-primary text-primary-foreground font-black text-xs px-4 h-8 rounded-xl shadow-xs cursor-pointer"
                 >
-                  برو به امروز
-                </button>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleNutritionNextDay}
-              className="p-1.5 rounded-xl bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 transition-colors cursor-pointer"
-              title="روز بعد"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {isLoading ? (
-              <div className="text-center py-6 text-xs text-muted-foreground">در حال بارگذاری وعده‌ها...</div>
-            ) : loggedMeals.length === 0 ? (
-              <div className="text-center py-6 text-xs text-muted-foreground">وعده غذایی برای امروز ثبت نشده است.</div>
+                  دریافت برنامه
+                </Button>
+              </div>
             ) : (
-              <AnimatePresence>
-                {loggedMeals.slice(0, 3).map((m) => (
-                  <div
-                    key={m.id}
-                    onClick={() => handleToggleMeal(m.id)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
-                      m.isCompleted
-                        ? 'bg-emerald-500/[0.04] border-emerald-500/25'
-                        : 'bg-muted/40 hover:bg-muted/80 border-border/60'
-                    }`}
+              <>
+                {/* Date Navigation Bar */}
+                <div className="flex items-center justify-between p-1.5 rounded-xl bg-muted/30 border border-border/50 text-xs select-none">
+                  <button
+                    type="button"
+                    onClick={handleTrainingPrevDay}
+                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+
+                  <div className="flex items-center gap-1.5 text-xs font-bold">
+                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>{formattedTrainingPersianDate}</span>
+                    {isTrainingToday ? (
+                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
+                        امروز
+                      </span>
+                    ) : (
                       <button
                         type="button"
-                        className="flex-shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={handleTrainingGoToday}
+                        className="text-[10px] text-primary hover:underline font-black cursor-pointer"
                       >
-                        {m.isCompleted ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-500 stroke-[2.5]" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground/60 stroke-[1.8]" />
-                        )}
+                        امروز
                       </button>
-                      <div className="min-w-0">
-                        <p
-                          className={`text-xs font-bold line-clamp-1 transition-colors ${
-                            m.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTrainingNextDay}
+                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  {trainingSessions.length === 0 ? (
+                    <div className="text-center py-3 text-xs text-muted-foreground">جلسه تمرینی برای این تاریخ ثبت نشده است.</div>
+                  ) : (
+                    <AnimatePresence>
+                      {trainingSessions.slice(0, 3).map((s) => (
+                        <motion.div
+                          key={s.id}
+                          whileHover={{ scale: 1.01, x: -2 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleToggleSession(s.dayName)}
+                          className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                            s.completed
+                              ? 'bg-emerald-500/[0.05] border-emerald-500/30'
+                              : 'bg-muted/40 hover:bg-muted/80 border-border/60'
                           }`}
                         >
-                          {m.name}
-                        </p>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                            {getMealTypeLabel(m.mealType)}
-                          </span>
-                          <span>•</span>
-                          <span>{m.calories} kcal</span>
-                          <span>•</span>
-                          <span>{m.protein}g پروتئین</span>
-                        </div>
-                      </div>
-                    </div>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {s.completed ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className={`text-xs font-bold line-clamp-1 ${s.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                                {s.title}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <span className="font-bold text-primary">{s.dayName}</span>
+                                <span>•</span>
+                                <span>{s.durationMinutes} دقیقه</span>
+                                <span>•</span>
+                                <span className="line-clamp-1">{s.focus}</span>
+                              </div>
+                            </div>
+                          </div>
 
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
-                        m.isCompleted
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {m.isCompleted ? 'مصرف شد' : 'تیک مصرف'}
-                    </span>
-                  </div>
-                ))}
-              </AnimatePresence>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${s.completed ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
+                            {s.completed ? 'انجام شد' : `${s.drillsCount} حرکت`}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  )}
+                </div>
+              </>
             )}
           </div>
+        )}
 
-          {/* Button to view full nutrition list */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/practice')}
-            className="w-full text-xs font-bold gap-1.5 h-9 rounded-2xl bg-muted/40 hover:bg-muted text-foreground border-border/70"
-          >
-            <span>مشاهده کامل در بخش تمرینات</span>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Tab 2: Nutrition Content */}
+        {dailyTab === 'nutrition' && (
+          <div className="space-y-2.5">
+            {loggedMeals.length === 0 ? (
+              <div className="py-5 text-center space-y-2 bg-muted/20 rounded-2xl border border-dashed border-border/70 p-3">
+                <Apple className="h-6 w-6 text-emerald-500 mx-auto" />
+                <p className="text-xs font-bold text-muted-foreground">
+                  برنامه غذایی امروز ثبت نشده است
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/practice')}
+                  className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-black text-xs px-4 h-8 rounded-xl shadow-xs cursor-pointer"
+                >
+                  دریافت برنامه غذایی
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Date Navigation Bar */}
+                <div className="flex items-center justify-between p-1.5 rounded-xl bg-muted/30 border border-border/50 text-xs select-none">
+                  <button
+                    type="button"
+                    onClick={handleNutritionPrevDay}
+                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+
+                  <div className="flex items-center gap-1.5 text-xs font-bold">
+                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>{formattedNutritionPersianDate}</span>
+                    {isNutritionToday ? (
+                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
+                        امروز
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleNutritionGoToday}
+                        className="text-[10px] text-emerald-500 hover:underline font-black cursor-pointer"
+                      >
+                        امروز
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleNutritionNextDay}
+                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <AnimatePresence>
+                    {loggedMeals.slice(0, 4).map((m) => (
+                      <div
+                        key={m.id}
+                        onClick={() => handleToggleMeal(m.id)}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                          m.isCompleted
+                            ? 'bg-emerald-500/[0.04] border-emerald-500/25'
+                            : 'bg-muted/40 hover:bg-muted/80 border-border/60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {m.isCompleted ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          ) : (
+                            <Circle className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <p className={`text-xs font-bold line-clamp-1 ${m.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                              {m.name}
+                            </p>
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                {getMealTypeLabel(m.mealType)}
+                              </span>
+                              <span>•</span>
+                              <span>{m.calories} kcal</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${m.isCompleted ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
+                          {m.isCompleted ? 'مصرف شد' : m.portion || 'یک وعده'}
+                        </span>
+                      </div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 5. Minimal Coach Tactial Note Pill */}

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -7,8 +8,36 @@ import { useNavigate } from 'react-router-dom';
 import { getAgeGroupFromAge } from '../plans/data/readyProgramsStore';
 
 export const SettingsView: React.FC = () => {
-  const { currentUser, logout, setIsProfileModalOpen } = useAuth();
+  const { currentUser, logout, updateUser, setIsProfileModalOpen } = useAuth();
   const navigate = useNavigate();
+
+  // Ensure latest profile data is synchronized from server
+  React.useEffect(() => {
+    if (currentUser?.phoneNumber) {
+      fetch(`${API_BASE_URL}/auth/profile?phoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.user) {
+            updateUser({
+              fullName: data.user.fullName,
+              isProfileComplete: Boolean(data.user.isProfileComplete),
+              nationalId: data.user.nationalId,
+              age: data.user.age,
+              height: data.user.height,
+              weight: data.user.weight,
+              preferredFoot: data.user.preferredFoot,
+              position: data.user.position,
+              avatarUrl: data.user.avatarUrl,
+              experienceYears: data.user.experienceYears,
+              bicep: data.user.bicep,
+              calf: data.user.calf,
+              chest: data.user.chest,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentUser?.phoneNumber, updateUser]);
 
   if (!currentUser) return null;
 
@@ -118,7 +147,7 @@ export const SettingsView: React.FC = () => {
           <Button
             variant="primary"
             onClick={() => setIsProfileModalOpen(true)}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs h-11 rounded-2xl gap-2 shadow-sm"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs h-11 rounded-2xl gap-2 shadow-sm"
           >
             <Edit3 className="h-4 w-4" />
             <span>ویرایش و تغییر اطلاعات پروفایل</span>

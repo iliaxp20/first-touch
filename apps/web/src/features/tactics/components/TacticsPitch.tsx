@@ -430,6 +430,7 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
       {players.map((p) => {
         const isGrabbed = activePlayer === p.id;
         const isGK = p.position === 'GK';
+        const isAway = p.team === 'AWAY';
 
         return (
           <div
@@ -453,6 +454,8 @@ export const TacticsPitch: React.FC<TacticsPitchProps> = ({
               className={`relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full font-black text-xs sm:text-sm shadow-xl ring-2 ring-white/95 ${
                 isGK
                   ? 'bg-gradient-to-br from-yellow-300 via-amber-400 to-amber-600 text-black'
+                  : isAway
+                  ? 'bg-gradient-to-br from-blue-500 via-sky-600 to-indigo-700 text-white'
                   : 'bg-gradient-to-br from-rose-500 via-red-600 to-rose-700 text-white'
               }`}
             >

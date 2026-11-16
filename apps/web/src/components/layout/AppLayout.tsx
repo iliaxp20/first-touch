@@ -31,8 +31,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const auth = useAuth();
   const location = useLocation();
 
+  const isPracticePage = location.pathname === '/practice' || location.pathname.startsWith('/plans');
   const isTacticsActiveRoom = location.pathname.startsWith('/tactics/');
-  const shouldHideNavbar = hideNavbar ?? isTacticsActiveRoom;
+  const shouldHideNavbar = hideNavbar ?? (isTacticsActiveRoom || isPracticePage);
   const shouldHideBottomNav = hideBottomNav ?? isTacticsActiveRoom;
 
   const effectiveRole = activeRole ?? auth.currentUser?.role ?? 'PLAYER';
@@ -41,10 +42,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const effectiveAvatar = userAvatar ?? auth.currentUser?.avatarUrl;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100/70 via-slate-50 to-violet-100/60 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/40 text-foreground transition-colors duration-200 relative overflow-x-hidden">
-      {/* Ambient Flowing Light Orbs in Background */}
-      <div className="fixed top-1/4 -right-20 w-80 h-80 rounded-full bg-purple-300/35 dark:bg-purple-900/20 blur-[120px] pointer-events-none animate-orb-1" />
-      <div className="fixed bottom-1/4 -left-20 w-96 h-96 rounded-full bg-violet-300/30 dark:bg-violet-900/15 blur-[140px] pointer-events-none animate-orb-2" />
+    <div className="min-h-screen flex flex-col bg-background dark:bg-[#030d07] text-foreground transition-colors duration-200 relative overflow-x-hidden">
+      {/* Stadium Floodlight Green Luminous Atmosphere */}
+      <div 
+        className="fixed -top-28 left-1/2 -translate-x-1/2 w-[650px] sm:w-[950px] h-[500px] sm:h-[620px] rounded-full pointer-events-none z-0 opacity-20 dark:opacity-100 transition-opacity"
+        style={{
+          background: 'radial-gradient(circle at 50% 35%, rgba(16, 185, 129, 0.45) 0%, rgba(5, 150, 105, 0.30) 32%, rgba(4, 120, 87, 0.16) 55%, transparent 75%)',
+          filter: 'blur(50px)',
+        }}
+      />
+      <div 
+        className="fixed top-0 inset-x-0 h-96 pointer-events-none z-0 opacity-25 dark:opacity-100 transition-opacity"
+        style={{
+          background: 'radial-gradient(ellipse 95% 65% at 50% -10%, rgba(34, 197, 94, 0.30) 0%, rgba(16, 185, 129, 0.15) 42%, transparent 75%)',
+        }}
+      />
 
       {/* Top Navbar */}
       {!shouldHideNavbar && (

@@ -15,8 +15,10 @@ export interface ProfileData {
   bicep?: string;
   calf?: string;
   chest?: string;
+  thigh?: string;
+  bodyPhotoUrl?: string;
   experienceYears?: string;
-  preferredFoot?: 'راست' | 'چپ' | 'هر دو پا';
+  preferredFoot: 'راست' | 'چپ' | 'هر دو پا';
   favPosition?: string;
 }
 
@@ -38,6 +40,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   const [transitionMessage, setTransitionMessage] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bodyFileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<ProfileData>({
     fullName: '',
@@ -51,6 +54,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
     bicep: '',
     calf: '',
     chest: '',
+    thigh: '',
+    bodyPhotoUrl: '',
     experienceYears: '',
     preferredFoot: 'راست',
     favPosition: 'هافبک میانی / بازیساز',
@@ -64,7 +69,10 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
       if (initialData) {
         setFormData((prev) => ({
           ...prev,
-          fullName: initialData.fullName || prev.fullName,
+          fullName:
+            initialData.fullName && initialData.fullName !== 'کاربر گرامی'
+              ? initialData.fullName
+              : prev.fullName,
           nationalId: initialData.nationalId || prev.nationalId,
           avatarUrl: initialData.avatarUrl || prev.avatarUrl,
           age: initialData.age ? String(initialData.age) : prev.age,
@@ -74,8 +82,10 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
           bicep: initialData.bicep ? String(initialData.bicep) : prev.bicep,
           calf: initialData.calf ? String(initialData.calf) : prev.calf,
           chest: initialData.chest ? String(initialData.chest) : prev.chest,
+          thigh: initialData.thigh ? String(initialData.thigh) : prev.thigh,
+          bodyPhotoUrl: initialData.bodyPhotoUrl || prev.bodyPhotoUrl,
           experienceYears: initialData.experienceYears || prev.experienceYears,
-          preferredFoot: initialData.preferredFoot || prev.preferredFoot,
+          preferredFoot: initialData.preferredFoot || prev.preferredFoot || 'راست',
           favPosition: initialData.position || initialData.favPosition || prev.favPosition,
         }));
       }
@@ -86,13 +96,25 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   const [statusText, setStatusText] = useState('درحال شخصی‌سازی برنامه برای شما...');
   const [isFinished, setIsFinished] = useState(false);
 
-  // Handle Real Image File Upload
+  // Handle Real Face Image File Upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData((prev) => ({ ...prev, avatarUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle Body Photo Upload (اختیاری)
+  const handleBodyPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, bodyPhotoUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -112,8 +134,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   const handleStep1Submit = () => {
     setValidationError(null);
     const trimmedName = formData.fullName.trim();
-    if (!trimmedName || trimmedName.length < 3) {
-      setValidationError('نام و نام خانوادگی الزامی است (حداقل ۳ حرف وارد کنید).');
+    if (!trimmedName || trimmedName === 'کاربر گرامی' || trimmedName.length < 3) {
+      setValidationError('نام و نام خانوادگی الزامی است (حداقل ۳ حرف واقعی وارد کنید).');
       return;
     }
     const ageNum = Number(formData.age);
@@ -122,31 +144,49 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
       return;
     }
     const trimmedId = formData.nationalId.trim();
-    if (!trimmedId || trimmedId.length < 8) {
-      setValidationError('کد ملی یا شناسه شناسنامه‌ای معتبر الزامی است (حداقل ۸ رقم).');
+    if (!trimmedId || trimmedId.length < 8 || !/^\d+$/.test(trimmedId)) {
+      setValidationError('کد ملی یا شناسه هویتی باید تنها شامل اعداد و حداقل ۸ رقم باشد.');
       return;
     }
     goToStep(2, 'در حال ثبت مشخصات فردی و آماده‌سازی بخش سنجش بدنی...');
   };
 
-  // Step 2 Validation: CANNOT BE EMPTY
+  // Step 2 Validation: Required fields check
   const handleStep2Submit = () => {
     setValidationError(null);
     const heightNum = Number(formData.height);
     if (!formData.height.trim() || isNaN(heightNum) || heightNum < 90 || heightNum > 230) {
-      setValidationError('لطفاً قد واقعی خود را بر حسب سانتی‌متر وارد نمایید (بین ۹۰ تا ۲۳۰).');
+      setValidationError('لطفاً قد واقعی خود را بر حسب سانتی‌متر به عدد وارد نمایید (بین ۹۰ تا ۲۳۰).');
       return;
     }
     const weightNum = Number(formData.weight);
     if (!formData.weight.trim() || isNaN(weightNum) || weightNum < 20 || weightNum > 160) {
-      setValidationError('لطفاً وزن واقعی خود را بر حسب کیلوگرم وارد نمایید (بین ۲۰ تا ۱۶۰).');
+      setValidationError('لطفاً وزن واقعی خود را بر حسب کیلوگرم به عدد وارد نمایید (بین ۲۰ تا ۱۶۰).');
       return;
     }
-    if (!formData.favPosition?.trim()) {
-      setValidationError('لطفاً پست تخصصی بازی در زمین را انتخاب کنید.');
+    if (!formData.preferredFoot) {
+      setValidationError('انتخاب پای تخصصی الزامی است.');
       return;
     }
+    // پست تخصصی و شاخص‌های دور بدنی و تصویر بدن اختیاری هستند
     goToStep(3, 'در حال محاسبه شاخص‌های تنی و ساخت کارت دیجیتال مربیگری...');
+  };
+
+  const handleFinish = () => {
+    const trimmedName = formData.fullName.trim();
+    if (
+      !trimmedName ||
+      trimmedName === 'کاربر گرامی' ||
+      !formData.age.trim() ||
+      !formData.nationalId.trim() ||
+      !formData.height.trim() ||
+      !formData.weight.trim()
+    ) {
+      setStep(1);
+      setValidationError('مشخصات ناقص است. لطفاً همه فیلدهای ستاره‌دار را به درستی تکمیل فرمایید.');
+      return;
+    }
+    onComplete(formData);
   };
 
   // Smooth circular progress in Step 4
@@ -186,15 +226,15 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   if (!isOpen) return null;
 
   const inputClass =
-    'w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/90 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-colors';
+    'w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/90 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-colors';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm overflow-y-auto select-none transition-all">
-      <Card className="w-full max-w-xl border border-purple-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl shadow-purple-950/20 dark:shadow-black/70 relative overflow-hidden my-6">
+      <Card className="w-full max-w-xl border border-emerald-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl shadow-emerald-950/20 dark:shadow-black/70 relative overflow-hidden my-6">
         {/* Step Progress Top Bar */}
-        <div className="bg-purple-50/80 dark:bg-purple-950/40 p-4 border-b border-purple-100 dark:border-purple-900/40 flex items-center justify-between">
+        <div className="bg-emerald-50/80 dark:bg-emerald-950/40 p-4 border-b border-emerald-100 dark:border-emerald-900/40 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-600 text-white font-black text-xs shadow-sm">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white font-black text-xs shadow-sm">
               {step}
             </span>
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -220,8 +260,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
           {isTransitioning ? (
             <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
               <div className="relative flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full border-4 border-purple-200 dark:border-purple-800 border-t-purple-600 animate-spin" />
-                <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400 absolute animate-pulse" />
+                <div className="h-16 w-16 rounded-full border-4 border-emerald-200 dark:border-emerald-800 border-t-emerald-600 animate-spin" />
+                <Sparkles className="h-6 w-6 text-emerald-600 dark:text-emerald-400 absolute animate-pulse" />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-black text-slate-800 dark:text-slate-200">{transitionMessage}</p>
@@ -262,8 +302,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                       onClick={() => fileInputRef.current?.click()}
                       className={`relative h-20 w-20 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden ${
                         formData.avatarUrl
-                          ? 'border-purple-600 shadow-md ring-2 ring-purple-500/20'
-                          : 'border-purple-300 dark:border-purple-700/80 hover:border-purple-500 dark:hover:border-purple-500 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-50 dark:hover:bg-purple-900/30'
+                          ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/20'
+                          : 'border-emerald-300 dark:border-emerald-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
                       }`}
                     >
                       {formData.avatarUrl ? (
@@ -273,7 +313,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex flex-col items-center text-purple-600 dark:text-purple-400">
+                        <div className="flex flex-col items-center text-emerald-600 dark:text-emerald-400">
                           <Camera className="h-6 w-6" />
                           <span className="text-[9px] font-bold mt-1">بارگذاری عکس</span>
                         </div>
@@ -283,7 +323,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
                     >
                       <Upload className="h-3.5 w-3.5" />
                       {formData.avatarUrl ? 'تغییر تصویر چهره' : 'انتخاب تصویر چهره از دستگاه'}
@@ -354,7 +394,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <Button
                       variant="primary"
                       onClick={handleStep1Submit}
-                      className="w-full h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25 cursor-pointer"
+                      className="w-full h-11 text-sm font-black gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25 cursor-pointer"
                     >
                       مرحله بعد: اطلاعات تمرینی و بدنی
                       <ChevronLeft className="h-4 w-4" />
@@ -409,7 +449,9 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">پای تخصصی</label>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        پای تخصصی <span className="text-rose-500">*</span>
+                      </label>
                       <select
                         value={formData.preferredFoot || 'راست'}
                         onChange={(e) => setFormData({ ...formData, preferredFoot: e.target.value as any })}
@@ -423,13 +465,14 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
 
                     <div className="space-y-1 sm:col-span-2">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        پست تخصصی در زمین <span className="text-rose-500">*</span>
+                        پست تخصصی در زمین <span className="text-slate-400 font-normal">(اختیاری)</span>
                       </label>
                       <select
-                        value={formData.favPosition || 'هافبک میانی / بازیساز'}
+                        value={formData.favPosition || ''}
                         onChange={(e) => setFormData({ ...formData, favPosition: e.target.value })}
                         className={inputClass}
                       >
+                        <option value="">انتخاب نشده / نامشخص</option>
                         <option value="مهاجم نوک / تمام‌کننده">مهاجم نوک / تمام‌کننده</option>
                         <option value="وینگر چپ / نفوذی">وینگر چپ / نفوذی</option>
                         <option value="وینگر راست / نفوذی">وینگر راست / نفوذی</option>
@@ -443,18 +486,121 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">سابقه بازی</label>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        دور بازو <span className="text-slate-400 font-normal">(اختیاری)</span>
+                      </label>
                       <input
-                        type="text"
-                        value={formData.experienceYears || ''}
-                        onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
-                        className={inputClass}
-                        placeholder="مثال: ۳ سال مدرسه فوتبال"
+                        type="number"
+                        dir="ltr"
+                        value={formData.bicep || ''}
+                        onChange={(e) => setFormData({ ...formData, bicep: e.target.value })}
+                        className={`${inputClass} text-center`}
+                        placeholder="سانتی‌متر"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        دور سینه <span className="text-slate-400 font-normal">(اختیاری)</span>
+                      </label>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        value={formData.chest || ''}
+                        onChange={(e) => setFormData({ ...formData, chest: e.target.value })}
+                        className={`${inputClass} text-center`}
+                        placeholder="سانتی‌متر"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        دور ران <span className="text-slate-400 font-normal">(اختیاری)</span>
+                      </label>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        value={formData.thigh || ''}
+                        onChange={(e) => setFormData({ ...formData, thigh: e.target.value })}
+                        className={`${inputClass} text-center`}
+                        placeholder="سانتی‌متر"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        دور ساق پا <span className="text-slate-400 font-normal">(اختیاری)</span>
+                      </label>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        value={formData.calf || ''}
+                        onChange={(e) => setFormData({ ...formData, calf: e.target.value })}
+                        className={`${inputClass} text-center`}
+                        placeholder="سانتی‌متر"
                       />
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-xs text-purple-800 dark:text-purple-300 text-center font-bold flex items-center justify-center gap-1.5">
+                  {/* Body Photo Upload (اختیاری) */}
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>ارسال عکس تمام‌قد بدن</span>
+                        <span className="text-slate-400 font-normal">(اختیاری جهت بررسی فرم عضلانی توسط مربی)</span>
+                      </label>
+                      {formData.bodyPhotoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, bodyPhotoUrl: '' })}
+                          className="text-[11px] text-rose-500 hover:underline"
+                        >
+                          حذف عکس
+                        </button>
+                      )}
+                    </div>
+
+                    <input
+                      type="file"
+                      ref={bodyFileInputRef}
+                      onChange={handleBodyPhotoChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+
+                    {formData.bodyPhotoUrl ? (
+                      <div className="flex items-center gap-3 p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                        <img
+                          src={formData.bodyPhotoUrl}
+                          alt="عکس بدن"
+                          className="h-16 w-16 rounded-lg object-cover border border-emerald-300"
+                        />
+                        <div className="flex-1 text-right">
+                          <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">تصویر بدن با موفقیت افزوده شد</p>
+                          <button
+                            type="button"
+                            onClick={() => bodyFileInputRef.current?.click()}
+                            className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline mt-1 inline-flex items-center gap-1"
+                          >
+                            <Upload className="h-3 w-3" />
+                            تغییر عکس
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => bodyFileInputRef.current?.click()}
+                        className="w-full py-3 border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors bg-white dark:bg-slate-900 cursor-pointer"
+                      >
+                        <Upload className="h-4 w-4" />
+                        انتخاب تصویر تمام‌قد از گالری دستگاه
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 text-center font-bold flex items-center justify-center gap-1.5">
                     <Info className="h-4 w-4 shrink-0" />
                     <span>تمامی این اطلاعات در هر زمان در بخش «حساب من» قابل ویرایش مجدد هستند</span>
                   </div>
@@ -470,7 +616,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <Button
                       variant="primary"
                       onClick={handleStep2Submit}
-                      className="flex-[2] h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25 cursor-pointer"
+                      className="flex-[2] h-11 text-sm font-black gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25 cursor-pointer"
                     >
                       مشاهده پیش‌نمایش شناسنامه
                       <ChevronLeft className="h-4 w-4" />
@@ -490,8 +636,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                   </div>
 
                   {/* Official Player Card */}
-                  <div className="rounded-2xl p-5 bg-gradient-to-br from-purple-900 via-indigo-950 to-slate-900 text-white shadow-2xl border-2 border-purple-400/40 relative overflow-hidden">
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[10px] font-black text-purple-300 bg-black/50 px-2.5 py-1 rounded-full">
+                  <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-900 via-indigo-950 to-slate-900 text-white shadow-2xl border-2 border-emerald-400/40 relative overflow-hidden">
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[10px] font-black text-emerald-300 bg-black/50 px-2.5 py-1 rounded-full">
                       <img src="/logo.png" alt="فرست تاچ" className="h-4 w-4 object-contain" />
                       <span>شناسنامه ورزشی فرست تاچ</span>
                     </div>
@@ -501,16 +647,16 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         <img
                           src={formData.avatarUrl}
                           alt="تصویر بازیکن"
-                          className="h-20 w-20 rounded-2xl border-2 border-purple-400 object-cover shadow-xl"
+                          className="h-20 w-20 rounded-2xl border-2 border-emerald-400 object-cover shadow-xl"
                         />
                       ) : (
-                        <div className="h-20 w-20 rounded-2xl border-2 border-purple-400/50 bg-purple-800/40 flex items-center justify-center text-purple-300 font-black">
+                        <div className="h-20 w-20 rounded-2xl border-2 border-emerald-400/50 bg-emerald-800/40 flex items-center justify-center text-emerald-300 font-black">
                           <User className="h-10 w-10" />
                         </div>
                       )}
                       <div>
                         <h4 className="text-xl font-black">{formData.fullName}</h4>
-                        <p className="text-xs text-purple-300 font-semibold mt-0.5">
+                        <p className="text-xs text-emerald-300 font-semibold mt-0.5">
                           سن: {formData.age} سال | کد ملی: {formData.nationalId}
                         </p>
                         <p className="text-xs text-emerald-300 mt-1 font-bold">
@@ -519,18 +665,18 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-purple-950/60 border border-purple-400/20 text-center text-xs">
+                    <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-emerald-950/60 border border-emerald-400/20 text-center text-xs">
                       <div>
                         <span className="text-[10px] text-white/60 block">قد</span>
-                        <span className="font-bold text-sm text-purple-300">{formData.height} سانتی‌متر</span>
+                        <span className="font-bold text-sm text-emerald-300">{formData.height} سانتی‌متر</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-white/60 block">وزن</span>
-                        <span className="font-bold text-sm text-purple-300">{formData.weight} کیلوگرم</span>
+                        <span className="font-bold text-sm text-emerald-300">{formData.weight} کیلوگرم</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-white/60 block">پست تخصصی</span>
-                        <span className="font-bold text-xs text-purple-300 truncate block">{formData.favPosition}</span>
+                        <span className="font-bold text-xs text-emerald-300 truncate block">{formData.favPosition}</span>
                       </div>
                     </div>
                   </div>
@@ -547,7 +693,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                     <Button
                       variant="primary"
                       onClick={() => goToStep(4, 'در حال راه‌اندازی فرآیند شخصی‌سازی و صدور برنامه...')}
-                      className="flex-[2] h-11 text-sm font-black gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/30 cursor-pointer"
+                      className="flex-[2] h-11 text-sm font-black gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 cursor-pointer"
                     >
                       <Sparkles className="h-4 w-4" />
                       تایید نهایی و فعال‌سازی امکانات
@@ -579,7 +725,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                         strokeDasharray={264}
                         strokeDashoffset={264 - (264 * progress) / 100}
                         strokeLinecap="round"
-                        className="text-purple-600 transition-all duration-75 ease-linear"
+                        className="text-emerald-600 transition-all duration-75 ease-linear"
                         fill="transparent"
                       />
                     </svg>
@@ -588,7 +734,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                         {progress}٪
                       </span>
-                      <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 mt-0.5">
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                         {progress < 100 ? 'در حال تکمیل' : 'تکمیل شد'}
                       </span>
                     </div>
@@ -606,7 +752,7 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                   ) : (
                     <div className="space-y-5 animate-in fade-in zoom-in duration-300 max-w-sm mx-auto">
                       <div className="space-y-1.5">
-                        <h3 className="text-2xl font-black text-purple-600 dark:text-purple-400">
+                        <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                           مشخصات با موفقیت ذخیره شد!
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -616,8 +762,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => onComplete(formData)}
-                        className="w-full h-12 text-sm font-black border-2 border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-600/10 active:scale-[0.98] rounded-xl transition-all shadow-sm cursor-pointer"
+                        onClick={handleFinish}
+                        className="w-full h-12 text-sm font-black border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600/10 active:scale-[0.98] rounded-xl transition-all shadow-sm cursor-pointer"
                       >
                         ورود به فرست تاچ
                       </button>

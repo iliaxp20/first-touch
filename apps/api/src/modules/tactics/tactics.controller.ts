@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { TacticsService } from './tactics.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 
@@ -7,10 +7,10 @@ export class TacticsController {
   constructor(private readonly tacticsService: TacticsService) {}
 
   @Get('boards')
-  getAllBoards() {
+  getAllBoards(@Query('creatorPhone') creatorPhone?: string) {
     return {
       success: true,
-      boards: this.tacticsService.getAllBoards(),
+      boards: this.tacticsService.getAllBoards(creatorPhone),
     };
   }
 

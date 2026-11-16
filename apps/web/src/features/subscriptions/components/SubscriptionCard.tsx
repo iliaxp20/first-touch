@@ -33,7 +33,7 @@ export const SubscriptionCard: React.FC = () => {
       popular: true,
     },
     {
-      name: 'اشتراک سالانه آکادمی',
+      name: 'اشتراک طلایی سالانه فرست تاچ',
       price: '۴,۵۰۰,۰۰۰',
       period: 'سالانه',
       description: 'همراهی گام‌به‌گام مربی در کل فصل مسابقاتی',

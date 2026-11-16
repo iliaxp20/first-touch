@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -39,7 +40,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4000/tactics/boards', {
+      const response = await fetch(`${API_BASE_URL}/tactics/boards`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,9 +55,12 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
         throw new Error(data.message || 'خطا در ایجاد تخته تاکتیک');
       }
 
-      // Persist to local storage list
+      // Persist to user-scoped local storage list
       try {
-        const savedListStr = localStorage.getItem('ft_saved_tactics_boards');
+        const storageKey = creatorPhone
+          ? `ft_saved_tactics_boards_${creatorPhone}`
+          : 'ft_saved_tactics_boards_guest';
+        const savedListStr = localStorage.getItem(storageKey);
         const currentList = savedListStr ? JSON.parse(savedListStr) : [];
         const updatedList = [
           {
@@ -67,7 +71,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
           },
           ...currentList.filter((b: any) => b.id !== data.board.id),
         ];
-        localStorage.setItem('ft_saved_tactics_boards', JSON.stringify(updatedList));
+        localStorage.setItem(storageKey, JSON.stringify(updatedList));
         localStorage.setItem(`ft_creator_${data.board.id}`, 'true');
       } catch (e) {
         console.warn('Could not save board to localStorage', e);
@@ -102,7 +106,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-      <Card className="w-full max-w-md p-6 bg-card border-border shadow-2xl relative">
+      <Card className="w-full max-w-md p-6 bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl border-emerald-500/20 dark:border-white/10 rounded-3xl shadow-2xl relative">
         <button
           onClick={onClose}
           className="absolute top-4 left-4 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"

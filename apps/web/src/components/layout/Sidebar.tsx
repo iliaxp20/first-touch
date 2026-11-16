@@ -1,10 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, Presentation, CalendarCheck2, CreditCard, Users, Settings, X } from 'lucide-react';
+import { LayoutDashboard, Presentation, CalendarCheck2, Apple, CreditCard, Users, Settings, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/Button';
 
-export type NavItemKey = 'dashboard' | 'tactics' | 'plans' | 'subscriptions' | 'students' | 'settings' | 'rewards';
+export type NavItemKey = 'dashboard' | 'tactics' | 'plans' | 'nutrition' | 'subscriptions' | 'students' | 'settings' | 'rewards';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,8 +19,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeItem, o
 
   const navItems = [
     { key: 'dashboard' as NavItemKey, label: 'داشبورد', path: '/', icon: LayoutDashboard },
-    { key: 'tactics' as NavItemKey, label: 'تخته تاکتیک', path: '/tactics', icon: Presentation, badge: 'جدید' },
     { key: 'plans' as NavItemKey, label: 'برنامه‌های تمرینی', path: '/practice', icon: CalendarCheck2 },
+    { key: 'nutrition' as NavItemKey, label: 'برنامه غذایی', path: '/nutrition', icon: Apple },
+    { key: 'tactics' as NavItemKey, label: 'تخته تاکتیک', path: '/tactics', icon: Presentation, badge: 'جدید' },
     { key: 'subscriptions' as NavItemKey, label: 'اشتراک و درآمد', path: '/subscriptions', icon: CreditCard },
     { key: 'students' as NavItemKey, label: 'لیست شاگردان', path: '/subscriptions', icon: Users },
     { key: 'settings' as NavItemKey, label: 'تنظیمات', path: '/settings', icon: Settings },
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeItem, o
     const path = location.pathname;
     if (path === '/tactics') return 'tactics';
     if (path === '/practice' || path.startsWith('/plans') || path.startsWith('/exercises')) return 'plans';
+    if (path === '/nutrition' || path.startsWith('/diet') || path.startsWith('/meals')) return 'nutrition';
     if (path === '/settings' || path === '/profile') return 'settings';
     if (path === '/subscriptions') return 'subscriptions';
     if (activeItem) return activeItem;
@@ -63,9 +65,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeItem, o
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
-        <div className="flex items-center justify-between pb-4 lg:hidden border-b border-border mb-3">
-          <span className="font-bold text-foreground">منوی فرست تاچ</span>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+        <div className="flex items-center justify-between pb-4 border-b border-border/60 mb-3">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png?v=2" alt="فرست تاچ" className="h-8 w-8 object-contain" />
+            <div className="flex flex-col">
+              <span className="font-black text-sm text-foreground">فرست تاچ</span>
+              <span className="text-[10px] text-muted-foreground font-semibold">سامانه تخصصی فوتبال</span>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />
           </Button>
         </div>

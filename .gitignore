@@ -7,6 +7,8 @@ node_modules/
 dist/
 build/
 out/
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
 
 # Environment variables
 .env
@@ -36,3 +38,8 @@ Thumbs.db
 
 # Monorepo cache
 .turbo
+
+# Emergency tunnel sub-repo & scratch
+emergency-tunnel/
+scratch/
+

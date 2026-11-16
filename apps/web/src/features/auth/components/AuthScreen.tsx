@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Phone, KeyRound, User, Lock, Shield, Award, Users, ChevronLeft } from 'lucide-react';
+import { AuthUser } from '@/context/AuthContext';
+import { API_BASE_URL } from '@/lib/api';
 
 export type UserRole = 'PLAYER' | 'COACH' | 'PARENT';
 
 interface AuthScreenProps {
-  onLoginSuccess: (user: { token?: string; phoneNumber: string; role: UserRole; isProfileComplete: boolean; fullName?: string }) => void;
+  onLoginSuccess: (user: Partial<AuthUser> & { phoneNumber: string; role: UserRole; isProfileComplete: boolean }) => void;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
@@ -38,7 +40,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/auth/send-otp', {
+      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: cleanPhone, referralCode: referralCode.trim() || undefined }),
@@ -74,7 +76,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:4000/auth/verify-otp', {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: phoneNumber.trim(), otp: cleanOtp }),
@@ -88,7 +90,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       setVerifiedToken(data.token);
       setVerifiedUser(data.user);
 
-      // If user profile is already completed in DB, log in directly
+      // If user profile is already completed in DB, log in directly with all profile data
       if (data.user?.isProfileComplete) {
         onLoginSuccess({
           token: data.token,
@@ -96,6 +98,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
           role: data.user.role || 'PLAYER',
           isProfileComplete: true,
           fullName: data.user.fullName || 'کاربر گرامی',
+          avatarUrl: data.user.avatarUrl,
+          nationalId: data.user.nationalId,
+          age: data.user.age,
+          height: data.user.height,
+          weight: data.user.weight,
+          preferredFoot: data.user.preferredFoot,
+          position: data.user.position,
+          experienceYears: data.user.experienceYears,
+          bicep: data.user.bicep,
+          calf: data.user.calf,
+          chest: data.user.chest,
         });
       } else {
         setAuthStep('role-selection');
@@ -122,7 +135,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:4000/auth/login-password', {
+      const res = await fetch(`${API_BASE_URL}/auth/login-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: cleanUsername, password: cleanPassword }),
@@ -153,17 +166,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       token: verifiedToken,
       phoneNumber: phoneNumber || '۰۹۱۲۳۴۵۶۷۸۹',
       role,
-      isProfileComplete: false,
+      isProfileComplete: Boolean(verifiedUser?.isProfileComplete),
       fullName: verifiedUser?.fullName || 'کاربر گرامی',
+      avatarUrl: verifiedUser?.avatarUrl,
+      nationalId: verifiedUser?.nationalId,
+      age: verifiedUser?.age,
+      height: verifiedUser?.height,
+      weight: verifiedUser?.weight,
+      preferredFoot: verifiedUser?.preferredFoot,
+      position: verifiedUser?.position,
+      experienceYears: verifiedUser?.experienceYears,
+      bicep: verifiedUser?.bicep,
+      calf: verifiedUser?.calf,
+      chest: verifiedUser?.chest,
     });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-100/70 via-slate-50 to-violet-100/60 dark:from-slate-950 dark:via-purple-950/40 dark:to-slate-900 relative overflow-hidden select-none transition-colors duration-200">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-100/70 via-slate-50 to-teal-100/60 dark:from-slate-950 dark:via-emerald-950/40 dark:to-slate-900 relative overflow-hidden select-none transition-colors duration-200">
       {/* Animated Flowing Pastel Orbs */}
-      <div className="absolute top-1/4 -right-16 w-80 h-80 rounded-full bg-purple-300/35 dark:bg-purple-900/25 blur-[100px] pointer-events-none animate-orb-1" />
-      <div className="absolute bottom-1/4 -left-16 w-96 h-96 rounded-full bg-violet-300/30 dark:bg-violet-900/20 blur-[120px] pointer-events-none animate-orb-2" />
-      <div className="absolute top-2/3 right-1/3 w-64 h-64 rounded-full bg-purple-200/25 dark:bg-purple-800/15 blur-[80px] pointer-events-none" />
+      <div className="absolute top-1/4 -right-16 w-80 h-80 rounded-full bg-emerald-300/35 dark:bg-emerald-900/25 blur-[100px] pointer-events-none animate-orb-1" />
+      <div className="absolute bottom-1/4 -left-16 w-96 h-96 rounded-full bg-teal-300/30 dark:bg-teal-900/20 blur-[120px] pointer-events-none animate-orb-2" />
+      <div className="absolute top-2/3 right-1/3 w-64 h-64 rounded-full bg-emerald-200/25 dark:bg-emerald-800/15 blur-[80px] pointer-events-none" />
 
       {/* Decorative Pitch Yard Lines */}
       <div className="absolute inset-0 opacity-[0.04] dark:opacity-[0.03] pointer-events-none flex items-center justify-center">
@@ -171,13 +195,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         <div className="absolute inset-x-0 h-[2px] bg-slate-900 dark:bg-white" />
       </div>
 
-      <Card className="w-full max-w-md bg-white/95 dark:bg-slate-900/90 border border-purple-200/90 dark:border-white/10 backdrop-blur-2xl shadow-2xl shadow-purple-950/10 dark:shadow-black/60 relative z-10 overflow-hidden transition-all duration-300">
+      <Card className="w-full max-w-md bg-white/95 dark:bg-slate-900/90 border border-emerald-200/90 dark:border-white/10 backdrop-blur-2xl shadow-2xl shadow-emerald-950/10 dark:shadow-black/60 relative z-10 overflow-hidden transition-all duration-300">
         {/* Brand Header with Transparent Logo */}
-        <div className="p-6 text-center border-b border-purple-100 dark:border-white/10 bg-gradient-to-b from-purple-500/10 via-purple-500/5 to-transparent relative">
+        <div className="p-6 text-center border-b border-emerald-100 dark:border-white/10 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent relative">
           <img
-            src="/logo.png"
+            src="/logo.png?v=2"
             alt="لوگوی فرست تاچ"
-            className="mx-auto h-24 w-24 object-contain drop-shadow-[0_10px_20px_rgba(124,58,237,0.25)] mb-2 transition-transform duration-300 hover:scale-105 select-none"
+            className="mx-auto h-24 w-24 object-contain drop-shadow-[0_10px_25px_rgba(16,185,129,0.35)] mb-2 transition-transform duration-300 hover:scale-105 select-none"
           />
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">فرست تاچ</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
@@ -197,7 +221,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
             <form onSubmit={handleSendOtp} className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1.5 text-right">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Phone className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   شماره تلفن همراه
                 </label>
                 <input
@@ -206,7 +230,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm font-medium focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all placeholder:text-slate-400 text-center tracking-widest"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm font-medium focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all placeholder:text-slate-400 text-center tracking-widest"
                   required
                 />
               </div>
@@ -222,18 +246,33 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                   placeholder="اختیاری"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white text-xs focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none text-center transition-all"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white text-xs focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none text-center transition-all"
                 />
               </div>
 
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-11 text-sm font-black shadow-lg shadow-purple-500/25 bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
+                className="w-full h-11 text-sm font-black shadow-lg shadow-emerald-500/25 bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200"
                 disabled={loading}
               >
                 {loading ? 'در حال ارسال کد...' : 'دریافت کد تایید یکبار مصرف'}
               </Button>
+
+              {/* Quick Demo Login Option */}
+              <button
+                type="button"
+                onClick={() => {
+                  setPhoneNumber('09123456789');
+                  setOtp('11111');
+                  setTestOtpNotice('11111');
+                  setAuthStep('otp-verify');
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all flex items-center justify-center gap-2"
+              >
+                <span>🧪</span>
+                <span>ورود تستی سریع (شماره آزمایشی و کد ۱۱۱۱۱)</span>
+              </button>
 
               <div className="relative my-4 text-center">
                 <div className="absolute inset-0 flex items-center">
@@ -264,11 +303,23 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                 <p className="text-sm font-bold text-slate-900 dark:text-white dir-ltr">{phoneNumber}</p>
               </div>
 
-              {testOtpNotice && (
-                <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs text-center font-bold">
-                  کد تایید آزمایشی سیستم: <span className="text-sm font-black tracking-widest">{testOtpNotice}</span>
+              {/* Test OTP Helper Badge */}
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs text-center space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-center gap-1.5 font-bold">
+                  <span>🧪</span>
+                  <span>کد ورود تستی سامانه:</span>
+                  <span className="font-mono text-sm bg-emerald-200/60 dark:bg-emerald-800/60 px-2 py-0.5 rounded-lg text-emerald-900 dark:text-white font-black tracking-widest">
+                    {testOtpNotice || '11111'}
+                  </span>
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setOtp('11111')}
+                  className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 underline font-semibold transition-colors"
+                >
+                  کلیک برای درج خودکار کد تستی (۱۱۱۱۱)
+                </button>
+              </div>
 
               <div className="space-y-1.5 text-center">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">کد ۵ رقمی را وارد نمایید</label>
@@ -279,7 +330,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="۱۲۳۴۵"
-                  className="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-center font-black text-xl tracking-[0.5em] focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+                  className="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-center font-black text-xl tracking-[0.5em] focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
                   required
                 />
               </div>
@@ -287,7 +338,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-11 text-sm font-black shadow-lg shadow-purple-500/25 bg-purple-600 hover:bg-purple-700 text-white"
+                className="w-full h-11 text-sm font-black shadow-lg shadow-emerald-500/25 bg-emerald-600 hover:bg-emerald-700 text-white"
                 disabled={loading}
               >
                 {loading ? 'در حال بررسی...' : 'تایید کد و ادامه'}
@@ -308,7 +359,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
             <form onSubmit={handlePasswordLogin} className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1.5 text-right">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   نام کاربری
                 </label>
                 <input
@@ -317,14 +368,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                   placeholder="نام کاربری"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
                   required
                 />
               </div>
 
               <div className="space-y-1.5 text-right">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Lock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <Lock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   رمز عبور
                 </label>
                 <input
@@ -333,7 +384,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
                   required
                 />
               </div>
@@ -341,7 +392,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-11 text-sm font-black shadow-lg shadow-purple-500/25 bg-purple-600 hover:bg-purple-700 text-white"
+                className="w-full h-11 text-sm font-black shadow-lg shadow-emerald-500/25 bg-emerald-600 hover:bg-emerald-700 text-white"
                 disabled={loading}
               >
                 {loading ? 'در حال ورود...' : 'ورود به سامانه'}
@@ -370,28 +421,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('PLAYER')}
-                  className="w-full p-4 rounded-xl border-2 border-purple-500 bg-purple-50/80 dark:bg-purple-950/40 hover:bg-purple-100/60 dark:hover:bg-purple-900/50 flex items-center justify-between text-right transition-all duration-200 group shadow-sm"
+                  className="w-full p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/50 flex items-center justify-between text-right transition-all duration-200 group shadow-sm"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black shadow-md shadow-purple-500/30 group-hover:scale-105 transition-transform">
+                    <div className="h-11 w-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md shadow-emerald-500/30 group-hover:scale-105 transition-transform">
                       <Award className="h-5 w-5" />
                     </div>
                     <div>
                       <p className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                         ۱. بازیکن (شاگرد)
-                        <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">ورود به برنامه</span>
+                        <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">ورود به برنامه</span>
                       </p>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">دریافت تمرینات، ارزیابی لمس اول و ارتباط با مربی</p>
                     </div>
                   </div>
-                  <ChevronLeft className="h-5 w-5 text-purple-600 dark:text-purple-400 group-hover:-translate-x-1 transition-transform" />
+                  <ChevronLeft className="h-5 w-5 text-emerald-600 dark:text-emerald-400 group-hover:-translate-x-1 transition-transform" />
                 </button>
 
                 {/* 2 - مربی */}
                 <button
                   type="button"
                   onClick={() => handleSelectRole('COACH')}
-                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-300 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 flex items-center justify-between text-right transition-all duration-200 group shadow-sm"
+                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-300 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 flex items-center justify-between text-right transition-all duration-200 group shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center font-black group-hover:scale-105 transition-transform">
@@ -409,7 +460,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('PARENT')}
-                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-300 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 flex items-center justify-between text-right transition-all duration-200 group shadow-sm"
+                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-300 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 flex items-center justify-between text-right transition-all duration-200 group shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center font-black group-hover:scale-105 transition-transform">

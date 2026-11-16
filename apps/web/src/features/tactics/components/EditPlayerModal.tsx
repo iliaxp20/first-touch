@@ -2,22 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { TacticalPlayer } from '../types/tactics.types';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { X, UserCheck } from 'lucide-react';
+import { X, UserCheck, Trash2 } from 'lucide-react';
 
 interface EditPlayerModalProps {
   isOpen: boolean;
   onClose: () => void;
   player: TacticalPlayer | null;
   onSave: (playerId: string, name: string, number: number, position: string) => void;
+  onDelete?: (playerId: string) => void;
 }
 
-const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DM', 'CM', 'AM', 'RW', 'LW', 'ST'];
+const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DM', 'CM', 'AM', 'RW', 'LW', 'ST', 'SUB'];
 
 export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
   isOpen,
   onClose,
   player,
   onSave,
+  onDelete,
 }) => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState(1);
@@ -39,12 +41,19 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
     onClose();
   };
 
+  const handleDelete = () => {
+    if (window.confirm(`آیا از حذف بازیکن شماره ${player.number} (${player.name || player.position}) از زمین اطمینان دارید؟`)) {
+      onDelete?.(player.id);
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
       <Card className="w-full max-w-sm p-6 bg-card border-border shadow-2xl relative">
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+          className="absolute top-4 left-4 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
@@ -55,8 +64,8 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-black text-foreground">ویرایش مشخصات بازیکن</h3>
-            <p className="text-[11px] text-muted-foreground">
-              تغییرات در لحظه از طریق وب‌سوکت برای همه نمایش داده می‌شود
+            <p className="text-xs text-muted-foreground">
+              تغییر مشخصات یا حذف مهره از زمین
             </p>
           </div>
         </div>
@@ -103,13 +112,26 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-              انصراف
-            </Button>
-            <Button type="submit" variant="primary" size="sm">
-              ذخیره و همگام‌سازی
-            </Button>
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+            {onDelete ? (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-3 py-2 rounded-xl text-rose-500 hover:bg-rose-500/10 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>حذف از زمین</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                انصراف
+              </Button>
+              <Button type="submit" variant="primary" size="sm">
+                ذخیره
+              </Button>
+            </div>
           </div>
         </form>
       </Card>

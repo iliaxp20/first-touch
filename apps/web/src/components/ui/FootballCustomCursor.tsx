@@ -134,15 +134,15 @@ export const FootballCustomCursor: React.FC = () => {
       >
         <div className="cursor-inner relative flex items-center justify-center">
           {/* Subtle tactical crosshair pips */}
-          <span className="absolute -top-1 w-1 h-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
-          <span className="absolute -bottom-1 w-1 h-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
-          <span className="absolute -left-1 h-1 w-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
-          <span className="absolute -right-1 h-1 w-[1.5px] bg-purple-500 dark:bg-purple-300 rounded-full" />
+          <span className="absolute -top-1 w-1 h-[1.5px] bg-emerald-500 dark:bg-emerald-300 rounded-full" />
+          <span className="absolute -bottom-1 w-1 h-[1.5px] bg-emerald-500 dark:bg-emerald-300 rounded-full" />
+          <span className="absolute -left-1 h-1 w-[1.5px] bg-emerald-500 dark:bg-emerald-300 rounded-full" />
+          <span className="absolute -right-1 h-1 w-[1.5px] bg-emerald-500 dark:bg-emerald-300 rounded-full" />
 
           {/* Click Ripple: Nested directly inside the cursor so it NEVER jumps to (0,0) */}
           <span
             ref={clickRippleRef}
-            className="absolute -inset-1 rounded-full border-2 border-purple-500 dark:border-purple-300 opacity-0 pointer-events-none"
+            className="absolute -inset-1 rounded-full border-2 border-emerald-500 dark:border-emerald-300 opacity-0 pointer-events-none"
           />
         </div>
       </div>
@@ -150,7 +150,7 @@ export const FootballCustomCursor: React.FC = () => {
       {/* 2. PINPOINT CENTER DOT (ULTRA PRECISE) */}
       <div
         ref={dotRef}
-        className="absolute top-0 left-0 w-1.5 h-1.5 -ml-[3px] -mt-[3px] rounded-full bg-purple-600 dark:bg-purple-400 shadow-[0_0_6px_#a855f7] opacity-0 pointer-events-none will-change-transform"
+        className="absolute top-0 left-0 w-1.5 h-1.5 -ml-[3px] -mt-[3px] rounded-full bg-emerald-600 dark:bg-emerald-400 shadow-[0_0_6px_#a855f7] opacity-0 pointer-events-none will-change-transform"
       />
     </div>
   );

@@ -372,8 +372,11 @@ export const useTacticsSocket = ({
   useEffect(() => {
     if (!boardId) return;
 
-    const hostname = window.location.hostname || 'localhost';
-    const wsUrl = `ws://${hostname}:4001`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl =
+      window.location.hostname === 'localhost'
+        ? 'ws://localhost:4001'
+        : `${protocol}//${window.location.host}/ws/tactics`;
 
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;

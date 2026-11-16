@@ -1,0 +1,50 @@
+[
+  {
+    "id": "drill-adm-1794802946244",
+    "categoryIndex": 1,
+    "categoryTitle": "چابکی",
+    "englishName": "Test Drill",
+    "persianName": "تمرین تستی جدید",
+    "imageUrl": "https://example.com/img.jpg",
+    "videoUrl": "https://example.com/video.mp4",
+    "description": "توضیحات تمرین تستی",
+    "difficulty": "INTERMEDIATE",
+    "equipment": "مخروط",
+    "targetSkill": "سرعت"
+  },
+  {
+    "id": "drill-adm-1794729612111",
+    "categoryIndex": 1,
+    "categoryTitle": "تمرینات نردبان چابکی",
+    "englishName": "Fast Ladder Shuffle",
+    "persianName": "شافل سرعتی روی نردبان",
+    "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
+    "videoUrl": "/uploads/1794729612080-test_agility_video.mp4",
+    "description": "حرکت سریع پاها در داخل و خارج خانه‌های نردبان با مرکز ثقل پایین",
+    "difficulty": "ADVANCED",
+    "equipment": "نردبان، مخروط",
+    "targetSkill": "چابکی پا و واکنش سریع"
+  },
+  {
+    "id": "drill-1-17",
+    "categoryIndex": 1,
+    "categoryTitle": "تمرینات نردبان چابکی (Agility Ladder)",
+    "englishName": "Quick Feet Run",
+    "persianName": "دویدن با گام‌های بسیار سریع",
+    "equipment": "نردبان چابکی",
+    "targetSkill": "بیشینه فرکانس حرکتی پنجه",
+    "difficulty": "INTERMEDIATE",
+    "description": "دویدن با حداکثر سرعت ممکن و ثبت بیشترین تعداد تماس پا در ثانیه."
+  },
+  {
+    "id": "drill-2-17",
+    "categoryIndex": 2,
+    "categoryTitle": "تمرینات چابکی با مخروط (Cone Agility Drills)",
+    "englishName": "Cone Weave",
+    "persianName": "عبور بافت‌های از مخروط‌ها",
+    "equipment": "ردیف متراکم مخروط",
+    "targetSkill": "ریزگام‌های فرکانس بالا",
+    "difficulty": "BEGINNER",
+    "description": "بافتن گام‌ها از لابه‌لای مخروط‌های با فاصله کمتر از ۱ متر."
+  }
+]

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -219,7 +220,7 @@ export const NutritionTracker: React.FC = () => {
   // Fetch real data from API for active dateKey
   const fetchDailyLog = async (dateStr = dateKey) => {
     try {
-      const res = await fetch(`http://localhost:4000/nutrition/daily-log?date=${dateStr}`);
+      const res = await fetch(`${API_BASE_URL}/nutrition/daily-log?date=${dateStr}`);
       if (res.ok) {
         const data = await res.json();
         setDailyLog(data);
@@ -241,7 +242,7 @@ export const NutritionTracker: React.FC = () => {
 
   const fetchFoods = async () => {
     try {
-      const res = await fetch('http://localhost:4000/nutrition/foods');
+      const res = await fetch(`${API_BASE_URL}/nutrition/foods`);
       if (res.ok) {
         const data = await res.json();
         setFoods(data);
@@ -253,7 +254,7 @@ export const NutritionTracker: React.FC = () => {
 
   const fetchPresetPlans = async () => {
     try {
-      const res = await fetch('http://localhost:4000/nutrition/preset-plans');
+      const res = await fetch(`${API_BASE_URL}/nutrition/preset-plans`);
       if (res.ok) {
         const data = await res.json();
         setPresetPlans(data);
@@ -334,7 +335,7 @@ export const NutritionTracker: React.FC = () => {
   const handleConfirmSelectFood = async () => {
     if (!selectedFood) return;
     try {
-      const res = await fetch('http://localhost:4000/nutrition/log-food', {
+      const res = await fetch(`${API_BASE_URL}/nutrition/log-food`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -365,7 +366,7 @@ export const NutritionTracker: React.FC = () => {
       const singleProt = Number(manualForm.protein) || 0;
       const count = Math.max(1, manualForm.count);
 
-      const res = await fetch('http://localhost:4000/nutrition/log-food', {
+      const res = await fetch(`${API_BASE_URL}/nutrition/log-food`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -398,7 +399,7 @@ export const NutritionTracker: React.FC = () => {
   // Toggle checklist item (قابلیت تیک زدن کنار هر غذا)
   const handleToggleItem = async (itemId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/nutrition/toggle-item/${itemId}?date=${dateKey}`, {
+      const res = await fetch(`${API_BASE_URL}/nutrition/toggle-item/${itemId}?date=${dateKey}`, {
         method: 'PATCH',
       });
       if (res.ok) {
@@ -414,7 +415,7 @@ export const NutritionTracker: React.FC = () => {
   const handleUpdateItemCount = async (itemId: string, newCount: number) => {
     if (newCount < 1) return;
     try {
-      const res = await fetch(`http://localhost:4000/nutrition/update-count/${itemId}`, {
+      const res = await fetch(`${API_BASE_URL}/nutrition/update-count/${itemId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ count: newCount, date: dateKey }),
@@ -431,7 +432,7 @@ export const NutritionTracker: React.FC = () => {
   // Delete logged item
   const handleDeleteItem = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/nutrition/log-food/${id}?date=${dateKey}`, {
+      const res = await fetch(`${API_BASE_URL}/nutrition/log-food/${id}?date=${dateKey}`, {
         method: 'DELETE',
       });
       if (res.ok) {
@@ -482,7 +483,7 @@ export const NutritionTracker: React.FC = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:4000/nutrition/apply-preset', {
+      const res = await fetch(`${API_BASE_URL}/nutrition/apply-preset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId, date: dateKey }),
@@ -500,7 +501,7 @@ export const NutritionTracker: React.FC = () => {
   // Reset / Clear active plan
   const handleResetPlan = async () => {
     try {
-      const res = await fetch('http://localhost:4000/nutrition/reset-plan', {
+      const res = await fetch(`${API_BASE_URL}/nutrition/reset-plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: dateKey }),
@@ -551,7 +552,7 @@ export const NutritionTracker: React.FC = () => {
     setIsTargetModalOpen(false);
 
     try {
-      const res = await fetch('http://localhost:4000/nutrition/target', {
+      const res = await fetch(`${API_BASE_URL}/nutrition/target`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -596,13 +597,13 @@ export const NutritionTracker: React.FC = () => {
     <div className="max-w-3xl mx-auto space-y-5 text-right select-none pb-28 sm:pb-36 relative">
       {/* Floating Success Notification Toast */}
       {notificationToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] px-4 py-2.5 rounded-2xl bg-slate-900/95 dark:bg-purple-950/95 text-white border border-purple-500/40 shadow-xl flex items-center gap-2 text-xs font-black animate-in fade-in slide-in-from-top-4">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] px-4 py-2.5 rounded-2xl bg-slate-900/95 dark:bg-emerald-950/95 text-white border border-emerald-500/40 shadow-xl flex items-center gap-2 text-xs font-black animate-in fade-in slide-in-from-top-4">
           <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           <span>{notificationToast}</span>
         </div>
       )}
       {/* 1. PERSIAN CALENDAR HEADER BAR (تقویم شمسی با ناوبری و ریست روزانه) */}
-      <div className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+      <div className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 shadow-lg shadow-emerald-950/15">
         <button
           type="button"
           onClick={handleNextDay}
@@ -613,7 +614,7 @@ export const NutritionTracker: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-purple-600" />
+          <Calendar className="h-4 w-4 text-emerald-600" />
           <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
             {formattedPersianDate}
           </span>
@@ -625,7 +626,7 @@ export const NutritionTracker: React.FC = () => {
             <button
               type="button"
               onClick={handleGoToday}
-              className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 cursor-pointer transition-colors"
+              className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer transition-colors"
             >
               برو به امروز
             </button>
@@ -643,7 +644,7 @@ export const NutritionTracker: React.FC = () => {
       </div>
 
       {/* 2. DAILY WATER TRACKER (ثبت مصرف آب روزانه - بدون حروف انگلیسی) */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 shadow-xl shadow-emerald-950/20 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
@@ -722,10 +723,10 @@ export const NutritionTracker: React.FC = () => {
 
       {/* 2. TOP STATS BAR (ACTIVE WHEN PLAN OR TARGET IS SET) */}
       {hasActivePlan && (
-        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="p-4 sm:p-5 rounded-[28px] bg-white/75 dark:bg-[#07160e]/85 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 shadow-2xl shadow-emerald-950/25 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <Apple className="h-5 w-5" />
               </div>
               <div>
@@ -734,14 +735,14 @@ export const NutritionTracker: React.FC = () => {
                     پایش تغذیه روزانه
                   </h2>
                   {target.planTitle && (
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
                       {target.planTitle}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
                   {target.targetWeight ? (
-                    <span className="flex items-center gap-1 font-mono text-purple-600 dark:text-purple-400 font-bold">
+                    <span className="flex items-center gap-1 font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                       <Scale className="h-3 w-3" />
                       وزن هدف: {target.targetWeight} کیلوگرم
                     </span>
@@ -756,16 +757,16 @@ export const NutritionTracker: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsPlanModalOpen(true)}
-                className="text-xs font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 cursor-pointer transition-colors"
+                className="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 cursor-pointer transition-colors"
               >
-                <Apple className="h-3.5 w-3.5 text-purple-600" />
+                <Apple className="h-3.5 w-3.5 text-emerald-600" />
                 <span>تعویض برنامه</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsTargetModalOpen(true)}
-                className="text-xs font-bold text-slate-600 hover:text-purple-600 dark:text-slate-300 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 cursor-pointer transition-colors"
+                className="text-xs font-bold text-slate-600 hover:text-emerald-600 dark:text-slate-300 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 cursor-pointer transition-colors"
                 title="ویرایش کالری و وزن هدف"
               >
                 <Edit2 className="h-3 w-3" />
@@ -817,7 +818,7 @@ export const NutritionTracker: React.FC = () => {
             <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
-                  remainingCalories >= 0 ? 'bg-purple-600' : 'bg-rose-500'
+                  remainingCalories >= 0 ? 'bg-emerald-600' : 'bg-rose-500'
                 }`}
                 style={{ width: `${Math.min(100, caloriesPct)}%` }}
               />
@@ -850,27 +851,27 @@ export const NutritionTracker: React.FC = () => {
         </div>
       )}
 
-      {/* 3. INITIAL EMPTY STATE: NO EXTRA SHAPE / CARD BORDER (EXACTLY MATCHING TRAINING PLAN STYLE) */}
+      {/* 3. INITIAL EMPTY STATE: MINIMAL & COMPACT */}
       {!hasActivePlan ? (
-        <div className="py-16 sm:py-24 flex flex-col items-center justify-center text-center space-y-4 select-none">
-          <div className="h-16 w-16 rounded-3xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300 flex items-center justify-center shadow-sm">
-            <Apple className="h-8 w-8" />
+        <div className="py-10 px-4 rounded-[28px] bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 flex flex-col items-center justify-center text-center space-y-3.5 select-none shadow-xl shadow-emerald-950/15">
+          <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shadow-inner">
+            <Apple className="h-6 w-6" />
           </div>
 
           <div className="space-y-1 max-w-sm mx-auto">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              هنوز برنامه غذایی فعالی دریافت نکرده‌اید
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200">
+              برنامه غذایی و کالری روزانه
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              برای شروع، برنامه غذایی آماده یا رایگان خود را انتخاب کنید یا هدف و کالری روزانه را به صورت دستی تنظیم نمایید.
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              تنظیم هدف و پایش درشت‌مغذی‌های تمرینی
             </p>
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+          <div className="pt-1 flex flex-col sm:flex-row items-center gap-2.5">
             <button
               type="button"
               onClick={() => setIsPlanModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-sm flex items-center gap-2 cursor-pointer transition-all"
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs flex items-center gap-2 cursor-pointer transition-all"
             >
               <Apple className="h-4 w-4" />
               <span>دریافت برنامه غذایی</span>
@@ -882,7 +883,7 @@ export const NutritionTracker: React.FC = () => {
               className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
             >
               <Edit2 className="h-3.5 w-3.5" />
-              <span>تنظیم هدف و کالری دستی</span>
+              <span>تنظیم دستی هدف</span>
             </button>
           </div>
         </div>
@@ -898,7 +899,7 @@ export const NutritionTracker: React.FC = () => {
             return (
               <div
                 key={meal.key}
-                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 shadow-xs space-y-2.5 transition-all"
+                className="p-4 sm:p-5 rounded-[26px] bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/15 dark:border-white/10 shadow-lg shadow-emerald-950/15 space-y-2.5 transition-all"
               >
                 {/* Row Header */}
                 <div className="flex items-center justify-between">
@@ -915,7 +916,7 @@ export const NutritionTracker: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleOpenAdd(meal.key)}
-                    className="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="h-3 w-3" />
                     <span>افزودن</span>
@@ -1043,11 +1044,11 @@ export const NutritionTracker: React.FC = () => {
                   initial={{ scale: 0.96, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.96, opacity: 0 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative z-10"
+                  className="bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative z-10"
                 >
                   <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                      <div className="h-7 w-7 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                         <Apple className="h-4 w-4" />
                       </div>
                       <div>
@@ -1077,8 +1078,8 @@ export const NutritionTracker: React.FC = () => {
                           key={plan.id}
                           className={`p-4 rounded-2xl border transition-all ${
                             isActive
-                              ? 'border-purple-600 bg-purple-50/50 dark:bg-purple-950/30'
-                              : 'border-slate-200/80 dark:border-slate-800 hover:border-purple-300'
+                              ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30'
+                              : 'border-slate-200/80 dark:border-slate-800 hover:border-emerald-300'
                           }`}
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -1089,7 +1090,7 @@ export const NutritionTracker: React.FC = () => {
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                                     : plan.type === 'coach'
                                     ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300'
+                                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                                 }`}
                               >
                                 {plan.typeLabel}
@@ -1099,7 +1100,7 @@ export const NutritionTracker: React.FC = () => {
                               </h4>
                             </div>
 
-                            <span className="text-xs font-black font-mono text-purple-600 dark:text-purple-400">
+                            <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400">
                               {plan.dailyCalories} کالری
                             </span>
                           </div>
@@ -1122,7 +1123,7 @@ export const NutritionTracker: React.FC = () => {
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                 isActive
                                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
                               }`}
                             >
                               {isActive ? 'برنامه فعال شما' : 'اعمال این برنامه'}
@@ -1151,7 +1152,7 @@ export const NutritionTracker: React.FC = () => {
                   initial={{ scale: 0.96, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.96, opacity: 0 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative z-10"
+                  className="bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative z-10"
                 >
                   {/* Header */}
                   <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -1176,7 +1177,7 @@ export const NutritionTracker: React.FC = () => {
                       onClick={() => setModalTab('picker')}
                       className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
                         modalTab === 'picker'
-                          ? 'bg-purple-600 text-white shadow-xs'
+                          ? 'bg-emerald-600 text-white shadow-xs'
                           : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -1187,7 +1188,7 @@ export const NutritionTracker: React.FC = () => {
                       onClick={() => setModalTab('manual')}
                       className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
                         modalTab === 'manual'
-                          ? 'bg-purple-600 text-white shadow-xs'
+                          ? 'bg-emerald-600 text-white shadow-xs'
                           : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -1204,10 +1205,10 @@ export const NutritionTracker: React.FC = () => {
                           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                           <input
                             type="text"
-                            placeholder="جستجوی بین ۸۰۰ غذای ایرانی و ورزشی (قورمه، کباب، سنگک، فیله مرغ، تخم‌مرغ)..."
+                            placeholder="جستجو..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-9 pr-9 pl-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:border-purple-600"
+                            className="w-full h-9 pr-9 pl-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:border-emerald-600"
                           />
                         </div>
                       </div>
@@ -1223,7 +1224,7 @@ export const NutritionTracker: React.FC = () => {
                               onClick={() => setSelectedCategory(cat)}
                               className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1 ${
                                 selectedCategory === cat
-                                  ? 'bg-purple-600 text-white'
+                                  ? 'bg-emerald-600 text-white'
                                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                               }`}
                             >
@@ -1231,7 +1232,7 @@ export const NutritionTracker: React.FC = () => {
                               <span
                                 className={`text-[9px] px-1 py-0.2 rounded-md ${
                                   selectedCategory === cat
-                                    ? 'bg-purple-700/80 text-white'
+                                    ? 'bg-emerald-700/80 text-white'
                                     : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
                                 }`}
                               >
@@ -1268,8 +1269,8 @@ export const NutritionTracker: React.FC = () => {
                                 }}
                                 className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-xs ${
                                   isSelected
-                                    ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 font-bold'
-                                    : 'border-slate-100 dark:border-slate-800 hover:border-purple-200'
+                                    ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 font-bold'
+                                    : 'border-slate-100 dark:border-slate-800 hover:border-emerald-200'
                                 }`}
                               >
                                 <div className="min-w-0 flex-1 pl-2">
@@ -1305,7 +1306,7 @@ export const NutritionTracker: React.FC = () => {
                             onClick={() =>
                               setVisibleLimit((prev) => Math.min(prev + 100, filteredFoods.length))
                             }
-                            className="w-full py-2.5 text-center text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/40 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors cursor-pointer border border-dashed border-purple-200 dark:border-purple-800"
+                            className="w-full py-2.5 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-950/40 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer border border-dashed border-emerald-200 dark:border-emerald-800"
                           >
                             نمایش موارد بیشتر (نمایش {displayedFoods.length} از {filteredFoods.length} غذا)
                           </button>
@@ -1314,7 +1315,7 @@ export const NutritionTracker: React.FC = () => {
 
                       {/* Count Stepper & Confirm (تعدادی نه سهمی) */}
                       {selectedFood && (
-                        <div className="p-3 bg-purple-50/50 dark:bg-purple-950/30 border-t border-purple-100 dark:border-purple-900/40 flex items-center justify-between">
+                        <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 border-t border-emerald-100 dark:border-emerald-900/40 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                               تعداد:
@@ -1346,7 +1347,7 @@ export const NutritionTracker: React.FC = () => {
                           <button
                             type="button"
                             onClick={handleConfirmSelectFood}
-                            className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-xs cursor-pointer flex items-center gap-1"
+                            className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs cursor-pointer flex items-center gap-1"
                           >
                             <Check className="h-3.5 w-3.5" />
                             <span>ثبت در وعده ({Math.round(selectedFood.calories * itemCount)} کالری)</span>
@@ -1369,7 +1370,7 @@ export const NutritionTracker: React.FC = () => {
                           placeholder="مثلاً: ساندویچ فیله مرغ خانگی"
                           value={manualForm.name}
                           onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
-                          className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:border-purple-600"
+                          className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:border-emerald-600"
                         />
                       </div>
 
@@ -1385,7 +1386,7 @@ export const NutritionTracker: React.FC = () => {
                             placeholder="مثلاً: 350"
                             value={manualForm.calories}
                             onChange={(e) => setManualForm({ ...manualForm, calories: e.target.value })}
-                            className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono focus:outline-none focus:border-purple-600"
+                            className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono focus:outline-none focus:border-emerald-600"
                           />
                         </div>
 
@@ -1400,7 +1401,7 @@ export const NutritionTracker: React.FC = () => {
                             placeholder="مثلاً: 25"
                             value={manualForm.protein}
                             onChange={(e) => setManualForm({ ...manualForm, protein: e.target.value })}
-                            className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono focus:outline-none focus:border-purple-600"
+                            className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono focus:outline-none focus:border-emerald-600"
                           />
                         </div>
                       </div>
@@ -1450,7 +1451,7 @@ export const NutritionTracker: React.FC = () => {
                         </button>
                         <button
                           type="submit"
-                          className="px-5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-xs cursor-pointer"
+                          className="px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs cursor-pointer"
                         >
                           ثبت غذا
                         </button>
@@ -1476,11 +1477,11 @@ export const NutritionTracker: React.FC = () => {
                   initial={{ scale: 0.96, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.96, opacity: 0 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4 relative z-10"
+                  className="bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4 relative z-10"
                 >
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                     <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-purple-600" />
+                      <Target className="h-4 w-4 text-emerald-600" />
                       <h3 className="text-sm font-black text-slate-900 dark:text-white">
                         تنظیم هدف و کالری دستی
                       </h3>
@@ -1518,7 +1519,7 @@ export const NutritionTracker: React.FC = () => {
                             }
                             className={`py-1.5 px-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
                               targetForm.weightGoal === g.id
-                                ? 'bg-purple-600 text-white shadow-xs'
+                                ? 'bg-emerald-600 text-white shadow-xs'
                                 : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                             }`}
                           >
@@ -1554,7 +1555,7 @@ export const NutritionTracker: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-purple-600 dark:text-purple-400 block mb-1">
+                        <label className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block mb-1">
                           وزن هدف (kg)
                         </label>
                         <input
@@ -1566,7 +1567,7 @@ export const NutritionTracker: React.FC = () => {
                           onChange={(e) =>
                             setTargetForm({ ...targetForm, targetWeight: Number(e.target.value) })
                           }
-                          className="w-full h-8 px-2.5 rounded-xl border border-purple-300 dark:border-purple-700 bg-purple-50/40 dark:bg-purple-950/30 text-xs font-mono font-black"
+                          className="w-full h-8 px-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50/40 dark:bg-emerald-950/30 text-xs font-mono font-black"
                           placeholder="مثلاً: 75"
                         />
                       </div>
@@ -1584,15 +1585,15 @@ export const NutritionTracker: React.FC = () => {
                         max="5000"
                         value={targetForm.calories}
                         onChange={(e) => setTargetForm({ ...targetForm, calories: Number(e.target.value) })}
-                        className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-black font-mono focus:outline-none focus:border-purple-600"
+                        className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-black font-mono focus:outline-none focus:border-emerald-600"
                       />
                     </div>
 
                     {/* Smart Protein (پروتئین هوشمند بر حسب وزن بدن) */}
-                    <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-purple-50/90 dark:from-purple-950/40 dark:via-slate-800/60 dark:to-purple-950/30 border border-purple-200/90 dark:border-purple-800/40 space-y-2">
+                    <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-indigo-50/50 to-emerald-50/90 dark:from-emerald-950/40 dark:via-slate-800/60 dark:to-emerald-950/30 border border-emerald-200/90 dark:border-emerald-800/40 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-lg bg-purple-600/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 flex items-center justify-center">
+                          <div className="h-6 w-6 rounded-lg bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
                             <Sparkles className="h-3.5 w-3.5" />
                           </div>
                           <div>
@@ -1616,7 +1617,7 @@ export const NutritionTracker: React.FC = () => {
                             }
                           }}
                           className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            isSmartProtein ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-700'
+                            isSmartProtein ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
                           }`}
                         >
                           <span
@@ -1628,10 +1629,10 @@ export const NutritionTracker: React.FC = () => {
                       </div>
 
                       {isSmartProtein && (
-                        <div className="space-y-2 pt-1 border-t border-purple-100 dark:border-purple-900/30 animate-in fade-in">
+                        <div className="space-y-2 pt-1 border-t border-emerald-100 dark:border-emerald-900/30 animate-in fade-in">
                           <div className="flex items-center justify-between text-[10px]">
                             <span className="text-slate-500 dark:text-slate-400 font-bold">انتخاب ضریب پروتئین:</span>
-                            <span className="font-mono font-black text-purple-700 dark:text-purple-300">
+                            <span className="font-mono font-black text-emerald-700 dark:text-emerald-300">
                               {proteinMultiplier} گرم / کیلوگرم
                             </span>
                           </div>
@@ -1653,8 +1654,8 @@ export const NutritionTracker: React.FC = () => {
                                 }}
                                 className={`py-1 px-1 rounded-lg text-center transition-all cursor-pointer ${
                                   proteinMultiplier === item.mult
-                                    ? 'bg-purple-600 text-white font-black shadow-xs'
-                                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:border-purple-300'
+                                    ? 'bg-emerald-600 text-white font-black shadow-xs'
+                                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:border-emerald-300'
                                 }`}
                               >
                                 <div className="text-[10px] leading-tight font-mono">{item.label}</div>
@@ -1663,9 +1664,9 @@ export const NutritionTracker: React.FC = () => {
                             ))}
                           </div>
 
-                          <div className="p-1.5 rounded-lg bg-purple-100/70 dark:bg-purple-900/40 text-[10px] text-purple-900 dark:text-purple-200 font-bold text-center flex items-center justify-center gap-1">
+                          <div className="p-1.5 rounded-lg bg-emerald-100/70 dark:bg-emerald-900/40 text-[10px] text-emerald-900 dark:text-emerald-200 font-bold text-center flex items-center justify-center gap-1">
                             <span>✨ پروتئین محاسبه شد:</span>
-                            <span className="font-mono font-black text-xs text-purple-700 dark:text-purple-300">
+                            <span className="font-mono font-black text-xs text-emerald-700 dark:text-emerald-300">
                               {calculateSmartProtein(targetForm.currentWeight || 70, proteinMultiplier)} گرم
                             </span>
                             <span className="text-[9px] text-slate-500 dark:text-slate-400 font-normal">
@@ -1684,7 +1685,7 @@ export const NutritionTracker: React.FC = () => {
                             پروتئین (g)
                           </label>
                           {isSmartProtein && (
-                            <span className="text-[8px] font-bold px-1 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                            <span className="text-[8px] font-bold px-1 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
                               هوشمند
                             </span>
                           )}
@@ -1699,7 +1700,7 @@ export const NutritionTracker: React.FC = () => {
                           }}
                           className={`w-full h-8 px-2 rounded-lg border text-xs font-mono font-bold ${
                             isSmartProtein
-                              ? 'border-purple-400 dark:border-purple-600 bg-purple-50/50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200'
+                              ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200'
                               : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white'
                           }`}
                         />
@@ -1742,7 +1743,7 @@ export const NutritionTracker: React.FC = () => {
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-xs cursor-pointer"
+                        className="px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs cursor-pointer"
                       >
                         ذخیره و فعال‌سازی
                       </button>

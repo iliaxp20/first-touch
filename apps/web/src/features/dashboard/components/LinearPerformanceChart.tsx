@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Apple } from 'lucide-react';
+import { Dumbbell, Apple, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export interface DayPoint {
   day: string;
@@ -14,6 +15,8 @@ export interface DayPoint {
 interface LinearPerformanceChartProps {
   data?: DayPoint[];
   isLoading?: boolean;
+  hasActiveProgram?: boolean;
+  onGetProgram?: () => void;
 }
 
 const DEFAULT_WEEKLY_DATA: DayPoint[] = [
@@ -28,9 +31,14 @@ const DEFAULT_WEEKLY_DATA: DayPoint[] = [
 
 export const LinearPerformanceChart: React.FC<LinearPerformanceChartProps> = ({
   data = DEFAULT_WEEKLY_DATA,
+  hasActiveProgram = true,
+  onGetProgram,
 }) => {
   const chartPoints = data && data.length > 0 ? data : DEFAULT_WEEKLY_DATA;
   const [metric, setMetric] = useState<'workout' | 'nutrition'>('workout');
+
+  const isAllZero = chartPoints.every((p) => (metric === 'workout' ? p.workoutScore === 0 : p.nutritionScore === 0));
+  const showEmptyState = !hasActiveProgram || isAllZero;
 
   const todayIndex = chartPoints.findIndex((p) => p.isToday);
   const defaultHoverIdx = todayIndex >= 0 ? todayIndex : chartPoints.length - 1;
@@ -73,8 +81,8 @@ export const LinearPerformanceChart: React.FC<LinearPerformanceChartProps> = ({
   const linePath = buildSmoothPath(coords);
   const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${height - paddingY} L ${coords[0].x} ${height - paddingY} Z`;
 
-  const activeColor = metric === 'workout' ? '#8b5cf6' : '#10b981';
-  const activeColorHex = metric === 'workout' ? 'rgb(139 92 246)' : 'rgb(16 185 129)';
+  const activeColor = metric === 'workout' ? '#10b981' : '#34d399';
+  const activeColorHex = metric === 'workout' ? 'rgb(16 185 129)' : 'rgb(52 211 153)';
 
   const activePoint =
     hoveredIdx !== null && coords[hoveredIdx]
@@ -82,55 +90,39 @@ export const LinearPerformanceChart: React.FC<LinearPerformanceChartProps> = ({
       : coords[coords.length - 1] || coords[0];
 
   return (
-    <div className="rounded-3xl bg-card border border-border/80 p-5 sm:p-6 shadow-sm space-y-4">
+    <div className="rounded-3xl bg-white/70 dark:bg-[#081810]/75 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 p-4 sm:p-5 shadow-xl shadow-emerald-950/15 space-y-3">
       {/* Chart Top Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-colors"
-            style={{
-              backgroundColor: metric === 'workout' ? 'rgba(139, 92, 246, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-              color: activeColor,
-            }}
+            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0 bg-emerald-500/15 text-emerald-500 border border-emerald-500/20"
           >
-            {metric === 'workout' ? <Dumbbell className="h-5 w-5" /> : <Apple className="h-5 w-5" />}
+            {metric === 'workout' ? <Dumbbell className="h-4 w-4 text-emerald-500" /> : <Apple className="h-4 w-4 text-emerald-500" />}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm sm:text-base font-black text-foreground">
-                {metric === 'workout' ? 'نمودار خطی بار تمرینات هفتگی' : 'نمودار خطی ثبات انرژی و تغذیه'}
-              </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                ۷ روز اخیر
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {metric === 'workout'
-                ? 'نمودار پیوسته دقایق و فشار تمرینات روزانه'
-                : 'روند پایبندی به کالری و سوخت‌رسانی عضلانی'}
-            </p>
-          </div>
+          <h3 className="text-xs sm:text-sm font-black text-foreground">
+            {metric === 'workout' ? 'نمودار تمرینات هفته' : 'نمودار تغذیه هفته'}
+          </h3>
         </div>
 
         {/* Minimal Pill Switcher */}
-        <div className="flex items-center p-1 rounded-2xl bg-muted/70 border border-border/60 text-xs font-bold">
+        <div className="flex items-center p-0.5 rounded-xl bg-slate-100/80 dark:bg-black/40 backdrop-blur-md border border-white/10 text-xs font-bold">
           <button
             type="button"
             onClick={() => setMetric('workout')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
               metric === 'workout'
-                ? 'bg-card text-purple-600 dark:text-purple-400 shadow-sm'
+                ? 'bg-emerald-600 text-white shadow-xs font-black'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            تمرینات
+            تمرین
           </button>
           <button
             type="button"
             onClick={() => setMetric('nutrition')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
               metric === 'nutrition'
-                ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-sm'
+                ? 'bg-emerald-600 text-white shadow-xs font-black'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -140,15 +132,15 @@ export const LinearPerformanceChart: React.FC<LinearPerformanceChartProps> = ({
       </div>
 
       {/* Hovered Point Detail Callout (Linear Minimal) */}
-      <div className="flex items-center justify-between px-2 py-1.5 rounded-xl bg-muted/40 border border-border/50 text-xs">
+      <div className="flex items-center justify-between px-2.5 py-1 rounded-xl bg-muted/30 border border-border/40 text-[11px]">
         <span className="font-bold text-foreground flex items-center gap-1.5">
           <span
-            className="w-2.5 h-2.5 rounded-full animate-pulse"
+            className="w-2 h-2 rounded-full animate-pulse"
             style={{ backgroundColor: activeColor }}
           />
           <span>{activePoint.point.day}</span>
           {activePoint.point.isToday && (
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary/10 text-primary font-bold">
+            <span className="text-[10px] px-1 py-0.2 rounded bg-primary/10 text-primary font-bold">
               امروز
             </span>
           )}
@@ -157,13 +149,11 @@ export const LinearPerformanceChart: React.FC<LinearPerformanceChartProps> = ({
         <span className="font-semibold text-muted-foreground">
           {metric === 'workout' ? (
             <>
-              شاخص بار تمرین: <strong className="text-foreground">{activePoint.val}٪</strong> (
-              {activePoint.point.workoutMinutes} دقیقه فعالیت)
+              بار تمرین: <strong className="text-foreground">{activePoint.val}٪</strong> ({activePoint.point.workoutMinutes} دقیقه)
             </>
           ) : (
             <>
-              تحقق رژیم: <strong className="text-foreground">{activePoint.val}٪</strong> (
-              {activePoint.point.calories.toLocaleString('fa-IR')} kcal)
+              تحقق کالری: <strong className="text-foreground">{activePoint.val}٪</strong> ({activePoint.point.calories} kcal)
             </>
           )}
         </span>
@@ -277,6 +267,28 @@ export const LinearPerformanceChart: React.FC<LinearPerformanceChartProps> = ({
             );
           })}
         </svg>
+
+        {/* Empty State Overlay for First-Time Users */}
+        {showEmptyState && (
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px] flex flex-col items-center justify-center p-3 text-center rounded-2xl space-y-2 animate-in fade-in">
+            <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-bold text-foreground">
+              نمودار عملکرد پس از ثبت تمرین فعال می‌شود
+            </p>
+            {onGetProgram && (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={onGetProgram}
+                className="bg-primary text-primary-foreground font-black text-xs px-4 h-7.5 rounded-xl shadow-xs cursor-pointer"
+              >
+                دریافت برنامه
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

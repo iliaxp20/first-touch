@@ -102,7 +102,7 @@ export const DEFAULT_NUTRITION_TARGET: DailyNutritionTarget = {
 export const PRESET_NUTRITION_PLANS: PresetNutritionPlan[] = [
   {
     id: 'plan-free',
-    title: 'برنامه اصولی آکادمی فرست تاچ',
+    title: 'برنامه اصولی فرست تاچ فرست تاچ',
     type: 'free',
     price: 'رایگان',
     dailyCalories: 2350,
@@ -441,7 +441,7 @@ export const PRESET_NUTRITION_PLANS: PresetNutritionPlan[] = [
     title: 'برنامه اختصاصی با نظارت مربی تغذیه ورزشی',
     type: 'coach',
     price: '۳۹۹,۰۰۰ تومان',
-    coachName: 'دپارتمان تخصصی تغذیه ورزشی آکادمی',
+    coachName: 'دپارتمان تخصصی تغذیه ورزشی فرست تاچ',
     dailyCalories: 2400,
     protein: 140,
     carbs: 270,

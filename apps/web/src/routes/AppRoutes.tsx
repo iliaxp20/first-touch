@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DashboardView } from '@/features/dashboard/DashboardView';
 import { PlanList } from '@/features/plans/components/PlanList';
+import { NutritionView } from '@/features/plans/components/NutritionView';
 import { TacticsBoard } from '@/features/tactics/components/TacticsBoard';
 import { SubscriptionCard } from '@/features/subscriptions/components/SubscriptionCard';
 import { SettingsView } from '@/features/settings/SettingsView';
@@ -35,6 +36,23 @@ const PracticeRoute: React.FC = () => {
       onUnlockClick={() => setIsProfileModalOpen(true)}
     >
       <PlanList />
+    </LockedFeatureView>
+  );
+};
+
+// Nutrition page wrapped in profile lock
+const NutritionRoute: React.FC = () => {
+  const { currentUser, setIsProfileModalOpen } = useAuth();
+  const isUnlocked = currentUser?.isProfileComplete ?? false;
+
+  return (
+    <LockedFeatureView
+      title="برنامه غذایی و کالری‌شمار غیرفعال است"
+      description="برنامه غذایی اختصاصی و محاسبه نیاز کالری روزانه پس از ثبت مشخصات فیزیکی (قد، وزن، سن) فعال می‌گردد."
+      isUnlocked={isUnlocked}
+      onUnlockClick={() => setIsProfileModalOpen(true)}
+    >
+      <NutritionView />
     </LockedFeatureView>
   );
 };
@@ -95,24 +113,6 @@ export const AppRoutes: React.FC = () => {
       <Route path="/auth" element={<Navigate to="/login" replace />} />
       <Route path="/admin" element={<AdminRoute />} />
 
-      {/* Publicly accessible Tactics Room for link sharing (also works for logged-in coaches & players) */}
-      <Route
-        path="/tactics"
-        element={
-          <AppLayout>
-            <TacticsBoard />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/tactics/:boardId"
-        element={
-          <AppLayout>
-            <TacticsBoard />
-          </AppLayout>
-        }
-      />
-
       {/* Protected routes wrapped with layout */}
       <Route
         element={
@@ -128,6 +128,15 @@ export const AppRoutes: React.FC = () => {
         <Route path="/practice" element={<PracticeRoute />} />
         <Route path="/plans" element={<Navigate to="/practice" replace />} />
         <Route path="/exercises" element={<Navigate to="/practice" replace />} />
+        <Route path="/training" element={<Navigate to="/practice" replace />} />
+
+        {/* Nutrition and diet routes */}
+        <Route path="/nutrition" element={<NutritionRoute />} />
+        <Route path="/diet" element={<Navigate to="/nutrition" replace />} />
+        <Route path="/meals" element={<Navigate to="/nutrition" replace />} />
+
+        {/* Tactics routes within unified layout */}
+        <Route path="/tactics" element={<TacticsBoard />} />
 
         {/* Subscriptions route */}
         <Route path="/subscriptions" element={<SubscriptionsRoute />} />
@@ -141,6 +150,16 @@ export const AppRoutes: React.FC = () => {
         <Route path="/rewards" element={<QuizRewardsView />} />
         <Route path="/quiz" element={<Navigate to="/rewards" replace />} />
       </Route>
+
+      {/* Publicly accessible Tactics Room for link sharing */}
+      <Route
+        path="/tactics/:boardId"
+        element={
+          <AppLayout>
+            <TacticsBoard />
+          </AppLayout>
+        }
+      />
 
       {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />

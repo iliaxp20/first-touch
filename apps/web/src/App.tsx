@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
@@ -27,9 +28,9 @@ const AppContent: React.FC = () => {
         onClose={() => setIsProfileModalOpen(false)}
         initialData={currentUser}
         onComplete={(profileData) => {
-          updateUser({
+          const updatedUserFields = {
             isProfileComplete: true,
-            fullName: profileData.fullName || 'کاربر گرامی',
+            fullName: profileData.fullName.trim(),
             avatarUrl: profileData.avatarUrl,
             age: profileData.age,
             nationalId: profileData.nationalId,
@@ -38,11 +39,41 @@ const AppContent: React.FC = () => {
             bicep: profileData.bicep,
             calf: profileData.calf,
             chest: profileData.chest,
+            thigh: profileData.thigh,
+            bodyPhotoUrl: profileData.bodyPhotoUrl,
             experienceYears: profileData.experienceYears,
             preferredFoot: profileData.preferredFoot,
             position: profileData.favPosition,
-          });
+          };
+
+          updateUser(updatedUserFields);
           setIsProfileModalOpen(false);
+
+          // Persist directly to API + Database
+          if (currentUser?.phoneNumber) {
+            const apiBase = window.location.hostname !== 'localhost' ? '' : `${API_BASE_URL}`;
+            fetch(`${apiBase}/auth/profile`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                phoneNumber: currentUser.phoneNumber,
+                fullName: profileData.fullName.trim(),
+                nationalId: profileData.nationalId.trim(),
+                age: String(profileData.age).trim(),
+                height: String(profileData.height).trim(),
+                weight: String(profileData.weight).trim(),
+                preferredFoot: profileData.preferredFoot,
+                position: profileData.favPosition,
+                avatarUrl: profileData.avatarUrl,
+                experienceYears: profileData.experienceYears,
+                bicep: profileData.bicep,
+                calf: profileData.calf,
+                chest: profileData.chest,
+                thigh: profileData.thigh,
+                bodyPhotoUrl: profileData.bodyPhotoUrl,
+              }),
+            }).catch((err) => console.warn('Could not persist profile to API:', err));
+          }
         }}
       />
 

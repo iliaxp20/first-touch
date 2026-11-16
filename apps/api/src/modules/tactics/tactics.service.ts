@@ -107,10 +107,17 @@ export class TacticsService {
     }
   }
 
-  getAllBoards(): TacticalBoard[] {
-    return Array.from(this.boards.values()).sort(
+  getAllBoards(creatorPhone?: string): TacticalBoard[] {
+    if (!creatorPhone || !creatorPhone.trim()) {
+      return [];
+    }
+
+    const cleanPhone = creatorPhone.trim();
+    const all = Array.from(this.boards.values()).sort(
       (a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime(),
     );
+
+    return all.filter((b) => b.creatorPhone === cleanPhone);
   }
 
   createBoard(dto: CreateBoardDto): TacticalBoard {

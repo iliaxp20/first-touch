@@ -8,6 +8,7 @@ import {
   Dumbbell,
   Apple,
   Droplets,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -176,28 +177,20 @@ export const AiCoachModal: React.FC<AiCoachModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm select-none animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl h-[88vh] max-h-[700px] flex flex-col rounded-3xl bg-card border border-border/80 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-2xl h-[88vh] max-h-[700px] flex flex-col rounded-3xl bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 shadow-2xl shadow-emerald-950/40 overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border/60 bg-muted/30">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-emerald-500/15 dark:border-white/10 bg-emerald-500/5 dark:bg-emerald-950/20">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-violet-500 text-white flex items-center justify-center shadow-md shadow-purple-500/25">
-                <Bot className="h-5 w-5" />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-card" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-lime-300 text-slate-950 flex items-center justify-center shadow-md shadow-emerald-500/20">
+              <Sparkles className="h-5 w-5" />
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-black text-foreground">
-                  دستیار هوش مصنوعی فرست تاچ
-                </h3>
-                <span className="text-[10px] px-2 py-0.2 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
-                  AI Coach
-                </span>
-              </div>
+              <h3 className="text-sm sm:text-base font-black text-foreground">
+                دستیار مربی هوش مصنوعی
+              </h3>
               <p className="text-[11px] text-muted-foreground font-semibold">
-                تحلیل وضعیت • پاسخگویی تاکتیکی و تمرینی ۲۴/۷
+                مشاور هوشمند تمرینات تخصصی، تاکتیک و تغذیه ورزشی
               </p>
             </div>
           </div>
@@ -205,7 +198,7 @@ export const AiCoachModal: React.FC<AiCoachModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-2xl bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="h-9 w-9 rounded-2xl flex items-center justify-center bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -219,7 +212,7 @@ export const AiCoachModal: React.FC<AiCoachModalProps> = ({
               className={`flex gap-2.5 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {m.sender === 'ai' && (
-                <div className="w-7 h-7 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0 mt-0.5">
                   <Bot className="h-4 w-4" />
                 </div>
               )}
@@ -251,7 +244,7 @@ export const AiCoachModal: React.FC<AiCoachModalProps> = ({
 
           {isTyping && (
             <div className="flex gap-2.5 items-center text-muted-foreground text-xs">
-              <div className="w-7 h-7 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center border border-purple-500/20 shrink-0">
+              <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20 shrink-0">
                 <Bot className="h-4 w-4 animate-spin" />
               </div>
               <span className="italic">مربی هوشمند در حال تایپ پاسخ تخصصی...</span>
@@ -272,7 +265,7 @@ export const AiCoachModal: React.FC<AiCoachModalProps> = ({
                 onClick={() => handleSendPrompt(qp.prompt)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card hover:bg-muted text-[11px] font-bold text-foreground border border-border/80 shrink-0 transition-colors shadow-2xs"
               >
-                <Icon className="h-3 w-3 text-purple-500" />
+                <Icon className="h-3 w-3 text-emerald-500" />
                 <span>{qp.title}</span>
               </button>
             );

@@ -2,15 +2,15 @@ import { IsString, MinLength, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminLoginDto {
-  @ApiProperty({ description: 'نام کاربری ادمین', example: 'ft_admin' })
+  @ApiProperty({ description: 'نام کاربری ادمین', example: 'admin' })
   @IsString()
-  @MinLength(4)
+  @MinLength(3)
   @MaxLength(50)
   username: string;
 
-  @ApiProperty({ description: 'رمز عبور امن ادمین' })
+  @ApiProperty({ description: 'رمز عبور ادمین' })
   @IsString()
-  @MinLength(8)
+  @MinLength(3)
   @MaxLength(100)
   password: string;
 }
