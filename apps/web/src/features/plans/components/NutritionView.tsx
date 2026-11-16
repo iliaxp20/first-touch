@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { NutritionTracker } from './NutritionTracker';
 
 export const NutritionView: React.FC = () => {
   const navigate = useNavigate();
@@ -135,8 +134,21 @@ export const NutritionView: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Nutrition Tracker Component */}
-      <NutritionTracker />
+      {/* =========================================================================
+          HEALTHY EATING NUTRITION BANNER / SLIDER
+          (فقط خود تصویر اسلایدر تغذیه بدون کادر اضافه)
+          ========================================================================= */}
+      <div className="w-full my-2">
+        <motion.img
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          src="/healthy-eating-banner.png"
+          alt="برنامه تغذیه سالم و ورزشی فرست تاچ"
+          className="w-full h-auto rounded-2xl sm:rounded-3xl cursor-pointer"
+          onClick={triggerHaptic}
+        />
+      </div>
     </div>
   );
 };
