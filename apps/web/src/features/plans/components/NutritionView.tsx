@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,52 @@ export const NutritionView: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isPlanPressed, setIsPlanPressed] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  // هماهنگ‌سازی و بارگذاری همزمان تمام تصاویر صفحه بدون نمایش تکه‌تکه
+  useEffect(() => {
+    const imagesToLoad = [
+      '/firsttouchcrop.png',
+      '/glossy-profile-icon.png',
+      '/healthy-eating-banner.png',
+      '/nutrition-cat-1.png',
+      '/nutrition-cat-2.png',
+      '/nutrition-cat-3.png',
+      '/nutrition-plan-progress-card.png',
+      '/nutrition-promo-banner.png',
+    ];
+
+    let loadedCount = 0;
+    let isMounted = true;
+
+    const onImageLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= imagesToLoad.length && isMounted) {
+        setIsReady(true);
+      }
+    };
+
+    imagesToLoad.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      if (img.complete) {
+        onImageLoaded();
+      } else {
+        img.onload = onImageLoaded;
+        img.onerror = onImageLoaded;
+      }
+    });
+
+    // سقف زمانی تضمینی جهت جلوگیری از معطلی رابط کاربری
+    const timer = setTimeout(() => {
+      if (isMounted) setIsReady(true);
+    }, 280);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
   const categories = [
     { id: 1, image: '/nutrition-cat-1.png' },
@@ -29,7 +75,11 @@ export const NutritionView: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto px-2 sm:px-3 pt-1 pb-32 select-none animate-in fade-in duration-300">
+    <div
+      className={`w-full max-w-lg mx-auto px-2 sm:px-3 pt-1 pb-32 select-none transition-opacity duration-300 ${
+        isReady ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       {/* =========================================================================
           TOP APP BAR (دقیقاً مشابه بخش تمرینات)
           - لوگوی بزرگ First Touch با تابش سبز نئونی
@@ -70,6 +120,8 @@ export const NutritionView: React.FC = () => {
             whileTap={{ scale: 0.96 }}
             src="/firsttouchcrop.png"
             alt="فرست تاچ"
+            loading="eager"
+            decoding="sync"
             className="relative z-10 h-11 sm:h-14 md:h-16 w-auto max-h-16 object-contain drop-shadow-[0_4px_24px_rgba(16,185,129,0.7)]"
           />
         </div>
@@ -103,6 +155,8 @@ export const NutritionView: React.FC = () => {
             }}
             src="/glossy-profile-icon.png"
             alt="پروفایل کاربری"
+            loading="eager"
+            decoding="sync"
             className="w-[41px] h-[41px] sm:w-[45px] sm:h-[45px] shrink-0 aspect-square object-contain cursor-pointer"
             title="پروفایل کاربری"
           />
@@ -152,12 +206,11 @@ export const NutritionView: React.FC = () => {
           (فقط خود تصویر اسلایدر تغذیه بدون کادر اضافه)
           ========================================================================= */}
       <div className="w-full my-2">
-        <motion.img
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+        <img
           src="/healthy-eating-banner.png"
           alt="برنامه تغذیه سالم و ورزشی فرست تاچ"
+          loading="eager"
+          decoding="sync"
           className="w-full h-auto rounded-2xl sm:rounded-3xl cursor-pointer"
           onClick={triggerHaptic}
         />
@@ -187,6 +240,8 @@ export const NutritionView: React.FC = () => {
                 <img
                   src={cat.image}
                   alt={`دسته‌بندی تغذیه ${index + 1}`}
+                  loading="eager"
+                  decoding="sync"
                   className={`w-full h-auto object-contain transition-all duration-300 select-none ${
                     isSelected
                       ? 'drop-shadow-[0_0_14px_rgba(52,211,153,0.85)] brightness-115'
@@ -222,6 +277,8 @@ export const NutritionView: React.FC = () => {
           <img
             src="/nutrition-plan-progress-card.png"
             alt="دریافت برنامه غذایی"
+            loading="eager"
+            decoding="sync"
             className="w-full h-auto object-contain rounded-2xl sm:rounded-3xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
             draggable={false}
           />
@@ -251,6 +308,8 @@ export const NutritionView: React.FC = () => {
           <img
             src="/nutrition-promo-banner.png"
             alt="برنامه جامع تغذیه ورزشی First Touch"
+            loading="eager"
+            decoding="sync"
             className="w-full h-auto object-contain rounded-3xl"
             draggable={false}
           />

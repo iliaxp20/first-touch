@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Star, Dumbbell, Apple } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavItemKey } from './Sidebar';
@@ -82,6 +82,35 @@ export const LiquidGlassNav: React.FC<LiquidGlassNavProps> = ({
   };
 
   const currentActive = getCurrentActiveKey();
+
+  // پیش‌بارگذاری تمام تصاویر تب‌های ناوبری جهت جلوگیری از لود تکه‌تکه
+  useEffect(() => {
+    const assets = [
+      '/firsttouchcrop.png',
+      '/glossy-profile-icon.png',
+      '/healthy-eating-banner.png',
+      '/nutrition-cat-1.png',
+      '/nutrition-cat-2.png',
+      '/nutrition-cat-3.png',
+      '/nutrition-plan-progress-card.png',
+      '/nutrition-promo-banner.png',
+      '/neon-training-banner.png',
+      '/category-1.png',
+      '/category-2.png',
+      '/category-3.png',
+      '/category-4.png',
+      '/category-5.png',
+      '/training-plan-progress-card.png',
+      '/drill-thumb-cones.png',
+      '/drill-thumb-agility.png',
+      '/drill-thumb-passing.png',
+      '/pro-trophy-banner.png',
+    ];
+    assets.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   // بازخورد لمسی (Haptic Feedback)
   const triggerHaptic = () => {

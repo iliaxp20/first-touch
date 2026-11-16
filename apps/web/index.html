@@ -9,6 +9,36 @@
     <link rel="preload" href="/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Vazirmatn-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- Critical Asset Preloader (Loads all nav images in memory immediately) -->
+    <script>
+      (function() {
+        var preloads = [
+          '/firsttouchcrop.png',
+          '/glossy-profile-icon.png',
+          '/healthy-eating-banner.png',
+          '/nutrition-cat-1.png',
+          '/nutrition-cat-2.png',
+          '/nutrition-cat-3.png',
+          '/nutrition-plan-progress-card.png',
+          '/nutrition-promo-banner.png',
+          '/neon-training-banner.png',
+          '/category-1.png',
+          '/category-2.png',
+          '/category-3.png',
+          '/category-4.png',
+          '/category-5.png',
+          '/training-plan-progress-card.png',
+          '/drill-thumb-cones.png',
+          '/drill-thumb-agility.png',
+          '/drill-thumb-passing.png',
+          '/pro-trophy-banner.png'
+        ];
+        for (var i = 0; i < preloads.length; i++) {
+          var img = new Image();
+          img.src = preloads[i];
+        }
+      })();
+    </script>
     <!-- Fallback Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

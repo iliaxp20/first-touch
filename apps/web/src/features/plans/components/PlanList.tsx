@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,56 @@ export const PlanList: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isPlanPressed, setIsPlanPressed] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  // هماهنگ‌سازی و بارگذاری همزمان تمام تصاویر صفحه بدون نمایش تکه‌تکه
+  useEffect(() => {
+    const imagesToLoad = [
+      '/firsttouchcrop.png',
+      '/glossy-profile-icon.png',
+      '/neon-training-banner.png',
+      '/category-1.png',
+      '/category-2.png',
+      '/category-3.png',
+      '/category-4.png',
+      '/category-5.png',
+      '/training-plan-progress-card.png',
+      '/drill-thumb-cones.png',
+      '/drill-thumb-agility.png',
+      '/drill-thumb-passing.png',
+      '/pro-trophy-banner.png',
+    ];
+
+    let loadedCount = 0;
+    let isMounted = true;
+
+    const onImageLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= imagesToLoad.length && isMounted) {
+        setIsReady(true);
+      }
+    };
+
+    imagesToLoad.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      if (img.complete) {
+        onImageLoaded();
+      } else {
+        img.onload = onImageLoaded;
+        img.onerror = onImageLoaded;
+      }
+    });
+
+    const timer = setTimeout(() => {
+      if (isMounted) setIsReady(true);
+    }, 280);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
   const categories = [
     { id: 1, image: '/category-1.png' },
@@ -61,7 +111,11 @@ export const PlanList: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto px-2 sm:px-3 pt-1 pb-32 select-none animate-in fade-in duration-300">
+    <div
+      className={`w-full max-w-lg mx-auto px-2 sm:px-3 pt-1 pb-32 select-none transition-opacity duration-300 ${
+        isReady ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       {/* =========================================================================
           TOP APP BAR
           - لوگو فرست تاچ بزرگ‌تر و خوانا در سمت چپ
@@ -102,6 +156,8 @@ export const PlanList: React.FC = () => {
             whileTap={{ scale: 0.96 }}
             src="/firsttouchcrop.png"
             alt="فرست تاچ"
+            loading="eager"
+            decoding="sync"
             className="relative z-10 h-11 sm:h-14 md:h-16 w-auto max-h-16 object-contain drop-shadow-[0_4px_24px_rgba(16,185,129,0.7)]"
           />
         </div>
@@ -135,6 +191,8 @@ export const PlanList: React.FC = () => {
             }}
             src="/glossy-profile-icon.png"
             alt="پروفایل کاربری"
+            loading="eager"
+            decoding="sync"
             className="w-[41px] h-[41px] sm:w-[45px] sm:h-[45px] shrink-0 aspect-square object-contain cursor-pointer"
             title="پروفایل کاربری"
           />
@@ -184,12 +242,11 @@ export const PlanList: React.FC = () => {
           (کامل و بدون برش و بدون نصفه‌شدن - نمایش ۱۰۰٪ تصویر بنر)
           ========================================================================= */}
       <div className="w-full my-2">
-        <motion.img
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+        <img
           src="/neon-training-banner.png"
           alt="تمرین امروزت آماده‌ست - بهتر بازی کن، بیشتر رشد کن"
+          loading="eager"
+          decoding="sync"
           className="w-full h-auto rounded-2xl sm:rounded-3xl cursor-pointer"
           onClick={triggerHaptic}
         />
@@ -219,6 +276,8 @@ export const PlanList: React.FC = () => {
                 <img
                   src={cat.image}
                   alt={`دسته‌بندی تمرینی ${index + 1}`}
+                  loading="eager"
+                  decoding="sync"
                   className={`w-full h-auto object-contain transition-all duration-300 select-none ${
                     isSelected
                       ? 'drop-shadow-[0_0_14px_rgba(52,211,153,0.85)] brightness-115'
@@ -254,6 +313,8 @@ export const PlanList: React.FC = () => {
           <img
             src="/training-plan-progress-card.png"
             alt="دریافت برنامه تمرینی"
+            loading="eager"
+            decoding="sync"
             className="w-full h-auto object-contain rounded-2xl sm:rounded-3xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
             draggable={false}
           />
@@ -299,6 +360,8 @@ export const PlanList: React.FC = () => {
               <img
                 src={drill.image}
                 alt={drill.title}
+                loading="eager"
+                decoding="sync"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 draggable={false}
               />
@@ -372,6 +435,8 @@ export const PlanList: React.FC = () => {
           <img
             src="/pro-trophy-banner.png"
             alt="به سطح بالاتری برس - با برنامه‌های حرفه‌ای First Touch"
+            loading="eager"
+            decoding="sync"
             className="w-full h-auto object-contain rounded-3xl"
             draggable={false}
           />
