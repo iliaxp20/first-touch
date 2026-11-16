@@ -7,6 +7,7 @@ export const NutritionView: React.FC = () => {
   const navigate = useNavigate();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [isPlanPressed, setIsPlanPressed] = useState(false);
 
   const categories = [
     { id: 1, image: '/nutrition-cat-1.png' },
@@ -165,7 +166,7 @@ export const NutritionView: React.FC = () => {
       {/* =========================================================================
           NUTRITION CATEGORIES (کراپ‌شده از تصویر ۳ تایی، همراه با انیمیشن کلیک نرم)
           ========================================================================= */}
-      <div className="w-full mt-4 sm:mt-5 mb-6">
+      <div className="w-full mt-4 sm:mt-5 mb-5">
         <div className="grid grid-cols-3 gap-2 sm:gap-3.5 w-full">
           {categories.map((cat, index) => {
             const isSelected = selectedCategory === cat.id;
@@ -197,6 +198,63 @@ export const NutritionView: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* =========================================================================
+          NUTRITION PLAN PROGRESS CARD (دریافت برنامه غذایی - کوچک و متمرکز)
+          ========================================================================= */}
+      <div className="w-full my-3 flex justify-center">
+        <motion.div
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.95, rotateX: 3, rotateY: -1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          onClick={() => {
+            triggerHaptic();
+            setIsPlanPressed(true);
+            setTimeout(() => setIsPlanPressed(false), 500);
+          }}
+          className={`relative w-[82%] sm:w-[78%] max-w-[360px] cursor-pointer rounded-2xl sm:rounded-3xl transition-all duration-300 select-none ${
+            isPlanPressed
+              ? 'ring-2 ring-emerald-400/90 shadow-[0_0_30px_rgba(52,211,153,0.5)] scale-[0.97]'
+              : 'hover:drop-shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
+          }`}
+        >
+          <img
+            src="/nutrition-plan-progress-card.png"
+            alt="دریافت برنامه غذایی"
+            className="w-full h-auto object-contain rounded-2xl sm:rounded-3xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
+            draggable={false}
+          />
+        </motion.div>
+      </div>
+
+      {/* =========================================================================
+          NUTRITION PROMO SECTION (بخش پایینی بنر تغذیه)
+          ========================================================================= */}
+      <div className="relative w-full mt-2 mb-8">
+        {/* هاله سبز زمردی ملایم در زمینه بنر */}
+        <div
+          className="absolute -bottom-6 -left-6 w-64 h-28 rounded-full pointer-events-none opacity-65 z-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.42) 0%, rgba(5, 150, 105, 0.20) 48%, transparent 75%)',
+            filter: 'blur(30px)',
+          }}
+        />
+
+        <motion.div
+          whileHover={{ scale: 1.015, y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+          onClick={triggerHaptic}
+          className="relative z-10 w-full cursor-pointer rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.5)]"
+        >
+          <img
+            src="/nutrition-promo-banner.png"
+            alt="برنامه جامع تغذیه ورزشی First Touch"
+            className="w-full h-auto object-contain rounded-3xl"
+            draggable={false}
+          />
+        </motion.div>
       </div>
     </div>
   );
