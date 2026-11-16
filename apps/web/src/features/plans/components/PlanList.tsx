@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PlanAcquisitionModal } from './PlanAcquisitionModal';
+import { ActiveTrainingPlanCard } from './ActiveTrainingPlanCard';
 
 export const PlanList: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,34 @@ export const PlanList: React.FC = () => {
   const [isPlanPressed, setIsPlanPressed] = useState(false);
   const [isAcquisitionOpen, setIsAcquisitionOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [activePlan, setActivePlan] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem('first_touch_student_active_plans');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+      }
+    } catch {}
+    return null;
+  });
+
+  useEffect(() => {
+    const handlePlanUpdate = () => {
+      try {
+        const saved = localStorage.getItem('first_touch_student_active_plans');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setActivePlan(parsed[0]);
+            return;
+          }
+        }
+        setActivePlan(null);
+      } catch {}
+    };
+    window.addEventListener('ft_student_plan_updated', handlePlanUpdate);
+    return () => window.removeEventListener('ft_student_plan_updated', handlePlanUpdate);
+  }, []);
 
   // هماهنگ‌سازی و بارگذاری همزمان تمام تصاویر صفحه بدون نمایش تکه‌تکه
   useEffect(() => {
@@ -294,34 +323,41 @@ export const PlanList: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          MY TRAINING PLAN PROGRESS CARD (عکس دریافت برنامه تمرینی - کوچک‌تر و متمرکز)
+          MY TRAINING PLAN PROGRESS CARD (عکس دریافت برنامه تمرینی / کارت زنده پس از دریافت)
           ========================================================================= */}
       <div className="w-full my-3 flex justify-center">
-        <motion.div
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.95, rotateX: 3, rotateY: -1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          onClick={() => {
-            triggerHaptic();
-            setIsPlanPressed(true);
-            setTimeout(() => setIsPlanPressed(false), 300);
-            setIsAcquisitionOpen(true);
-          }}
-          className={`relative w-[82%] sm:w-[78%] max-w-[360px] cursor-pointer rounded-2xl sm:rounded-3xl transition-all duration-300 select-none ${
-            isPlanPressed
-              ? 'ring-2 ring-emerald-400/90 shadow-[0_0_30px_rgba(52,211,153,0.5)] scale-[0.97]'
-              : 'hover:drop-shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
-          }`}
-        >
-          <img
-            src="/training-plan-progress-card.png"
-            alt="دریافت برنامه تمرینی"
-            loading="eager"
-            decoding="sync"
-            className="w-full h-auto object-contain rounded-2xl sm:rounded-3xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
-            draggable={false}
+        {activePlan ? (
+          <ActiveTrainingPlanCard
+            activePlan={activePlan}
+            onOpenDetails={() => setIsAcquisitionOpen(true)}
           />
-        </motion.div>
+        ) : (
+          <motion.div
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.95, rotateX: 3, rotateY: -1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            onClick={() => {
+              triggerHaptic();
+              setIsPlanPressed(true);
+              setTimeout(() => setIsPlanPressed(false), 300);
+              setIsAcquisitionOpen(true);
+            }}
+            className={`relative w-[82%] sm:w-[78%] max-w-[360px] cursor-pointer rounded-2xl sm:rounded-3xl transition-all duration-300 select-none ${
+              isPlanPressed
+                ? 'ring-2 ring-emerald-400/90 shadow-[0_0_30px_rgba(52,211,153,0.5)] scale-[0.97]'
+                : 'hover:drop-shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
+            }`}
+          >
+            <img
+              src="/training-plan-progress-card.png"
+              alt="دریافت برنامه تمرینی"
+              loading="eager"
+              decoding="sync"
+              className="w-full h-auto object-contain rounded-2xl sm:rounded-3xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
+              draggable={false}
+            />
+          </motion.div>
+        )}
       </div>
 
       {/* =========================================================================

@@ -709,42 +709,51 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                         }`}
                       >
                         <div className="space-y-3">
-                          {/* Image & Video Tag */}
-                          <div
-                            onClick={() => setFreeDrillDetail(drill)}
-                            className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 cursor-pointer group shadow-md"
-                          >
-                            {drill.videoUrl ? (
-                              <video
-                                src={drill.videoUrl}
-                                poster={drill.thumbnailUrl}
-                                preload="metadata"
-                                muted
-                                playsInline
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <img
-                                src={drill.thumbnailUrl}
-                                alt={drill.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            )}
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <div className="h-10 w-10 rounded-full bg-white/90 text-emerald-700 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play className="h-5 w-5 fill-emerald-700 ml-0.5" />
+                          {/* Image & Video Tag (Never black - always vivid with glowing play button) */}
+                          {(() => {
+                            const posterSrc =
+                              drill.thumbnailUrl && drill.thumbnailUrl.startsWith('http') && !drill.thumbnailUrl.includes('unsplash')
+                                ? drill.thumbnailUrl
+                                : drill.categoryKey === 'speed' || drill.title.includes('پاس')
+                                ? '/drill-thumb-passing.png'
+                                : drill.title.includes('مخروط') || drill.title.includes('دریبل')
+                                ? '/drill-thumb-cones.png'
+                                : '/drill-thumb-agility.png';
+
+                            return (
+                              <div
+                                onClick={() => setFreeDrillDetail(drill)}
+                                className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 cursor-pointer group shadow-lg border border-white/10"
+                              >
+                                <img
+                                  src={posterSrc}
+                                  alt={drill.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+
+                                {/* Ambient Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 group-hover:via-black/15 transition-colors flex items-center justify-center">
+                                  {/* Glossy Emerald Play Button */}
+                                  <div className="h-12 w-12 rounded-full bg-emerald-500/90 text-white flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.7)] group-hover:scale-110 transition-transform border border-white/30 backdrop-blur-sm">
+                                    <Play className="h-6 w-6 fill-white text-white ml-0.5" />
+                                  </div>
+                                </div>
+
+                                {/* Category Tag */}
+                                <span className="absolute top-2.5 right-2.5 text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/75 text-white backdrop-blur-md border border-white/10">
+                                  {drill.subCategory}
+                                </span>
+
+                                {/* Video Tag */}
+                                {drill.videoUrl && (
+                                  <span className="absolute top-2.5 left-2.5 text-[10px] font-black px-2.5 py-0.5 rounded-md bg-emerald-500/95 text-slate-950 shadow-md flex items-center gap-1 backdrop-blur-xs">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-slate-950 animate-pulse" />
+                                    <span>ویدیو</span>
+                                  </span>
+                                )}
                               </div>
-                            </div>
-                            <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/70 text-white backdrop-blur-xs">
-                              {drill.subCategory}
-                            </span>
-                            {drill.videoUrl && (
-                              <span className="absolute top-2 left-2 text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-500/90 text-white shadow-sm flex items-center gap-1">
-                                <Play className="h-2.5 w-2.5 fill-white" />
-                                ویدیو
-                              </span>
-                            )}
-                          </div>
+                            );
+                          })()}
 
                           <div>
                             <div className="flex items-center justify-between mb-1">

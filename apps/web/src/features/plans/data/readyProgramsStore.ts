@@ -51,7 +51,80 @@ export const getAgeGroupFromAge = (
 
 const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [];
 
-const DEFAULT_READY_NUTRITION_PLANS: ReadyNutritionPlan[] = [];
+const DEFAULT_READY_NUTRITION_PLANS: ReadyNutritionPlan[] = [
+  {
+    id: 'plan-free-football',
+    title: 'برنامه اصولی فرست تاچ (استاندارد فوتبالیست‌ها)',
+    ageGroup: 'تمامی رده‌ها',
+    price: 'رایگان',
+    priceNumber: 0,
+    dailyCalories: 2350,
+    goal: 'تغذیه بهینه مسابقه و ریکاوری با پروتئین و املاح استاندارد',
+    focus: '۱۳۵ گرم پروتئین • ۲۷۵ گرم کربوهیدرات • ۶۲ گرم چربی',
+    description: 'رژیم استاندارد ۵ وعده‌ای فوتبالیست شامل نان سنگک، تخم‌مرغ، مرغ، ماهی، جو دوسر و مغزها',
+    mealsSummary: [
+      { name: 'صبحانه', food: 'نان سنگک، ۲ تخم‌مرغ عسلی، پنیر سفید و گردو', time: '۰۸:۰۰' },
+      { name: 'میان‌وعده صبح', food: 'سیب درختی، ۳ عدد خرما پیارم و مغز بادام', time: '۱۱:۰۰' },
+      { name: 'ناهار', food: 'زرشک‌پلو با سینه مرغ پخته، ماست پروتئینی و سالاد زیتون', time: '۱۴:۰۰' },
+      { name: 'میان‌وعده عصر', food: 'موز، ۱ قاشق کره بادام‌زمینی و اوتمیل شیر کم‌چرب', time: '۱۷:۳۰' },
+      { name: 'شام', food: 'فیله مرغ یا سالمون گریل با سیب‌زمینی تنوری و بروکلی', time: '۲۱:۰۰' },
+    ],
+  },
+  {
+    id: 'plan-ready-growth',
+    title: 'برنامه آماده رشد قد و عضله‌سازی (نوجوانان و جوانان)',
+    ageGroup: 'نوجوانان (۱۲ تا ۱۵ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    dailyCalories: 2500,
+    goal: 'تغذیه صفحات رشد، افزایش تراکم استخوان و هایپرتروفی عضلانی',
+    focus: '۱۴۵ گرم پروتئین • ۲۹۰ گرم کربوهیدرات • ۶۵ گرم چربی',
+    description: 'غنی از کلسیم، املاح و پروتئین باکیفیت برای تغذیه صفحات رشد و توان انفجاری',
+    mealsSummary: [
+      { name: 'صبحانه', food: 'املت گوجه با ۲ تخم‌مرغ، ۲ کف دست سنگک و شیر', time: '۰۸:۰۰' },
+      { name: 'میان‌وعده', food: '۱ لیوان شیرموز خانگی با ۳ عدد خرما پیارم', time: '۱۱:۰۰' },
+      { name: 'ناهار', food: 'چلو راسته گوساله یا مرغ با برنج ایرانی و گوجه', time: '۱۴:۰۰' },
+      { name: 'عصرانه', food: 'نان تست جو با کره بادام‌زمینی، عسل و دانه چیا', time: '۱۷:۰۰' },
+      { name: 'شام', food: 'پاستا سبوس‌دار با سس گوجه تازه و فیله گریل', time: '۲۱:۰۰' },
+    ],
+  },
+  {
+    id: 'plan-ready-fatloss',
+    title: 'برنامه آماده کات و چربی‌سوزی حرفه‌ای فوتبال',
+    ageGroup: 'جوانان (۱۶ تا ۱۹ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    dailyCalories: 2100,
+    goal: 'کاهش درصد چربی زیرپوستی و حفظ کامل حجم عضلانی و سرعت',
+    focus: '۱۶۰ گرم پروتئین • ۱۹۰ گرم کربوهیدرات • ۵۰ گرم چربی',
+    description: 'برنامه چربی‌سوزی تخصصی ورزشکاران فوتبال بدون افت انرژی و شتاب اولیه',
+    mealsSummary: [
+      { name: 'صبحانه', food: '۳ سفیده تخم‌مرغ + ۱ زرده، اوتمیل دارچینی با آب/شیر بادام', time: '۰۸:۰۰' },
+      { name: 'میان‌وعده', food: 'سیب سبز همراه با ۱۰ عدد بادام خام', time: '۱۱:۰۰' },
+      { name: 'ناهار', food: 'سینه بوقلمون گریل‌شده با کینوا و سبزیجات بخارپز', time: '۱۴:۰۰' },
+      { name: 'عصرانه', food: 'شیک پروتئینی خانگی با شیر کم‌چرب و قهوه اسپرسو', time: '۱۷:۳۰' },
+      { name: 'شام', food: 'ماهی سالمون بخارپز با کلم بروکلی، مارچوبه و اسفناج', time: '۲۱:۰۰' },
+    ],
+  },
+  {
+    id: 'plan-ready-adults',
+    title: 'برنامه تغذیه قهرمانی و انرژی پایدار (بزرگسالان)',
+    ageGroup: 'بزرگسالان (+۱۹ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    dailyCalories: 2600,
+    goal: 'تأمین ذخایر گلیکوژن ۹۰ دقیقه مسابقه و ریکاوری سریع بافت عضلانی',
+    focus: '۱۵۵ گرم پروتئین • ۳۱۰ گرم کربوهیدرات • ۷۰ گرم چربی',
+    description: 'طراحی شده برای بازیکنان مسابقات رسمی و لیگ ۹۰ دقیقه‌ای',
+    mealsSummary: [
+      { name: 'صبحانه', food: 'نان جو دوسر، ۳ تخم‌مرغ، آووکادو و پنیر سفید', time: '۰۸:۰۰' },
+      { name: 'میان‌وعده', food: 'اسموتی اسفناج، موز، پروتئین وی و بادام', time: '۱۱:۰۰' },
+      { name: 'ناهار', food: 'استیک فیله یا سینه بوقلمون با برنج قهوه‌ای و زیتون', time: '۱۴:۰۰' },
+      { name: 'عصرانه قبل تمرین', food: 'سیب‌زمینی شیرین پخته با مقداری عسل طبیعی', time: '۱۷:۳۰' },
+      { name: 'شام ریکاوری', food: 'ماهی قزل‌آلا کبابی با سبزیجات فصلی و روغن زیتون بکر', time: '۲۱:۰۰' },
+    ],
+  },
+];
 
 const TRAINING_STORAGE_KEY = 'first_touch_ready_training_plans';
 const NUTRITION_STORAGE_KEY = 'first_touch_ready_nutrition_plans';
@@ -233,7 +306,7 @@ export const getReadyNutritionPlans = (): ReadyNutritionPlan[] => {
     const raw = localStorage.getItem(NUTRITION_STORAGE_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.filter((p: ReadyNutritionPlan) => p && !deletedIds.includes(p.id));
       }
     }

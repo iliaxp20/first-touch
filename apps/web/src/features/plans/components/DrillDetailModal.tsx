@@ -131,12 +131,17 @@ export const DrillDetailModal: React.FC<DrillDetailModalProps> = ({
                 src={(drill as any).videoUrl}
                 controls
                 playsInline
-                poster={drill.imageUrl || (drill as any).thumbnailUrl}
+                autoPlay
+                poster={
+                  (drill.imageUrl && !drill.imageUrl.includes('unsplash') ? drill.imageUrl : null) ||
+                  ((drill as any).thumbnailUrl && !(drill as any).thumbnailUrl.includes('unsplash') ? (drill as any).thumbnailUrl : null) ||
+                  ((drill as any).title?.includes('پاس') ? '/drill-thumb-passing.png' : (drill as any).title?.includes('دریبل') ? '/drill-thumb-cones.png' : '/drill-thumb-agility.png')
+                }
                 className="w-full h-full object-cover"
               />
             ) : drill.imageUrl ? (
               <img
-                src={drill.imageUrl}
+                src={drill.imageUrl && !drill.imageUrl.includes('unsplash') ? drill.imageUrl : '/drill-thumb-agility.png'}
                 alt={drill.persianName || (drill as any).title}
                 className="w-full h-full object-cover"
               />
