@@ -6,6 +6,13 @@ import { useNavigate } from 'react-router-dom';
 export const NutritionView: React.FC = () => {
   const navigate = useNavigate();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+
+  const categories = [
+    { id: 1, image: '/nutrition-cat-1.png' },
+    { id: 2, image: '/nutrition-cat-2.png' },
+    { id: 3, image: '/nutrition-cat-3.png' },
+  ];
 
   const triggerHaptic = () => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -13,6 +20,11 @@ export const NutritionView: React.FC = () => {
         navigator.vibrate([14]);
       } catch {}
     }
+  };
+
+  const handleCategoryClick = (id: number) => {
+    triggerHaptic();
+    setSelectedCategory((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -148,6 +160,43 @@ export const NutritionView: React.FC = () => {
           className="w-full h-auto rounded-2xl sm:rounded-3xl cursor-pointer"
           onClick={triggerHaptic}
         />
+      </div>
+
+      {/* =========================================================================
+          NUTRITION CATEGORIES (کراپ‌شده از تصویر ۳ تایی، همراه با انیمیشن کلیک نرم)
+          ========================================================================= */}
+      <div className="w-full mt-4 sm:mt-5 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3.5 w-full">
+          {categories.map((cat, index) => {
+            const isSelected = selectedCategory === cat.id;
+
+            return (
+              <motion.div
+                key={cat.id}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+                onClick={() => handleCategoryClick(cat.id)}
+                className={`relative flex flex-col items-center justify-center p-1 sm:p-2 rounded-2xl cursor-pointer transition-all duration-300 ${
+                  isSelected
+                    ? 'ring-2 ring-emerald-400 bg-emerald-500/20 shadow-[0_0_20px_rgba(52,211,153,0.4)]'
+                    : 'hover:bg-white/5 active:bg-white/10'
+                }`}
+              >
+                <img
+                  src={cat.image}
+                  alt={`دسته‌بندی تغذیه ${index + 1}`}
+                  className={`w-full h-auto object-contain transition-all duration-300 select-none ${
+                    isSelected
+                      ? 'drop-shadow-[0_0_14px_rgba(52,211,153,0.85)] brightness-115'
+                      : 'drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)] hover:brightness-105'
+                  }`}
+                  draggable={false}
+                />
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
