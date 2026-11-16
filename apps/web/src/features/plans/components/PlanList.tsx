@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PlanAcquisitionModal } from './PlanAcquisitionModal';
 
 export const PlanList: React.FC = () => {
   const navigate = useNavigate();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isPlanPressed, setIsPlanPressed] = useState(false);
+  const [isAcquisitionOpen, setIsAcquisitionOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   // هماهنگ‌سازی و بارگذاری همزمان تمام تصاویر صفحه بدون نمایش تکه‌تکه
@@ -302,7 +304,8 @@ export const PlanList: React.FC = () => {
           onClick={() => {
             triggerHaptic();
             setIsPlanPressed(true);
-            setTimeout(() => setIsPlanPressed(false), 500);
+            setTimeout(() => setIsPlanPressed(false), 300);
+            setIsAcquisitionOpen(true);
           }}
           className={`relative w-[82%] sm:w-[78%] max-w-[360px] cursor-pointer rounded-2xl sm:rounded-3xl transition-all duration-300 select-none ${
             isPlanPressed
@@ -442,6 +445,22 @@ export const PlanList: React.FC = () => {
           />
         </motion.div>
       </div>
+
+      {/* 3-Line Liquid Glass Plan Acquisition Modal */}
+      {isAcquisitionOpen && (
+        <PlanAcquisitionModal
+          isOpen={isAcquisitionOpen}
+          onClose={() => setIsAcquisitionOpen(false)}
+          mode="training"
+          onPlanActivated={(newPlan) => {
+            try {
+              const active = [newPlan];
+              localStorage.setItem('first_touch_student_active_plans', JSON.stringify(active));
+              window.dispatchEvent(new Event('ft_student_plan_updated'));
+            } catch {}
+          }}
+        />
+      )}
     </div>
   );
 };

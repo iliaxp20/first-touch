@@ -387,12 +387,12 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-5 bg-slate-950/95 sm:bg-slate-950/98 backdrop-blur-xl overflow-y-auto select-none">
-      <Card className="w-full max-w-4xl border border-emerald-500/20 dark:border-white/10 bg-white/95 dark:bg-[#07160e]/95 backdrop-blur-2xl shadow-2xl shadow-emerald-950/40 relative overflow-hidden rounded-3xl my-2 sm:my-6 flex flex-col max-h-[96vh] sm:max-h-[90vh]">
-        {/* Top Header - Streamlined & Compact */}
-        <div className="p-3.5 sm:p-5 border-b border-emerald-500/15 dark:border-white/10 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent dark:from-[#091b12] dark:via-[#07160e] dark:to-[#040e08] shrink-0">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-5 bg-black/85 backdrop-blur-xl overflow-y-auto select-none">
+      <Card className="w-full max-w-4xl border border-emerald-500/30 dark:border-emerald-500/20 bg-slate-900/90 dark:bg-[#07160e]/92 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] relative overflow-hidden rounded-3xl my-2 sm:my-6 flex flex-col max-h-[96vh] sm:max-h-[90vh] text-white">
+        {/* Top Header - Liquid Glass & Compact */}
+        <div className="p-3.5 sm:p-5 border-b border-white/10 dark:border-emerald-500/20 flex items-center justify-between bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-transparent dark:from-[#091b12] dark:via-[#07160e] dark:to-[#040e08] shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/25 shrink-0">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
               {mode === 'training' ? (
                 <Dumbbell className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
@@ -400,14 +400,14 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
               )}
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                 <span>
                   {mode === 'training'
                     ? 'دریافت برنامه تمرینی'
                     : 'دریافت برنامه غذایی'}
                 </span>
               </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block">
+              <p className="text-[11px] sm:text-xs text-emerald-200/70 mt-0.5 hidden sm:block">
                 انتخاب از میان برنامه‌های ساده رایگان، آماده رده سنی و اختصاصی با مربی
               </p>
             </div>
@@ -415,35 +415,35 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
           <button
             onClick={onClose}
-            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* 3 OPTIONS TABS SWITCHER WITH SLIDING PILL */}
+        {/* 3 LIQUID GLASS TABS SWITCHER WITH SLIDING PILL */}
         {!isProcessing && !isTransitioning && (
           <div className="px-3.5 sm:px-6 pt-3 sm:pt-4 shrink-0">
-            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/5 relative">
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-white/5 dark:bg-black/50 border border-white/10 dark:border-emerald-500/20 backdrop-blur-xl relative shadow-inner">
               {/* Option 1: Simple (Free) */}
               <button
                 type="button"
                 onClick={() => setActiveTab('free')}
-                className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === 'free'
-                    ? 'text-emerald-700 dark:text-emerald-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'text-white'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {activeTab === 'free' && (
                   <motion.div
                     layoutId="modalAcquisitionTabPill"
-                    className="absolute inset-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-emerald-500/30"
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/30 via-emerald-500/20 to-teal-500/20 border border-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.35)]"
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <Sparkles className="h-3.5 w-3.5 text-emerald-500 relative z-10 shrink-0" />
-                <span className="relative z-10 hidden sm:inline">برنامه ساده (رایگان)</span>
+                <Sparkles className="h-3.5 w-3.5 text-emerald-400 relative z-10 shrink-0" />
+                <span className="relative z-10 hidden sm:inline">رایگان (تخصصی)</span>
                 <span className="relative z-10 sm:hidden">رایگان</span>
               </button>
 
@@ -451,20 +451,20 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('ready')}
-                className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === 'ready'
-                    ? 'text-emerald-800 dark:text-emerald-200'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'text-white'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {activeTab === 'ready' && (
                   <motion.div
                     layoutId="modalAcquisitionTabPill"
-                    className="absolute inset-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-emerald-500/30"
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/30 via-emerald-500/20 to-teal-500/20 border border-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.35)]"
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <Calendar className="h-3.5 w-3.5 text-emerald-600 relative z-10 shrink-0" />
+                <Calendar className="h-3.5 w-3.5 text-emerald-400 relative z-10 shrink-0" />
                 <span className="relative z-10 hidden sm:inline">برنامه آماده (۱۹۹ ت)</span>
                 <span className="relative z-10 sm:hidden">آماده (۱۹۹ ت)</span>
               </button>
@@ -473,20 +473,20 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('custom-coach')}
-                className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`relative py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-colors duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === 'custom-coach'
-                    ? 'text-amber-700 dark:text-amber-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'text-white'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {activeTab === 'custom-coach' && (
                   <motion.div
                     layoutId="modalAcquisitionTabPill"
-                    className="absolute inset-0 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-amber-500/30"
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-500/30 via-amber-500/20 to-orange-500/20 border border-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.35)]"
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <UserCheck className="h-3.5 w-3.5 text-amber-500 relative z-10 shrink-0" />
+                <UserCheck className="h-3.5 w-3.5 text-amber-400 relative z-10 shrink-0" />
                 <span className="relative z-10 hidden sm:inline">اختصاصی مربی (۳۹۹ ت)</span>
                 <span className="relative z-10 sm:hidden">مربی (۳۹۹ ت)</span>
               </button>
@@ -700,25 +700,36 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           {activeCategoryDrills.map((drill) => {
                             const isPicked = selectedFreeItems.includes(drill.id);
                             return (
-                      <div
+                        <div
                         key={drill.id}
-                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between bg-white dark:bg-slate-800/60 ${
+                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between bg-white/10 dark:bg-white/[0.04] backdrop-blur-xl ${
                           isPicked
-                            ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md'
-                            : 'border-slate-200 dark:border-slate-700/80 hover:border-emerald-300'
+                            ? 'border-emerald-400 bg-emerald-500/15 dark:bg-emerald-950/30 shadow-[0_0_20px_rgba(52,211,153,0.25)]'
+                            : 'border-white/15 dark:border-white/10 hover:border-emerald-500/40 hover:bg-white/15'
                         }`}
                       >
                         <div className="space-y-3">
                           {/* Image & Video Tag */}
                           <div
                             onClick={() => setFreeDrillDetail(drill)}
-                            className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 cursor-pointer group"
+                            className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 cursor-pointer group shadow-md"
                           >
-                            <img
-                              src={drill.thumbnailUrl}
-                              alt={drill.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                            {drill.videoUrl ? (
+                              <video
+                                src={drill.videoUrl}
+                                poster={drill.thumbnailUrl}
+                                preload="metadata"
+                                muted
+                                playsInline
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <img
+                                src={drill.thumbnailUrl}
+                                alt={drill.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            )}
                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                               <div className="h-10 w-10 rounded-full bg-white/90 text-emerald-700 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                                 <Play className="h-5 w-5 fill-emerald-700 ml-0.5" />
@@ -727,6 +738,12 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/70 text-white backdrop-blur-xs">
                               {drill.subCategory}
                             </span>
+                            {drill.videoUrl && (
+                              <span className="absolute top-2 left-2 text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-500/90 text-white shadow-sm flex items-center gap-1">
+                                <Play className="h-2.5 w-2.5 fill-white" />
+                                ویدیو
+                              </span>
+                            )}
                           </div>
 
                           <div>
@@ -909,10 +926,10 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                     return (
                       <div
                         key={plan.id}
-                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
+                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 backdrop-blur-xl ${
                           isUnlocked
-                            ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-sm'
-                            : 'border-emerald-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:shadow-lg'
+                            ? 'border-emerald-400 bg-emerald-500/15 dark:bg-emerald-950/30 shadow-[0_0_20px_rgba(52,211,153,0.25)]'
+                            : 'border-white/15 dark:border-white/10 bg-white/10 dark:bg-white/[0.04] hover:border-emerald-500/40 hover:bg-white/15 hover:shadow-lg'
                         }`}
                       >
                         <div className="space-y-2.5">

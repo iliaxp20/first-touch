@@ -562,7 +562,7 @@ export const TacticsBoard: React.FC = () => {
   // View 1: Clean Minimalist Landing Page (when no boardId is in URL)
   if (!activeBoardId) {
     return (
-      <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 space-y-10 animate-in fade-in">
+      <div className="max-w-4xl mx-auto py-2 sm:py-4 px-2 sm:px-4 space-y-8 animate-in fade-in">
         {/* Main Banner Card */}
         <div className="bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 rounded-[28px] p-6 sm:p-10 shadow-xl shadow-emerald-950/20 text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
