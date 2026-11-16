@@ -5,7 +5,7 @@
     "creatorName": "کاربر گرامی",
     "creatorPhone": "09309663349",
     "createdAt": "2026-11-05T05:14:04.512Z",
-    "updatedAt": "2026-11-05T05:57:11.162Z",
+    "updatedAt": "2026-11-16T07:14:12.771Z",
     "players": [
       {
         "id": "1",
@@ -66,8 +66,8 @@
         "number": 8,
         "name": "",
         "team": "HOME",
-        "x": 55,
-        "y": 32,
+        "x": 59.9,
+        "y": 27.5,
         "position": "CM"
       },
       {

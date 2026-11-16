@@ -43,20 +43,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#030d07] text-foreground transition-colors duration-200 relative overflow-x-hidden">
-      {/* Stadium Floodlight Green Luminous Atmosphere */}
-      <div 
-        className="fixed -top-28 left-1/2 -translate-x-1/2 w-[650px] sm:w-[950px] h-[500px] sm:h-[620px] rounded-full pointer-events-none z-0 opacity-20 dark:opacity-100 transition-opacity"
-        style={{
-          background: 'radial-gradient(circle at 50% 35%, rgba(16, 185, 129, 0.45) 0%, rgba(5, 150, 105, 0.30) 32%, rgba(4, 120, 87, 0.16) 55%, transparent 75%)',
-          filter: 'blur(50px)',
-        }}
-      />
-      <div 
-        className="fixed top-0 inset-x-0 h-96 pointer-events-none z-0 opacity-25 dark:opacity-100 transition-opacity"
-        style={{
-          background: 'radial-gradient(ellipse 95% 65% at 50% -10%, rgba(34, 197, 94, 0.30) 0%, rgba(16, 185, 129, 0.15) 42%, transparent 75%)',
-        }}
-      />
+      {/* Stadium Floodlight Green Luminous Atmosphere (روی صفحه تمرینات غیرفعال تا روی اسلایدر رنگ سبز نیفتد) */}
+      {!isPracticePage && (
+        <>
+          <div 
+            className="fixed -top-28 left-1/2 -translate-x-1/2 w-[650px] sm:w-[950px] h-[500px] sm:h-[620px] rounded-full pointer-events-none z-0 opacity-20 dark:opacity-100 transition-opacity"
+            style={{
+              background: 'radial-gradient(circle at 50% 35%, rgba(16, 185, 129, 0.45) 0%, rgba(5, 150, 105, 0.30) 32%, rgba(4, 120, 87, 0.16) 55%, transparent 75%)',
+              filter: 'blur(50px)',
+            }}
+          />
+          <div 
+            className="fixed top-0 inset-x-0 h-96 pointer-events-none z-0 opacity-25 dark:opacity-100 transition-opacity"
+            style={{
+              background: 'radial-gradient(ellipse 95% 65% at 50% -10%, rgba(34, 197, 94, 0.30) 0%, rgba(16, 185, 129, 0.15) 42%, transparent 75%)',
+            }}
+          />
+        </>
+      )}
 
       {/* Top Navbar */}
       {!shouldHideNavbar && (
