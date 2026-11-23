@@ -14,7 +14,6 @@ export const NutritionView: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [initialCategoryKey, setInitialCategoryKey] = useState<string>('all');
-  const [isPlanPressed, setIsPlanPressed] = useState(false);
   const [isAcquisitionOpen, setIsAcquisitionOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [activePlan, setActivePlan] = useState<any>(() => {
@@ -55,7 +54,6 @@ export const NutritionView: React.FC = () => {
       '/nutrition-cat-1.png',
       '/nutrition-cat-2.png',
       '/nutrition-cat-3.png',
-      '/nutrition-plan-progress-card.png',
       '/nutrition-promo-banner.png',
     ];
 
@@ -339,41 +337,13 @@ export const NutritionView: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          NUTRITION PLAN PROGRESS CARD (کارت تقویم زنده وعده‌ها پس از دریافت / عکس دریافت)
+          NUTRITION PLAN & DAILY CALORIE TRACKER (تقویم تعاملی زنده و کالری‌شمار روزانه)
           ========================================================================= */}
       <div className="w-full my-1.5 flex justify-center">
-        {activePlan ? (
-          <ActiveNutritionPlanCard
-            activePlan={activePlan}
-            onOpenDetails={() => setIsAcquisitionOpen(true)}
-          />
-        ) : (
-          <motion.div
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.95, rotateX: 3, rotateY: -1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            onClick={() => {
-              triggerHaptic();
-              setIsPlanPressed(true);
-              setTimeout(() => setIsPlanPressed(false), 300);
-              setIsAcquisitionOpen(true);
-            }}
-            className={`relative w-[82%] sm:w-[78%] max-w-[360px] cursor-pointer rounded-2xl sm:rounded-3xl transition-all duration-300 select-none ${
-              isPlanPressed
-                ? 'ring-2 ring-emerald-400/90 shadow-[0_0_30px_rgba(52,211,153,0.5)] scale-[0.97]'
-                : 'hover:drop-shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
-            }`}
-          >
-            <img
-              src="/nutrition-plan-progress-card.png"
-              alt="دریافت برنامه غذایی"
-              loading="eager"
-              decoding="sync"
-              className="w-full h-auto object-contain rounded-2xl sm:rounded-3xl drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
-              draggable={false}
-            />
-          </motion.div>
-        )}
+        <ActiveNutritionPlanCard
+          activePlan={activePlan || { title: 'برنامه غذایی ورزشی فرست تاچ', dailyCalories: 2350 }}
+          onOpenDetails={() => setIsAcquisitionOpen(true)}
+        />
       </div>
 
       {/* =========================================================================

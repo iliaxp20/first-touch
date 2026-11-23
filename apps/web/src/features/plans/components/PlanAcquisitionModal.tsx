@@ -85,6 +85,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   // --- READY TAB STATE ---
   const [readyTrainingPlans, setReadyTrainingPlans] = useState<ReadyTrainingPlan[]>([]);
   const [readyNutritionPlans, setReadyNutritionPlans] = useState<ReadyNutritionPlan[]>([]);
+  const [selectedAgeFilter, setSelectedAgeFilter] = useState<string>(() => userAgeGroup || 'all');
 
   // --- 800+ FOOD DATABASE STATE ---
   const [foodList, setFoodList] = useState<any[]>([]);
@@ -1086,17 +1087,17 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
         )}
 
         {/* =========================================================================
-            TAB 2: READY PLANS (199K) - FILTERED BY USER PROFILE AGE AUTOMATICALLY
+            TAB 2: READY PLANS (199K) - FILTERED BY AGE & AGE SELECTOR PILLS
             ========================================================================= */}
         {activeTab === 'ready' && (
           <div className="space-y-3.5">
-            {/* Automatic Age Match Indicator without Any Manual Selectors */}
+            {/* Automatic Age Match Indicator */}
             <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-bold">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 shrink-0 text-emerald-500" />
                 <span>
                   {userAgeGroup
-                    ? `برنامه‌های متناسب با سن شما در پروفایل (${currentUser?.age} سال • ${userAgeGroup})`
+                    ? `برنامه‌های متناسب با رده سنی شما (${userAgeGroup})`
                     : 'برنامه‌های تمرینی تخصصی فرست تاچ'}
                 </span>
               </div>
@@ -1105,24 +1106,50 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
               </span>
             </div>
 
+            {/* Age Group Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scrollbar-none">
+              {[
+                { key: 'all', label: 'همه رده‌ها' },
+                { key: 'نونهالان (زیر ۱۲ سال)', label: 'نونهالان (زیر ۱۲)' },
+                { key: 'نوجوانان (۱۲ تا ۱۵ سال)', label: 'نوجوانان (۱۲ تا ۱۵)' },
+                { key: 'جوانان (۱۶ تا ۱۹ سال)', label: 'جوانان (۱۶ تا ۱۹)' },
+                { key: 'بزرگسالان (+۱۹ سال)', label: 'بزرگسالان (+۱۹)' },
+              ].map((opt) => {
+                const isSelected = selectedAgeFilter === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic();
+                      setSelectedAgeFilter(opt.key);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-500 text-slate-950 font-black shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+                        : 'bg-white/10 dark:bg-white/[0.05] text-slate-300 hover:text-white hover:bg-white/15 border border-white/10'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Ready Programs List */}
             {mode === 'training' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(
-                  readyTrainingPlans.filter(
-                    (p) =>
-                      !userAgeGroup ||
-                      p.ageGroup.includes(userAgeGroup) ||
-                      p.ageGroup === 'تمامی رده‌ها'
-                  ).length > 0
-                    ? readyTrainingPlans.filter(
-                        (p) =>
-                          !userAgeGroup ||
-                          p.ageGroup.includes(userAgeGroup) ||
-                          p.ageGroup === 'تمامی رده‌ها'
-                      )
-                    : readyTrainingPlans
-                ).map((plan) => {
+                {readyTrainingPlans
+                  .filter((p) => {
+                    if (selectedAgeFilter === 'all') return true;
+                    return (
+                      p.ageGroup === selectedAgeFilter ||
+                      p.ageGroup === 'تمامی رده‌ها' ||
+                      (p.ageGroup as string) === 'عمومی' ||
+                      p.ageGroup.includes(selectedAgeFilter)
+                    );
+                  })
+                  .map((plan) => {
                     const isUnlocked = isPlanUnlocked(plan.id, plan.title);
                     return (
                       <div

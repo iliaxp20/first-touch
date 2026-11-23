@@ -405,7 +405,7 @@ export const PlanList: React.FC = () => {
           }}
         />
 
-        <div className="relative z-10 flex items-center justify-between">
+        <div className="relative z-10 flex items-center justify-between mt-3">
           <div className="flex items-center gap-1.5">
             <h3 className="text-sm sm:text-base font-black text-slate-100 tracking-tight">
               تمرینات پیشنهادی
@@ -431,7 +431,7 @@ export const PlanList: React.FC = () => {
             }}
             className="group relative flex flex-col rounded-2xl sm:rounded-3xl bg-[#07160e]/90 hover:bg-[#0b2417] border border-emerald-500/20 hover:border-emerald-500/50 backdrop-blur-xl overflow-hidden shadow-[0_8px_25px_rgba(0,0,0,0.4)] cursor-pointer transition-colors"
           >
-            {/* Thumbnail Header with Duration Badge */}
+            {/* Thumbnail Header with Clean Duration Badge */}
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-black/40">
               {drill.image ? (
                 <img
@@ -451,13 +451,15 @@ export const PlanList: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
               ) : null}
-              <div
-                dir="ltr"
-                className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/30 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-400"
-              >
-                <span>{drill.duration}</span>
-                <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.2]" />
-              </div>
+              {Boolean(drill.duration && drill.duration.trim()) && (
+                <div
+                  dir="ltr"
+                  className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-emerald-500/40 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-400 shadow-md"
+                >
+                  <span>{drill.duration}</span>
+                  <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.2]" />
+                </div>
+              )}
             </div>
 
             {/* Content Body */}

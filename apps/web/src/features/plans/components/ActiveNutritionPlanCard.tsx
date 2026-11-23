@@ -43,24 +43,33 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
     },
     {
       id: `${day}-m2`,
+      type: 'میان‌وعده صبح',
+      title: 'سیب درختی، خرما و مغز بادام',
+      desc: '۱ عدد سیب متوسط، ۳ عدد خرما پیارم، ۱۰ عدد بادام',
+      calories: 220,
+      protein: 6,
+      completed: false,
+    },
+    {
+      id: `${day}-m3`,
       type: 'ناهار',
-      title: 'سینه مرغ گریل با برنج کته و کلم بروکلی',
+      title: 'سینه مرغ گریل با برنج کته و بروکلی',
       desc: '۱۸۰ گرم سینه مرغ، ۱۰ قاشق برنج، لیموترش',
       calories: 620,
       protein: 48,
       completed: false,
     },
     {
-      id: `${day}-m3`,
-      type: 'میان‌وعده',
-      title: 'اسموتی پروتئینی موز و بادام‌زمینی',
+      id: `${day}-m4`,
+      type: 'عصرانه',
+      title: 'موز، اوتمیل و کره بادام‌زمینی',
       desc: 'شیر کم‌چرب، موز، ۱ قاشق کره بادام‌زمینی',
-      calories: 280,
+      calories: 300,
       protein: 16,
       completed: false,
     },
     {
-      id: `${day}-m4`,
+      id: `${day}-m5`,
       type: 'شام',
       title: 'فیله ماهی یا خوراک عدسی با قارچ',
       desc: 'سبک با هضم آسان جهت بهبود ترشح هورمون رشد',
@@ -108,10 +117,13 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
     });
   };
 
-  const totalTargetCalories = activePlan?.dailyCalories || 1700;
+  const totalTargetCalories = activePlan?.dailyCalories || 1940;
   const consumedCalories = currentMeals
     .filter((m) => m.completed)
     .reduce((sum, m) => sum + m.calories, 0);
+  const consumedProtein = currentMeals
+    .filter((m) => m.completed)
+    .reduce((sum, m) => sum + m.protein, 0);
 
   const calPercent = Math.min(100, Math.round((consumedCalories / totalTargetCalories) * 100));
 
@@ -138,25 +150,27 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
       {/* 1. Header: Plan Title + Change Plan */}
       <div className="relative z-10 flex items-center justify-between pb-2.5 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center border border-amber-500/30">
+          <div className="h-7 w-7 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center border border-emerald-500/30">
             <Utensils className="h-3.5 w-3.5 stroke-[2.2]" />
           </div>
           <div>
             <span className="text-xs sm:text-sm font-black text-white">
-              {activePlan?.title ? activePlan.title.slice(0, 30) : 'برنامه غذایی اختصاصی'}
+              کالری‌شمار و وعده‌های روزانه
             </span>
-            <span className="block text-[10px] text-emerald-400 font-bold">تقویم وعده‌های روزانه</span>
+            <span className="block text-[10px] text-emerald-400 font-bold">
+              {activePlan?.title || 'برنامه غذایی ورزشی'}
+            </span>
           </div>
         </div>
 
         <button
           type="button"
           onClick={onOpenDetails}
-          className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
-          title="تغییر برنامه غذایی"
+          className="px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+          title="افزودن یا تغییر خوراک"
         >
           <RotateCcw className="h-3 w-3" />
-          <span>تغییر برنامه</span>
+          <span>+ تغییر / افزودن خوراک</span>
         </button>
       </div>
 
@@ -230,8 +244,11 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
               <span className="text-[8px] text-amber-400 font-bold mt-0.5">کالری</span>
             </div>
           </div>
-          <span className="text-[9px] font-bold text-slate-400 mt-1">
-            {consumedCalories} از {totalTargetCalories}
+          <span className="text-[10px] font-black text-amber-400 mt-1">
+            {consumedCalories} از {totalTargetCalories} kcal
+          </span>
+          <span className="text-[9px] font-bold text-emerald-400">
+            {consumedProtein}g پروتئین ثبت‌شده
           </span>
         </div>
 

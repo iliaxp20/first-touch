@@ -24,25 +24,16 @@ export class DrillsService implements OnModuleInit {
       if (fs.existsSync(this.storageFilePath)) {
         const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
         const customDrills: AgilityDrillItem[] = JSON.parse(raw);
-        if (Array.isArray(customDrills) && customDrills.length > 0) {
-          // Filter out dummy test items
-          const cleaned = customDrills.filter(
-            (d) =>
-              !d.persianName?.includes('تست') &&
-              !d.englishName?.toLowerCase().includes('test') &&
-              !d.description?.includes('تستی')
-          );
-          const customIds = new Set(cleaned.map((d) => d.id));
-          const remaining = INITIAL_AGILITY_DRILLS.filter((d) => !customIds.has(d.id));
-          this.memoryDrills = [...cleaned, ...remaining];
-          this.logger.log(`Loaded ${this.memoryDrills.length} total drills from INITIAL + disk.`);
+        if (Array.isArray(customDrills)) {
+          this.memoryDrills = customDrills;
+          this.logger.log(`Loaded ${this.memoryDrills.length} drills from disk.`);
           return;
         }
       }
     } catch (err: any) {
       this.logger.warn(`Failed loading drills from disk: ${err.message}`);
     }
-    this.memoryDrills = [...INITIAL_AGILITY_DRILLS];
+    this.memoryDrills = [];
   }
 
   private saveToDisk() {
@@ -51,9 +42,7 @@ export class DrillsService implements OnModuleInit {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      // Save all custom drills (those created via admin or having non-standard ids)
-      const customDrills = this.memoryDrills.filter((d) => d.id.startsWith('drill-adm-') || d.id.includes('-17'));
-      fs.writeFileSync(this.storageFilePath, JSON.stringify(customDrills, null, 2), 'utf-8');
+      fs.writeFileSync(this.storageFilePath, JSON.stringify(this.memoryDrills, null, 2), 'utf-8');
     } catch (err: any) {
       this.logger.error(`Failed saving drills to disk: ${err.message}`);
     }
