@@ -31,10 +31,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const auth = useAuth();
   const location = useLocation();
 
+  const isDashboardPage = location.pathname === '/' || location.pathname === '/dashboard';
   const isPracticePage = location.pathname === '/practice' || location.pathname.startsWith('/plans');
   const isNutritionPage = location.pathname === '/nutrition' || location.pathname.startsWith('/diet') || location.pathname.startsWith('/meals');
   const isTacticsActiveRoom = location.pathname.startsWith('/tactics/');
-  const shouldHideNavbar = hideNavbar ?? (isTacticsActiveRoom || isPracticePage || isNutritionPage);
+  const shouldHideNavbar = hideNavbar ?? (isTacticsActiveRoom || isPracticePage || isNutritionPage || isDashboardPage);
   const shouldHideBottomNav = hideBottomNav ?? isTacticsActiveRoom;
 
   const effectiveRole = activeRole ?? auth.currentUser?.role ?? 'PLAYER';
@@ -44,8 +45,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#030d07] text-foreground transition-colors duration-200 relative overflow-x-hidden">
-      {/* Stadium Floodlight Green Luminous Atmosphere (روی صفحات تمرین و تغذیه غیرفعال تا رنگ تداخل نداشته باشد) */}
-      {!isPracticePage && !isNutritionPage && (
+      {/* Stadium Floodlight Green Luminous Atmosphere (روی صفحات تمرین، تغذیه و پیشخان غیرفعال تا رنگ تداخل نداشته باشد) */}
+      {!isPracticePage && !isNutritionPage && !isDashboardPage && (
         <>
           <div 
             className="fixed -top-28 left-1/2 -translate-x-1/2 w-[650px] sm:w-[950px] h-[500px] sm:h-[620px] rounded-full pointer-events-none z-0 opacity-20 dark:opacity-100 transition-opacity"
@@ -77,7 +78,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <div className="flex-1 flex overflow-hidden">
         <main
           className={`flex-1 overflow-y-auto ${
-            shouldHideBottomNav ? 'p-2 sm:p-4 pb-4' : 'p-4 sm:p-6 lg:p-8 pb-32'
+            shouldHideNavbar
+              ? 'p-2 sm:p-3 pb-32'
+              : (shouldHideBottomNav ? 'p-2 sm:p-4 pb-4' : 'p-4 sm:p-6 lg:p-8 pb-32')
           }`}
         >
           <div className={shouldHideNavbar ? 'w-full' : 'mx-auto max-w-7xl'}>

@@ -1,45 +1,21 @@
-import { API_BASE_URL } from '@/lib/api';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useAuth } from '@/context/AuthContext';
-import {
-  CheckCircle2,
-  Circle,
-  Dumbbell,
-  Apple,
-  Droplets,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import {
+  Bell,
+  X,
+  Heart,
+  Droplets,
+  Moon,
+  TrendingUp,
+  Award,
+  Plus,
+  Minus,
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { API_BASE_URL } from '@/lib/api';
 import { LinearPerformanceChart, DayPoint } from './components/LinearPerformanceChart';
-import { AiCoachModal } from './components/AiCoachModal';
-
-interface SessionItem {
-  id: string;
-  dayName: string;
-  title: string;
-  focus: string;
-  durationMinutes: number;
-  completed: boolean;
-  drillsCount: number;
-}
-
-interface MealItem {
-  id: string;
-  mealType: string;
-  name: string;
-  portion?: string;
-  count: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  isCompleted?: boolean;
-}
+import { Button } from '@/components/ui/Button';
 
 const WATER_STORAGE_KEY = 'ft_player_water_glasses';
 const TARGET_WATER_GLASSES = 8;
@@ -48,43 +24,23 @@ export const DashboardView: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const [, setIsLoading] = useState(true);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [dailyTab, setDailyTab] = useState<'training' | 'nutrition'>('training');
+  // Page readiness and image preloader
+  const [isReady, setIsReady] = useState(false);
 
-  // Real Training Program State from API
-  const [activeProgram, setActiveProgram] = useState<any>(null);
-  const [trainingSessions, setTrainingSessions] = useState<SessionItem[]>([]);
-  const [completedSessionsCount, setCompletedSessionsCount] = useState<number>(0);
-  const [totalSessionsCount, setTotalSessionsCount] = useState<number>(1);
-  const [weeklyPerformanceData, setWeeklyPerformanceData] = useState<DayPoint[]>([]);
-  const [selectedTrainingDate, setSelectedTrainingDate] = useState<Date>(new Date());
+  // Modals state
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [isStudentReportModalOpen, setIsStudentReportModalOpen] = useState(false);
 
-  // Real Nutrition State from API
-  const [nutritionTarget, setNutritionTarget] = useState({
-    calories: 2400,
-    protein: 140,
-    carbs: 280,
-    fat: 65,
-  });
-  const [consumedNutrition, setConsumedNutrition] = useState({
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-  });
-  const [loggedMeals, setLoggedMeals] = useState<MealItem[]>([]);
-
-  // Local Water Tracker (Calculated in glasses: حداقل ۸ لیوان آب)
+  // Water Tracker
   const [waterGlasses, setWaterGlasses] = useState<number>(() => {
     try {
       const saved = localStorage.getItem(WATER_STORAGE_KEY);
       if (saved !== null && !isNaN(Number(saved))) return Number(saved);
-      const oldMl = localStorage.getItem('ft_player_water_ml');
-      if (oldMl !== null && !isNaN(Number(oldMl))) return Math.min(16, Math.round(Number(oldMl) / 250));
-      return 0;
+      return 6;
     } catch {
-      return 0;
+      return 6;
     }
   });
 
@@ -95,999 +51,706 @@ export const DashboardView: React.FC = () => {
     } catch {}
   }, [waterGlasses]);
 
+  // Real Training & Performance Data
+  const [weeklyPerformanceData, setWeeklyPerformanceData] = useState<DayPoint[]>([]);
+  const [activeProgram, setActiveProgram] = useState<any>(null);
+
+  // Haptic feedback
   const triggerHaptic = useCallback(() => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([12]);
+        navigator.vibrate([14]);
       } catch {}
     }
   }, []);
 
-  // Training Calendar Date Formatter & Navigation
-  const formattedTrainingPersianDate = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat('fa-IR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }).format(selectedTrainingDate);
-    } catch {
-      return 'امروز';
-    }
-  }, [selectedTrainingDate]);
+  // Synchronized asset preloader
+  useEffect(() => {
+    const imagesToLoad = [
+      '/firsttouchcrop.png',
+      '/glossy-profile-icon.png',
+      '/dashboard-banner-profile.webp',
+      '/dashboard-tactics-nutrition.webp',
+      '/dashboard-training-quiz-progress.webp',
+      '/dashboard-messages-health.webp',
+      '/dashboard-student-report.webp',
+    ];
 
-  const isTrainingToday = useMemo(() => {
-    const today = new Date();
-    return (
-      selectedTrainingDate.getDate() === today.getDate() &&
-      selectedTrainingDate.getMonth() === today.getMonth() &&
-      selectedTrainingDate.getFullYear() === today.getFullYear()
-    );
-  }, [selectedTrainingDate]);
+    let loadedCount = 0;
+    let isMounted = true;
 
-  const handleTrainingPrevDay = () => {
-    const d = new Date(selectedTrainingDate);
-    d.setDate(d.getDate() - 1);
-    setSelectedTrainingDate(d);
-  };
-
-  const handleTrainingNextDay = () => {
-    const d = new Date(selectedTrainingDate);
-    d.setDate(d.getDate() + 1);
-    setSelectedTrainingDate(d);
-  };
-
-  const handleTrainingGoToday = () => {
-    setSelectedTrainingDate(new Date());
-  };
-
-  // Nutrition Calendar Date Formatter & Navigation (REAL NUTRITION CALENDAR)
-  const [selectedNutritionDate, setSelectedNutritionDate] = useState<Date>(new Date());
-
-  const nutritionDateKey = useMemo(() => {
-    return selectedNutritionDate.toISOString().split('T')[0];
-  }, [selectedNutritionDate]);
-
-  const formattedNutritionPersianDate = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat('fa-IR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }).format(selectedNutritionDate);
-    } catch {
-      return 'امروز';
-    }
-  }, [selectedNutritionDate]);
-
-  const isNutritionToday = useMemo(() => {
-    const today = new Date();
-    return (
-      selectedNutritionDate.getDate() === today.getDate() &&
-      selectedNutritionDate.getMonth() === today.getMonth() &&
-      selectedNutritionDate.getFullYear() === today.getFullYear()
-    );
-  }, [selectedNutritionDate]);
-
-  const handleNutritionPrevDay = () => {
-    const d = new Date(selectedNutritionDate);
-    d.setDate(d.getDate() - 1);
-    setSelectedNutritionDate(d);
-  };
-
-  const handleNutritionNextDay = () => {
-    const d = new Date(selectedNutritionDate);
-    d.setDate(d.getDate() + 1);
-    setSelectedNutritionDate(d);
-  };
-
-  const handleNutritionGoToday = () => {
-    setSelectedNutritionDate(new Date());
-  };
-
-  // Fetch real nutrition logs for selected date (CALENDAR SUPPORT)
-  const fetchNutritionForDate = useCallback(async (dateKeyStr: string) => {
-    try {
-      const nutRes = await fetch(`${API_BASE_URL}/nutrition/daily-log?date=${dateKeyStr}`);
-      if (nutRes.ok) {
-        const nutData = await nutRes.json();
-
-        if (nutData.target && nutData.target.calories > 0) {
-          setNutritionTarget({
-            calories: nutData.target.calories || 2400,
-            protein: nutData.target.protein || 140,
-            carbs: nutData.target.carbs || 280,
-            fat: nutData.target.fat || 65,
-          });
-        }
-
-        setConsumedNutrition({
-          calories: nutData.totalCalories || 0,
-          protein: nutData.totalProtein || 0,
-          carbs: nutData.totalCarbs || 0,
-          fat: nutData.totalFat || 0,
-        });
-
-        // Flatten all meals
-        const mealsObj = nutData.meals || {};
-        const allItems: MealItem[] = [];
-
-        ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
-          if (Array.isArray(mealsObj[type])) {
-            mealsObj[type].forEach((item: any) => {
-              allItems.push({
-                id: item.id || `m-${Math.random().toString(36).substring(2, 6)}`,
-                mealType: type,
-                name: item.name || 'آیتم غذایی',
-                portion: item.portion,
-                count: item.count || 1,
-                calories: Math.round(item.calories || 0),
-                protein: Math.round(item.protein || 0),
-                carbs: Math.round(item.carbs || 0),
-                fat: Math.round(item.fat || 0),
-                isCompleted: !!item.isCompleted,
-              });
-            });
-          }
-        });
-
-        if (allItems.length === 0) {
-          try {
-            const presetsRes = await fetch(`${API_BASE_URL}/nutrition/preset-plans`);
-            if (presetsRes.ok) {
-              const presets = await presetsRes.json();
-              if (presets && presets.length > 0) {
-                const plan = presets[0];
-                setNutritionTarget({
-                  calories: plan.dailyCalories || 2400,
-                  protein: plan.protein || 140,
-                  carbs: plan.carbs || 280,
-                  fat: plan.fat || 65,
-                });
-
-                if (Array.isArray(plan.plannedItems)) {
-                  const mappedItems: MealItem[] = plan.plannedItems.map((p: any, i: number) => ({
-                    id: `preset-${i}`,
-                    mealType: p.mealType || 'snack',
-                    name: p.name,
-                    portion: p.portion,
-                    count: p.count || 1,
-                    calories: Math.round(p.calories || 0),
-                    protein: Math.round(p.protein || 0),
-                    carbs: Math.round(p.carbs || 0),
-                    fat: Math.round(p.fat || 0),
-                    isCompleted: false, // ZERO MOCK: Real state
-                  }));
-                  setLoggedMeals(mappedItems);
-                  setConsumedNutrition({ calories: 0, protein: 0, carbs: 0, fat: 0 });
-                }
-              }
-            }
-          } catch {}
-        } else {
-          setLoggedMeals(allItems);
-        }
+    const onImageLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= imagesToLoad.length && isMounted) {
+        setIsReady(true);
       }
-    } catch (e) {
-      console.warn('Nutrition fetch notice:', e);
-    }
+    };
+
+    imagesToLoad.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      if (img.complete) {
+        onImageLoaded();
+      } else {
+        img.onload = onImageLoaded;
+        img.onerror = onImageLoaded;
+      }
+    });
+
+    const timer = setTimeout(() => {
+      if (isMounted) setIsReady(true);
+    }, 280);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
-  // Fetch real data from API & Student Local Storage (ZERO MOCK DATA)
-  const fetchDashboardData = useCallback(async () => {
-    setIsLoading(true);
-
-    // 1. Fetch Real Training Programs (Prioritize User Enrolled Plans)
+  // Load programs & performance data
+  useEffect(() => {
     try {
-      let prog: any = null;
       const savedPlans = localStorage.getItem('first_touch_student_active_plans');
       if (savedPlans) {
         const parsed = JSON.parse(savedPlans);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          prog = parsed[0];
+          setActiveProgram(parsed[0]);
         }
       }
-
-      if (!prog) {
-        const progRes = await fetch(`${API_BASE_URL}/programs`);
-        if (progRes.ok) {
-          const progs = await progRes.json();
-          if (Array.isArray(progs) && progs.length > 0) {
-            prog = progs[0];
-          }
-        }
-      }
-
-      if (prog) {
-        setActiveProgram(prog);
-        setCompletedSessionsCount(prog.completedSessions || 0);
-        setTotalSessionsCount(prog.totalSessions || 12);
-
-        const week1 = prog.schedule?.[0];
-        if (week1 && Array.isArray(week1.sessions)) {
-          const mappedSessions: SessionItem[] = week1.sessions.map((s: any, idx: number) => ({
-            id: `sess-${idx}`,
-            dayName: s.dayName || 'جلسه',
-            title: s.title || 'تمرین تخصصی فوتبال',
-            focus: s.focus || 'تکنیک و آمادگی بدنی',
-            durationMinutes: s.durationMinutes || 45,
-            completed: !!s.completed,
-            drillsCount: s.drillsCount || 4,
-          }));
-          setTrainingSessions(mappedSessions);
-        }
-      }
-    } catch (e) {
-      console.warn('Programs fetch notice:', e);
-    }
-
-    // 2. Fetch Real Nutrition Daily Log for selected date
-    await fetchNutritionForDate(nutritionDateKey);
-
-    // 3. Fetch Real Weekly Performance from API
-    try {
-      const perfRes = await fetch(`${API_BASE_URL}/programs/weekly-performance`);
-      if (perfRes.ok) {
-        const perfData = await perfRes.json();
-        if (perfData.points && Array.isArray(perfData.points)) {
-          setWeeklyPerformanceData(perfData.points);
-        }
-      }
-    } catch (e) {
-      console.warn('Weekly performance fetch notice:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchNutritionForDate, nutritionDateKey]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
-  // Re-fetch nutrition whenever nutrition date navigation occurs
-  useEffect(() => {
-    fetchNutritionForDate(nutritionDateKey);
-  }, [fetchNutritionForDate, nutritionDateKey]);
-
-  // Toggle workout session with REAL PERSISTENCE across storage and server
-  const handleToggleSession = async (dayName: string) => {
-    // 1. Optimistic UI update for sessions list
-    setTrainingSessions((prev) =>
-      prev.map((s) => (s.dayName === dayName ? { ...s, completed: !s.completed } : s)),
-    );
-
-    if (activeProgram?.id) {
-      const nextSchedule = (activeProgram.schedule || []).map((w: any, wIdx: number) => {
-        if (wIdx !== 0) return w;
-        return {
-          ...w,
-          sessions: (w.sessions || []).map((s: any) =>
-            s.dayName === dayName ? { ...s, completed: !s.completed } : s,
-          ),
-        };
-      });
-
-      let completedCount = 0;
-      for (const w of nextSchedule) {
-        for (const s of w.sessions || []) {
-          if (s.completed) completedCount++;
-        }
-      }
-
-      const updatedProgram = {
-        ...activeProgram,
-        schedule: nextSchedule,
-        completedSessions: completedCount,
-      };
-
-      setActiveProgram(updatedProgram);
-      setCompletedSessionsCount(completedCount);
-
-      // Persist to localStorage so tick is NEVER lost
-      try {
-        const savedPlans = localStorage.getItem('first_touch_student_active_plans');
-        if (savedPlans) {
-          const parsed = JSON.parse(savedPlans);
-          if (Array.isArray(parsed)) {
-            const nextPlans = parsed.map((p: any) =>
-              p.id === updatedProgram.id ? updatedProgram : p,
-            );
-            localStorage.setItem('first_touch_student_active_plans', JSON.stringify(nextPlans));
-          }
-        }
-      } catch {}
-
-      // Server Sync
-      try {
-        const res = await fetch(`${API_BASE_URL}/programs/${activeProgram.id}/session-toggle`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ weekNumber: 1, dayName }),
-        });
-        await fetch(`${API_BASE_URL}/programs/sync`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedProgram),
-        }).catch(() => {});
-
-        if (res.ok) {
-          fetch(`${API_BASE_URL}/programs/weekly-performance`)
-            .then((r) => (r.ok ? r.json() : null))
-            .then((d) => d?.points && setWeeklyPerformanceData(d.points))
-            .catch(() => {});
-        }
-      } catch (e) {
-        console.warn('Session toggle notice:', e);
-      }
-    }
-  };
-
-  // Toggle meal item with REAL API date parameter and persistence
-  const handleToggleMeal = async (mealId: string) => {
-    setLoggedMeals((prev) => {
-      const next = prev.map((m) =>
-        m.id === mealId ? { ...m, isCompleted: !m.isCompleted } : m,
-      );
-
-      const newTotals = next
-        .filter((m) => m.isCompleted)
-        .reduce(
-          (acc, m) => ({
-            calories: acc.calories + m.calories,
-            protein: acc.protein + m.protein,
-            carbs: acc.carbs + m.carbs,
-            fat: acc.fat + m.fat,
-          }),
-          { calories: 0, protein: 0, carbs: 0, fat: 0 },
-        );
-      setConsumedNutrition(newTotals);
-
-      return next;
-    });
-
-    try {
-      await fetch(`${API_BASE_URL}/nutrition/toggle-item/${mealId}?date=${nutritionDateKey}`, {
-        method: 'PATCH',
-      });
     } catch {}
-  };
 
-  // Real Progress Percentages
-  const calPercent = Math.min(
-    100,
-    Math.round((consumedNutrition.calories / (nutritionTarget.calories || 2400)) * 100),
-  );
-  const proteinPercent = Math.min(
-    100,
-    Math.round((consumedNutrition.protein / (nutritionTarget.protein || 140)) * 100),
-  );
-  const workoutPercent = Math.min(
-    100,
-    Math.round((completedSessionsCount / (totalSessionsCount || 12)) * 100),
-  );
-
-  const waterPercent = Math.min(100, Math.round((waterGlasses / TARGET_WATER_GLASSES) * 100));
-
-  // Determine current day Persian day name (e.g. شنبه، یکشنبه، دوشنبه، ...)
-  const currentPersianDayName = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat('fa-IR', { weekday: 'long' }).format(new Date());
-    } catch {
-      return '';
-    }
+    fetch(`${API_BASE_URL}/programs/weekly-performance`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.points && Array.isArray(d.points)) {
+          setWeeklyPerformanceData(d.points);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  // Today's scheduled training session from active program
-  const todaySession = useMemo(() => {
-    if (!currentPersianDayName || trainingSessions.length === 0) return null;
-    return (
-      trainingSessions.find(
-        (s) =>
-          s.dayName.includes(currentPersianDayName) ||
-          currentPersianDayName.includes(s.dayName),
-      ) || null
-    );
-  }, [currentPersianDayName, trainingSessions]);
-
-  const weekCompletedSessionsCount = useMemo(() => {
-    return trainingSessions.filter((s) => s.completed).length;
-  }, [trainingSessions]);
-
-  // 1. Training Readiness (Weight: 40%)
-  const trainingReadinessScore = useMemo(() => {
-    if (trainingSessions.length === 0) return 0;
-
-    if (todaySession) {
-      // If today is a training day: 100% when today's session is completed
-      if (todaySession.completed) return 100;
-      // If not yet completed today, grant partial credit if other week sessions are done
-      return weekCompletedSessionsCount > 0
-        ? Math.round((weekCompletedSessionsCount / trainingSessions.length) * 50)
-        : 0;
-    }
-
-    // Today is a scheduled Rest & Recovery day:
-    // If the athlete has completed at least 1 session this week, resting correctly is 100% adherence to recovery!
-    return weekCompletedSessionsCount > 0 ? 100 : 0;
-  }, [trainingSessions, todaySession, weekCompletedSessionsCount]);
-
-  // 2. Nutrition Readiness (Weight: 35%)
-  const nutritionReadinessScore = useMemo(() => {
-    if (consumedNutrition.calories === 0 && consumedNutrition.protein === 0) {
-      return 0;
-    }
-    const calScore = Math.min(
-      100,
-      Math.round((consumedNutrition.calories / (nutritionTarget.calories || 2400)) * 100),
-    );
-    const proteinScore = Math.min(
-      100,
-      Math.round((consumedNutrition.protein / (nutritionTarget.protein || 140)) * 100),
-    );
-    return Math.round(calScore * 0.6 + proteinScore * 0.4);
-  }, [consumedNutrition, nutritionTarget]);
-
-  // 3. Hydration Readiness (Weight: 25%)
-  const waterReadinessScore = useMemo(() => {
-    if (waterGlasses === 0) return 0;
-    return Math.min(100, Math.round((waterGlasses / TARGET_WATER_GLASSES) * 100));
-  }, [waterGlasses]);
-
-  // Dynamic Real Readiness Score (Calculated from Genuine Activity: 0 to 100)
-  const readinessScore = useMemo(() => {
-    // If absolutely no activity has been logged: 0%
-    if (
-      trainingReadinessScore === 0 &&
-      nutritionReadinessScore === 0 &&
-      waterReadinessScore === 0
-    ) {
-      return 0;
-    }
-
-    const raw = Math.round(
-      trainingReadinessScore * 0.4 +
-        nutritionReadinessScore * 0.35 +
-        waterReadinessScore * 0.25,
-    );
-    return Math.min(100, Math.max(0, raw));
-  }, [trainingReadinessScore, nutritionReadinessScore, waterReadinessScore]);
-
-  // Dynamic visual styling & label based on genuine readiness score
-  const readinessMeta = useMemo(() => {
-    if (readinessScore >= 80) {
-      return {
-        label: 'عالی',
-        colorClass: 'text-emerald-500',
-        dotClass: 'bg-emerald-500 animate-pulse',
-        bgClass: 'bg-emerald-500/10 border-emerald-500/25',
-      };
-    }
-    if (readinessScore >= 50) {
-      return {
-        label: 'آماده مسابقه',
-        colorClass: 'text-sky-500',
-        dotClass: 'bg-sky-500',
-        bgClass: 'bg-sky-500/10 border-sky-500/25',
-      };
-    }
-    if (readinessScore >= 25) {
-      return {
-        label: 'در حال آمادگی',
-        colorClass: 'text-amber-500',
-        dotClass: 'bg-amber-500',
-        bgClass: 'bg-amber-500/10 border-amber-500/25',
-      };
-    }
-    return {
-      label: readinessScore === 0 ? 'ثبت نشده' : 'نیازمند تمرین و ریکاوری',
-      colorClass: 'text-muted-foreground',
-      dotClass: 'bg-muted-foreground/50',
-      bgClass: 'bg-muted/40 border-border/70',
-    };
-  }, [readinessScore]);
-
+  // Player details for banner
   const playerName = currentUser?.fullName || 'مهدی طارمی';
-
-  const getMealTypeLabel = (type: string) => {
-    switch (type) {
-      case 'breakfast':
-        return 'صبحانه';
-      case 'lunch':
-        return 'ناهار';
-      case 'dinner':
-        return 'شام';
-      case 'snack':
-      default:
-        return 'میان‌وعده';
-    }
-  };
+  const playerAge = currentUser?.age || 17;
+  const playerPosition = currentUser?.position || 'هافبک دفاعی';
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto pb-32 sm:pb-36 select-none animate-in fade-in duration-300">
-      {/* 1. Real Metrics Cards (شیشه‌ای و جمع‌وجور) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        {/* Metric 1: Workout Progress */}
-        <motion.div 
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-emerald-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
+    <div
+      className={`w-full max-w-lg mx-auto px-2 sm:px-3 pt-1 pb-32 select-none transition-opacity duration-300 ${
+        isReady ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      {/* =========================================================================
+          TOP APP BAR (دقیقاً مشابه بخش‌های برنامه غذایی و تمرینات)
+          - لوگوی بزرگ First Touch با تابش سبز نئونی
+          - زنگوله اعلان با دایره فیکس
+          - آیکون سه‌بعدی پروفایل متناسب
+          ========================================================================= */}
+      <header
+        dir="ltr"
+        className="w-full flex items-center justify-between py-2 px-1 sm:px-2 mb-3 relative"
+      >
+        {/* Header Ambient Emerald Atmosphere */}
+        <div
+          className="absolute -top-6 -left-4 w-80 h-28 rounded-full pointer-events-none opacity-75 z-0"
+          style={{
+            background:
+              'radial-gradient(circle at 35% 45%, rgba(34, 197, 94, 0.38) 0%, rgba(16, 185, 129, 0.20) 48%, transparent 75%)',
+            filter: 'blur(28px)',
+          }}
+        />
+
+        {/* 1. Left side: Large First Touch Logo with dedicated Emerald Radiance */}
+        <div
+          className="relative flex items-center shrink-0 cursor-pointer"
+          onClick={() => {
+            triggerHaptic();
+            navigate('/');
+          }}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-foreground">
-              <Dumbbell className="h-4 w-4 text-emerald-500" />
-              <span>پیشرفت تمرینات</span>
-            </span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-black">{workoutPercent}٪</span>
-          </div>
+          <div
+            className="absolute -inset-x-5 -inset-y-3 rounded-full pointer-events-none opacity-90 z-0"
+            style={{
+              background:
+                'radial-gradient(ellipse at 45% 50%, rgba(16, 185, 129, 0.58) 0%, rgba(5, 150, 105, 0.32) 42%, rgba(4, 120, 87, 0.12) 65%, transparent 80%)',
+              filter: 'blur(16px)',
+            }}
+          />
+          <motion.img
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            src="/firsttouchcrop.png"
+            alt="فرست تاچ"
+            loading="eager"
+            decoding="sync"
+            className="relative z-10 h-11 sm:h-14 md:h-16 w-auto max-h-16 object-contain drop-shadow-[0_4px_24px_rgba(16,185,129,0.7)]"
+          />
+        </div>
 
-          {!activeProgram ? (
-            <div className="py-2 text-center space-y-2">
-              <p className="text-[11px] text-muted-foreground font-semibold">هنوز برنامه‌ای فعال نشده</p>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => navigate('/practice')}
-                className="w-full h-8 text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs cursor-pointer"
-              >
-                دریافت برنامه
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  style={{ width: `${workoutPercent}%` }}
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-lime-300 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
-                />
-              </div>
-              <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
-                <span>{completedSessionsCount} از {totalSessionsCount} جلسه</span>
-                <span className="text-emerald-500 font-bold">کامل شد</span>
-              </div>
-            </>
-          )}
-        </motion.div>
+        {/* 2 & 3. Right side: Notification Bell + Pure 3D Profile Icon */}
+        <div className="relative z-10 flex items-center gap-2.5 sm:gap-3 shrink-0">
+          {/* 2. Notification Bell Button with neon green dot */}
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => {
+              triggerHaptic();
+              setIsNotifOpen(!isNotifOpen);
+            }}
+            className="relative w-10 h-10 sm:w-11 sm:h-11 shrink-0 aspect-square rounded-full bg-white/10 dark:bg-[#07160e]/80 hover:bg-white/20 dark:hover:bg-[#0c2a1a] border border-slate-200/50 dark:border-emerald-500/30 backdrop-blur-xl flex items-center justify-center text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-white shadow-[0_2px_10px_rgba(0,0,0,0.15)] dark:shadow-[0_2px_15px_rgba(0,0,0,0.4)] transition-colors cursor-pointer"
+            title="اعلان‌ها"
+          >
+            <Bell className="h-5 w-5 sm:h-5.5 sm:w-5.5 stroke-[2] shrink-0" />
+            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] ring-2 ring-background" />
+          </motion.button>
 
-        {/* Metric 2: Calorie Intake */}
-        <motion.div 
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-amber-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-foreground">
-              <Apple className="h-4 w-4 text-amber-500" />
-              <span>کالری سوخت</span>
-            </span>
-            <span className="text-amber-600 dark:text-amber-400 font-black">{calPercent}٪</span>
-          </div>
+          {/* 3. Pure 3D Profile Icon */}
+          <motion.img
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/settings');
+            }}
+            src="/glossy-profile-icon.png"
+            alt="پروفایل کاربری"
+            loading="eager"
+            decoding="sync"
+            className="w-[41px] h-[41px] sm:w-[45px] sm:h-[45px] shrink-0 aspect-square object-contain cursor-pointer"
+            title="پروفایل کاربری"
+          />
+        </div>
+      </header>
 
-          {!activeProgram && consumedNutrition.calories === 0 ? (
-            <div className="py-2 text-center space-y-2">
-              <p className="text-[11px] text-muted-foreground font-semibold">برنامه غذایی ثبت نشده</p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/practice')}
-                className="w-full h-8 text-xs font-black border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-xl cursor-pointer"
-              >
-                دریافت برنامه
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  style={{ width: `${calPercent}%` }}
-                  className="h-full rounded-full bg-amber-500 transition-all duration-300"
-                />
-              </div>
-              <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
-                <span>{consumedNutrition.calories} kcal</span>
-                <span>از {nutritionTarget.calories}</span>
-              </div>
-            </>
-          )}
-        </motion.div>
-
-        {/* Metric 3: Protein Intake */}
-        <motion.div 
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-emerald-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-foreground">
-              <Apple className="h-4 w-4 text-emerald-500" />
-              <span>پروتئین عضلانی</span>
-            </span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-black">{proteinPercent}٪</span>
-          </div>
-
-          {!activeProgram && consumedNutrition.protein === 0 ? (
-            <div className="py-2 text-center space-y-2">
-              <p className="text-[11px] text-muted-foreground font-semibold">محاسبه بر اساس برنامه</p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/practice')}
-                className="w-full h-8 text-xs font-black border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-xl cursor-pointer"
-              >
-                دریافت برنامه
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  style={{ width: `${proteinPercent}%` }}
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                />
-              </div>
-              <div className="text-[11px] font-semibold text-muted-foreground flex justify-between">
-                <span>{consumedNutrition.protein}g</span>
-                <span>از {nutritionTarget.protein}g</span>
-              </div>
-            </>
-          )}
-        </motion.div>
-
-        {/* Metric 4: Water Hydration */}
-        <motion.div 
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-          className="rounded-2xl bg-white/70 dark:bg-[#07160e]/75 backdrop-blur-xl border border-emerald-500/15 dark:border-white/10 hover:border-sky-500/40 p-4 shadow-lg shadow-emerald-950/15 flex flex-col justify-between space-y-3 h-full transition-all"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-foreground">
-              <Droplets className="h-4 w-4 text-sky-500" />
-              <span>مصرف آب روزانه</span>
-            </span>
-            <div className="flex items-center gap-1">
-              {waterGlasses > 0 && (
+      {/* =========================================================================
+          NOTIFICATIONS MODAL (z-[100] ABOVE ALL DOCKS)
+          ========================================================================= */}
+      <AnimatePresence>
+        {isNotifOpen && (
+          <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-20 bg-black/80 backdrop-blur-md animate-in fade-in select-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="w-full max-w-md rounded-3xl bg-card dark:bg-[#091b12] border border-border dark:border-emerald-500/30 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-foreground dark:text-white space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-border dark:border-emerald-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/30">
+                    <Bell className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-sm font-black">پیام‌ها و اطلاعیه‌ها</h3>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setWaterGlasses(0)}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground hover:text-foreground font-bold transition-colors cursor-pointer"
-                  title="ریست مصرف آب"
+                  onClick={() => setIsNotifOpen(false)}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
                 >
-                  صفر
+                  <X className="h-4 w-4" />
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setWaterGlasses((prev) => Math.max(0, prev - 1))}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 font-black hover:bg-sky-500/20 cursor-pointer"
-              >
-                -۱
-              </button>
-              <button
-                type="button"
-                onClick={() => setWaterGlasses((prev) => Math.min(20, prev + 1))}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 font-black hover:bg-sky-500/20 cursor-pointer"
-              >
-                +۱
-              </button>
-            </div>
-          </div>
-          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              style={{ width: `${waterPercent}%` }}
-              className="h-full rounded-full bg-sky-500 transition-all duration-300"
-            />
-          </div>
-          <div className="text-[11px] font-semibold text-muted-foreground flex justify-between items-center">
-            <span className="font-bold text-foreground">{waterGlasses} لیوان</span>
-            <span className="text-muted-foreground">از ۸ لیوان ({waterPercent}٪)</span>
-          </div>
+              </div>
 
-          <div className="flex items-center gap-1 pt-0.5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i < waterGlasses ? 'bg-sky-500 shadow-xs' : 'bg-muted'
-                }`}
-              />
-            ))}
+              <div className="space-y-2.5 text-right">
+                <div className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-emerald-400 font-bold">امروز • ۱۰:۳۰</span>
+                    <h4 className="text-xs font-black">جلسه تمرینی روزانه آماده است</h4>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    جلسه تمرین استقامت و کنترل توپ توسط کادر فنی بارگذاری شد.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-amber-400 font-bold">دیروز</span>
+                    <h4 className="text-xs font-black">ثبت میان‌وعده ریکاوری</h4>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    میزان پروتئین و آب‌رسانی پس از تمرین خود را در برنامه غذایی ثبت کنید.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          1. ITEM 1: PROFILE BANNER
+          - تصویر 64bad590... زیر topappbar
+          - روی تصویر کنار دکمش سن، نام و پست هافبک دفاعی
+          ========================================================================= */}
+      <div className="w-full mb-3 sm:mb-3.5">
+        <motion.div
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            triggerHaptic();
+            navigate('/settings');
+          }}
+          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+          title="مشاهده پروفایل کاربری"
+        >
+          <img
+            src="/dashboard-banner-profile.webp"
+            alt="پروفایل بازیکن"
+            className="w-full h-auto block select-none"
+            loading="eager"
+            decoding="sync"
+          />
+
+          {/* User details overlay positioned right next to the button */}
+          <div
+            dir="rtl"
+            className="absolute inset-y-0 right-[32%] sm:right-[31%] left-[22%] sm:left-[20%] flex flex-col justify-center items-start text-right pointer-events-none select-none z-10"
+          >
+            <div className="truncate max-w-full">
+              <span className="text-xs sm:text-sm md:text-base font-black text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                {playerName}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] md:text-xs font-bold text-emerald-400 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] truncate max-w-full">
+              <span>{playerAge} سال</span>
+              <span className="text-emerald-500/70">•</span>
+              <span className="text-emerald-300 font-extrabold">{playerPosition}</span>
+            </div>
           </div>
         </motion.div>
       </div>
 
-      {/* 3. Smooth Attractive Linear Curve Performance Chart (Real API Data) */}
-      <LinearPerformanceChart
-        data={weeklyPerformanceData}
-        hasActiveProgram={Boolean(activeProgram)}
-        onGetProgram={() => navigate('/practice')}
-      />
+      {/* =========================================================================
+          2. ITEM 2: TACTICS & NUTRITION ROW
+          - تصویر 5c237fbd...
+          - سمت چپ: تخته تاکتیک -> /tactics
+          - سمت راست: برنامه غذایی -> /nutrition
+          ========================================================================= */}
+      <div className="w-full mb-3 sm:mb-3.5">
+        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+          <img
+            src="/dashboard-tactics-nutrition.webp"
+            alt="تخته تاکتیک و برنامه غذایی"
+            className="w-full h-auto block select-none"
+            loading="eager"
+            decoding="sync"
+          />
 
-      {/* 4. Unified Daily Action Card (تمرین و تغذیه در یک کارت جمع‌وجور بدون اسکرول) */}
-      <div className="w-full rounded-3xl bg-white/70 dark:bg-[#07160e]/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-white/10 p-4 sm:p-5 shadow-2xl shadow-emerald-950/20 space-y-3">
-        {/* Top Header with Tab Switcher */}
-        <div className="flex items-center justify-between pb-2 border-b border-border/50 gap-2">
-          <div className="flex items-center p-0.5 rounded-xl bg-slate-100/80 dark:bg-black/50 backdrop-blur-md border border-white/10 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setDailyTab('training');
-              }}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                dailyTab === 'training'
-                  ? 'bg-emerald-600 text-white shadow-xs font-black'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Dumbbell className="h-3.5 w-3.5" />
-              <span>تمرینات امروز</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setDailyTab('nutrition');
-              }}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                dailyTab === 'nutrition'
-                  ? 'bg-emerald-600 text-white shadow-xs font-black'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Apple className="h-3.5 w-3.5" />
-              <span>وعده‌های غذایی</span>
-            </button>
-          </div>
+          {/* Tactics Hotspot (Left 50% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/tactics');
+            }}
+            className="absolute inset-y-0 left-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="ورود به تخته تاکتیک"
+          />
 
-          <button
-            type="button"
-            onClick={() => navigate('/practice')}
-            className="text-xs text-primary font-bold hover:underline flex items-center shrink-0 cursor-pointer"
-          >
-            <span>برنامه کامل</span>
-            <ChevronLeft className="h-3 w-3" />
-          </button>
+          {/* Nutrition Hotspot (Right 50% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/nutrition');
+            }}
+            className="absolute inset-y-0 right-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="مشاهده برنامه غذایی"
+          />
         </div>
-
-        {/* Tab 1: Training Content */}
-        {dailyTab === 'training' && (
-          <div className="space-y-2.5">
-            {!activeProgram ? (
-              <div className="py-5 text-center space-y-2 bg-muted/20 rounded-2xl border border-dashed border-border/70 p-3">
-                <Dumbbell className="h-6 w-6 text-emerald-500 mx-auto" />
-                <p className="text-xs font-bold text-muted-foreground">
-                  هنوز برنامه تمرینی فعال نکرده‌اید
-                </p>
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={() => navigate('/practice')}
-                  className="bg-primary text-primary-foreground font-black text-xs px-4 h-8 rounded-xl shadow-xs cursor-pointer"
-                >
-                  دریافت برنامه
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Date Navigation Bar */}
-                <div className="flex items-center justify-between p-1.5 rounded-xl bg-muted/30 border border-border/50 text-xs select-none">
-                  <button
-                    type="button"
-                    onClick={handleTrainingPrevDay}
-                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
-
-                  <div className="flex items-center gap-1.5 text-xs font-bold">
-                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>{formattedTrainingPersianDate}</span>
-                    {isTrainingToday ? (
-                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                        امروز
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleTrainingGoToday}
-                        className="text-[10px] text-primary hover:underline font-black cursor-pointer"
-                      >
-                        امروز
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleTrainingNextDay}
-                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                <div className="space-y-1.5">
-                  {trainingSessions.length === 0 ? (
-                    <div className="text-center py-3 text-xs text-muted-foreground">جلسه تمرینی برای این تاریخ ثبت نشده است.</div>
-                  ) : (
-                    <AnimatePresence>
-                      {trainingSessions.slice(0, 3).map((s) => (
-                        <motion.div
-                          key={s.id}
-                          whileHover={{ scale: 1.01, x: -2 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handleToggleSession(s.dayName)}
-                          className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
-                            s.completed
-                              ? 'bg-emerald-500/[0.05] border-emerald-500/30'
-                              : 'bg-muted/40 hover:bg-muted/80 border-border/60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {s.completed ? (
-                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                            ) : (
-                              <Circle className="h-4 w-4 text-muted-foreground/60 shrink-0" />
-                            )}
-                            <div className="min-w-0">
-                              <p className={`text-xs font-bold line-clamp-1 ${s.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                                {s.title}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                <span className="font-bold text-primary">{s.dayName}</span>
-                                <span>•</span>
-                                <span>{s.durationMinutes} دقیقه</span>
-                                <span>•</span>
-                                <span className="line-clamp-1">{s.focus}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${s.completed ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
-                            {s.completed ? 'انجام شد' : `${s.drillsCount} حرکت`}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Tab 2: Nutrition Content */}
-        {dailyTab === 'nutrition' && (
-          <div className="space-y-2.5">
-            {loggedMeals.length === 0 ? (
-              <div className="py-5 text-center space-y-2 bg-muted/20 rounded-2xl border border-dashed border-border/70 p-3">
-                <Apple className="h-6 w-6 text-emerald-500 mx-auto" />
-                <p className="text-xs font-bold text-muted-foreground">
-                  برنامه غذایی امروز ثبت نشده است
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/practice')}
-                  className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-black text-xs px-4 h-8 rounded-xl shadow-xs cursor-pointer"
-                >
-                  دریافت برنامه غذایی
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Date Navigation Bar */}
-                <div className="flex items-center justify-between p-1.5 rounded-xl bg-muted/30 border border-border/50 text-xs select-none">
-                  <button
-                    type="button"
-                    onClick={handleNutritionPrevDay}
-                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
-
-                  <div className="flex items-center gap-1.5 text-xs font-bold">
-                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>{formattedNutritionPersianDate}</span>
-                    {isNutritionToday ? (
-                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                        امروز
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleNutritionGoToday}
-                        className="text-[10px] text-emerald-500 hover:underline font-black cursor-pointer"
-                      >
-                        امروز
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleNutritionNextDay}
-                    className="p-1 rounded-lg bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                <div className="space-y-1.5">
-                  <AnimatePresence>
-                    {loggedMeals.slice(0, 4).map((m) => (
-                      <div
-                        key={m.id}
-                        onClick={() => handleToggleMeal(m.id)}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
-                          m.isCompleted
-                            ? 'bg-emerald-500/[0.04] border-emerald-500/25'
-                            : 'bg-muted/40 hover:bg-muted/80 border-border/60'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {m.isCompleted ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                          ) : (
-                            <Circle className="h-4 w-4 text-muted-foreground/60 shrink-0" />
-                          )}
-                          <div className="min-w-0">
-                            <p className={`text-xs font-bold line-clamp-1 ${m.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                              {m.name}
-                            </p>
-                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                {getMealTypeLabel(m.mealType)}
-                              </span>
-                              <span>•</span>
-                              <span>{m.calories} kcal</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${m.isCompleted ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
-                          {m.isCompleted ? 'مصرف شد' : m.portion || 'یک وعده'}
-                        </span>
-                      </div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* 5. Minimal Coach Tactial Note Pill */}
-      <div className="px-4 py-2.5 rounded-2xl bg-muted/40 border border-border/50 flex items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-muted-foreground line-clamp-1">
-          <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span>
-            <strong className="text-foreground">نکته تاکتیکی مربی:</strong> در زمان بازپس‌گیری توپ، سریعاً خطوط پاس روبه‌جلو را شناسایی و باز کنید.
-          </span>
+      {/* =========================================================================
+          3. ITEM 3: TRAINING, QUIZ & PROGRESS ROW
+          - تصویر 7a243db5...
+          - چپ: تمرینات و برنامه‌ها -> /practice
+          - وسط: بازی کوییز -> /quiz
+          - راست: گزارش پیشرفت -> باز شدن مودال تحلیل پیشرفت
+          ========================================================================= */}
+      <div className="w-full mb-3 sm:mb-3.5">
+        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+          <img
+            src="/dashboard-training-quiz-progress.webp"
+            alt="تمرینات، بازی کوییز و گزارش پیشرفت"
+            className="w-full h-auto block select-none"
+            loading="eager"
+            decoding="sync"
+          />
+
+          {/* Training Hotspot (Left 33.3% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/practice');
+            }}
+            className="absolute inset-y-0 left-0 w-[33.33%] cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="مشاهده برنامه تمرینات"
+          />
+
+          {/* Quiz Hotspot (Middle 33.3% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/quiz');
+            }}
+            className="absolute inset-y-0 left-[33.33%] w-[33.34%] cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="شروع بازی کوییز"
+          />
+
+          {/* Progress Hotspot (Right 33.3% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              setIsProgressModalOpen(true);
+            }}
+            className="absolute inset-y-0 right-0 w-[33.33%] cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="مشاهده گزارش پیشرفت"
+          />
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/tactics')}
-          className="text-primary font-bold hover:underline shrink-0 text-[11px]"
+      </div>
+
+      {/* =========================================================================
+          4. ITEM 4: MESSAGES & HEALTH STATUS ROW
+          - تصویر 0b98f1f0...
+          - چپ: پیام‌ها و اطلاعیه‌ها -> باز شدن مودال پیام‌ها
+          - راست: وضعیت خواب و سلامت -> باز شدن مودال وضعیت خواب و هیدراتاسیون
+          ========================================================================= */}
+      <div className="w-full mb-3 sm:mb-3.5">
+        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+          <img
+            src="/dashboard-messages-health.webp"
+            alt="پیام‌ها و وضعیت خواب و سلامت"
+            className="w-full h-auto block select-none"
+            loading="eager"
+            decoding="sync"
+          />
+
+          {/* Messages Hotspot (Left 50% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              setIsNotifOpen(true);
+            }}
+            className="absolute inset-y-0 left-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="مشاهده پیام‌ها و اطلاعیه‌ها"
+          />
+
+          {/* Health & Sleep Hotspot (Right 50% in image) */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              triggerHaptic();
+              setIsHealthModalOpen(true);
+            }}
+            className="absolute inset-y-0 right-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            title="مشاهده جزئیات خواب و سلامت"
+          />
+        </div>
+      </div>
+
+      {/* =========================================================================
+          5. ITEM 5: STUDENT PERFORMANCE REPORT BANNER
+          - تصویر a301f3fb...
+          - گزارش عملکرد دانش‌آموز (مشاهده گزارش ماهانه)
+          ========================================================================= */}
+      <div className="w-full mb-4">
+        <motion.div
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            triggerHaptic();
+            setIsStudentReportModalOpen(true);
+          }}
+          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+          title="مشاهده گزارش عملکرد دانش‌آموز"
         >
-          آنالیز تخته
-        </button>
+          <img
+            src="/dashboard-student-report.webp"
+            alt="گزارش عملکرد ماهانه دانش‌آموز"
+            className="w-full h-auto block select-none"
+            loading="eager"
+            decoding="sync"
+          />
+        </motion.div>
       </div>
 
-      {/* Dedicated Safe Empty Spacer so bottom floating LiquidGlassNav never overlaps */}
-      <div className="h-28 sm:h-36 w-full pointer-events-none" aria-hidden="true" />
+      {/* =========================================================================
+          PROGRESS REPORT MODAL
+          ========================================================================= */}
+      <AnimatePresence>
+        {isProgressModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in select-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="w-full max-w-lg rounded-3xl bg-card dark:bg-[#07160e] border border-border dark:border-emerald-500/30 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-foreground dark:text-white space-y-4 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between border-b border-border dark:border-emerald-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black">گزارش و تحلیل پیشرفت</h3>
+                    <p className="text-[10px] text-muted-foreground">آمار عملکرد هفتگی بازیکن</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsProgressModalOpen(false)}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-      {/* AI Assistant Modal */}
-      <AiCoachModal
-        isOpen={isAiModalOpen}
-        onClose={() => setIsAiModalOpen(false)}
-        readinessScore={readinessScore}
-        readinessLabel={readinessMeta.label}
-        workoutPercent={workoutPercent}
-        waterGlasses={waterGlasses}
-        caloriesConsumed={consumedNutrition.calories}
-        playerName={playerName}
-      />
+              {/* Linear Performance Chart */}
+              <div className="pt-2">
+                <LinearPerformanceChart
+                  data={weeklyPerformanceData}
+                  hasActiveProgram={!!activeProgram}
+                  onGetProgram={() => {
+                    setIsProgressModalOpen(false);
+                    navigate('/practice');
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-right">
+                  <span className="text-[10px] text-muted-foreground font-semibold">پایبندی به تمرینات</span>
+                  <div className="text-lg font-black text-emerald-400 mt-0.5">۸۵٪</div>
+                  <span className="text-[10px] text-emerald-500 font-bold">عالی و رو به رشد</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-right">
+                  <span className="text-[10px] text-muted-foreground font-semibold">مجموع دقایق فعالیت</span>
+                  <div className="text-lg font-black text-sky-400 mt-0.5">۳۲۰ دقیقه</div>
+                  <span className="text-[10px] text-sky-400 font-bold">در ۷ روز اخیر</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          HEALTH & SLEEP STATUS MODAL
+          ========================================================================= */}
+      <AnimatePresence>
+        {isHealthModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in select-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="w-full max-w-md rounded-3xl bg-card dark:bg-[#07160e] border border-border dark:border-emerald-500/30 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-foreground dark:text-white space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-border dark:border-emerald-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <Heart className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black">وضعیت خواب و سلامت</h3>
+                    <p className="text-[10px] text-muted-foreground">پایش ریکاوری و هیدراتاسیون بدن</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsHealthModalOpen(false)}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Sleep details */}
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                    <Moon className="h-4 w-4 text-indigo-400" />
+                    خواب دیشب
+                  </span>
+                  <span className="text-xs font-black text-indigo-400">۸ ساعت و ۱۵ دقیقه</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] text-muted-foreground pt-1 border-t border-white/5">
+                  <span>زمان خواب: ۲۳:۱۵</span>
+                  <span>زمان بیداری: ۰۷:۳۰</span>
+                  <span className="text-emerald-400 font-bold">کیفیت: عالی (۹۴٪)</span>
+                </div>
+              </div>
+
+              {/* Hydration Tracker */}
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                    <Droplets className="h-4 w-4 text-sky-400" />
+                    آب‌رسانی روزانه
+                  </span>
+                  <span className="text-xs font-black text-sky-400">
+                    {waterGlasses} از {TARGET_WATER_GLASSES} لیوان
+                  </span>
+                </div>
+
+                {/* Glasses indicator */}
+                <div className="grid grid-cols-8 gap-1.5 py-1">
+                  {Array.from({ length: 8 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-7 rounded-lg transition-all duration-300 flex items-center justify-center ${
+                        idx < waterGlasses
+                          ? 'bg-sky-500 shadow-[0_0_8px_rgba(56,189,248,0.5)] text-white'
+                          : 'bg-white/10 text-white/20'
+                      }`}
+                    >
+                      <Droplets className="h-3.5 w-3.5" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      triggerHaptic();
+                      setWaterGlasses((prev) => Math.max(0, prev - 1));
+                    }}
+                    className="h-8 flex-1 text-xs font-bold border-white/10 hover:bg-white/10"
+                  >
+                    <Minus className="h-3.5 w-3.5 ml-1" />
+                    کاهش
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => {
+                      triggerHaptic();
+                      setWaterGlasses((prev) => Math.min(16, prev + 1));
+                    }}
+                    className="h-8 flex-1 text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white"
+                  >
+                    <Plus className="h-3.5 w-3.5 ml-1" />
+                    ثبت یک لیوان
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          STUDENT REPORT MODAL
+          ========================================================================= */}
+      <AnimatePresence>
+        {isStudentReportModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in select-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="w-full max-w-md rounded-3xl bg-card dark:bg-[#07160e] border border-border dark:border-emerald-500/30 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-foreground dark:text-white space-y-4 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between border-b border-border dark:border-emerald-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+                    <Award className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black">گزارش عملکرد ماهانه دانش‌آموز</h3>
+                    <p className="text-[10px] text-muted-foreground">ارزیابی کادر فنی و پیشرفت مهارت‌ها</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsStudentReportModalOpen(false)}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Monthly Overview Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-900/30 via-emerald-950/20 to-black/40 border border-purple-500/20 text-right space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-white">{playerName}</span>
+                  <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                    رده برتر ماه
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-white/10">
+                  <div>
+                    <div className="text-xs text-muted-foreground">حضور منظم</div>
+                    <div className="text-base font-black text-emerald-400 mt-0.5">۹۴٪</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">نمره مهارت</div>
+                    <div className="text-base font-black text-purple-400 mt-0.5">A+</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">انضباط تیمی</div>
+                    <div className="text-base font-black text-sky-400 mt-0.5">۱۰۰٪</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills Radar / Bars */}
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-right">
+                <h4 className="text-xs font-bold text-muted-foreground">شاخص‌های فنی بازیکن:</h4>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-semibold">
+                    <span>کنترل توپ و فرست تاچ</span>
+                    <span className="text-emerald-400">۹۲٪</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full w-[92%]" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-semibold">
+                    <span>دید و هوش بازی (تاکتیک)</span>
+                    <span className="text-sky-400">۸۸٪</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full bg-sky-500 rounded-full w-[88%]" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-semibold">
+                    <span>استقامت و چابکی</span>
+                    <span className="text-purple-400">۸۵٪</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full bg-purple-500 rounded-full w-[85%]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Coach Feedback Note */}
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-right space-y-1">
+                <span className="text-[11px] font-black text-emerald-400">نظر سرمربی:</span>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  تمرکز روی جاگیری در فاز دفاعی و سرعت انتقال توپ بسیار مثبت بوده است. تداوم تمرینات هفتگی حفظ شود.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
