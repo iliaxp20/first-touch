@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Calendar, CheckCircle2, Circle, RotateCcw, Play, Clock } from 'lucide-react';
 import { VideoModal } from '@/features/admin/components/VideoModal';
 import { resolveMediaUrl } from '@/lib/api';
+import { getTrainingDrills } from '../data/freeTrainingCategories';
 
 interface ActiveTrainingPlanCardProps {
   activePlan: any;
@@ -292,8 +293,15 @@ export const ActiveTrainingPlanCard: React.FC<ActiveTrainingPlanCardProps> = ({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    const drills = getTrainingDrills();
+                    const matching = drills.find((d) => d.title === task.title || task.title.includes(d.title));
+                    const resolvedVideo =
+                      task.videoUrl ||
+                      matching?.videoUrl ||
+                      activePlan?.videoUrl ||
+                      '/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4';
                     setActiveVideo({
-                      url: task.videoUrl || '/uploads/drill_agility.mp4',
+                      url: resolvedVideo,
                       title: task.title,
                     });
                   }}

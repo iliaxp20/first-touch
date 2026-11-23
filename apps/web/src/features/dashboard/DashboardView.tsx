@@ -33,14 +33,14 @@ export const DashboardView: React.FC = () => {
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
   const [isStudentReportModalOpen, setIsStudentReportModalOpen] = useState(false);
 
-  // Water Tracker
+  // Water Tracker (Default to 0 glasses until player logs)
   const [waterGlasses, setWaterGlasses] = useState<number>(() => {
     try {
       const saved = localStorage.getItem(WATER_STORAGE_KEY);
       if (saved !== null && !isNaN(Number(saved))) return Number(saved);
-      return 6;
+      return 0;
     } catch {
-      return 6;
+      return 0;
     }
   });
 
@@ -63,9 +63,28 @@ export const DashboardView: React.FC = () => {
     fetch(`${API_BASE_URL}/programs/health-sleep`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ waterGlasses: newVal }),
+      body: JSON.stringify({ waterGlasses: newVal, isRecorded: true }),
     }).catch(() => {});
   }, []);
+
+  const handleSaveSleep = async (hours: number) => {
+    triggerHaptic();
+    try {
+      const res = await fetch(`${API_BASE_URL}/programs/health-sleep`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sleepHours: hours, isRecorded: true }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setHealthData(d);
+      } else {
+        setHealthData((prev: any) => ({ ...(prev || {}), sleepHours: hours, isRecorded: true }));
+      }
+    } catch {
+      setHealthData((prev: any) => ({ ...(prev || {}), sleepHours: hours, isRecorded: true }));
+    }
+  };
 
   // Haptic feedback
   const triggerHaptic = useCallback(() => {
@@ -647,21 +666,56 @@ export const DashboardView: React.FC = () => {
               </div>
 
               {/* Sleep details */}
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-right">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
                     <Moon className="h-4 w-4 text-indigo-400" />
                     خواب دیشب
                   </span>
-                  <span className="text-xs font-black text-indigo-400">
-                    {healthData?.sleepHours || 8.2} ساعت
-                  </span>
+                  {healthData?.sleepHours ? (
+                    <span className="text-xs font-black text-indigo-400">
+                      {healthData.sleepHours} ساعت
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                      ثبت نشده
+                    </span>
+                  )}
                 </div>
+
+                {/* Interactive Sleep Logger Form */}
+                <div className="space-y-1.5 pt-1.5 border-t border-white/10">
+                  <div className="text-[11px] text-muted-foreground font-semibold flex items-center justify-between">
+                    <span>ثبت ساعات خواب دیشب:</span>
+                    {healthData?.sleepHours && (
+                      <span className="text-emerald-400 text-[10px]">ثبت شده: {healthData.sleepHours} ساعت</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[6, 6.5, 7, 7.5, 8, 8.5, 9].map((hr) => (
+                      <button
+                        key={hr}
+                        type="button"
+                        onClick={() => handleSaveSleep(hr)}
+                        className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all border cursor-pointer ${
+                          healthData?.sleepHours === hr
+                            ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                            : 'bg-white/10 text-slate-300 hover:text-white border-white/10'
+                        }`}
+                      >
+                        {hr} ساعت
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center text-[11px] text-muted-foreground pt-1 border-t border-white/5">
-                  <span>ضربان استراحت: {healthData?.restingHeartRate || 52} bpm</span>
-                  <span className="text-emerald-400 font-bold">
-                    ریکاوری: {healthData?.recoveryScore || 88}٪
-                  </span>
+                  <span>ضربان استراحت: {healthData?.restingHeartRate ? `${healthData.restingHeartRate} bpm` : 'پایش با ساعت هوشمند'}</span>
+                  {healthData?.recoveryScore && (
+                    <span className="text-emerald-400 font-bold">
+                      ریکاوری: {healthData.recoveryScore}٪
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -673,7 +727,7 @@ export const DashboardView: React.FC = () => {
                     آب‌رسانی روزانه
                   </span>
                   <span className="text-xs font-black text-sky-400">
-                    {waterGlasses} از {TARGET_WATER_GLASSES} لیوان
+                    {waterGlasses} از {TARGET_WATER_GLASSES} لیوان ({waterGlasses * 250} ml)
                   </span>
                 </div>
 
@@ -682,11 +736,16 @@ export const DashboardView: React.FC = () => {
                   {Array.from({ length: 8 }).map((_, idx) => (
                     <div
                       key={idx}
-                      className={`h-7 rounded-lg transition-all duration-300 flex items-center justify-center ${
+                      onClick={() => {
+                        triggerHaptic();
+                        updateWater(idx + 1 === waterGlasses ? idx : idx + 1);
+                      }}
+                      className={`h-7 rounded-lg transition-all duration-300 flex items-center justify-center cursor-pointer ${
                         idx < waterGlasses
                           ? 'bg-sky-500 shadow-[0_0_8px_rgba(56,189,248,0.5)] text-white'
-                          : 'bg-white/10 text-white/20'
+                          : 'bg-white/10 text-white/20 hover:bg-white/15'
                       }`}
+                      title={`${(idx + 1) * 250} میلی‌لیتر`}
                     >
                       <Droplets className="h-3.5 w-3.5" />
                     </div>
@@ -758,66 +817,73 @@ export const DashboardView: React.FC = () => {
               </div>
 
               {/* Monthly Overview Card */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-900/30 via-emerald-950/20 to-black/40 border border-purple-500/20 text-right space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-white">{playerName}</span>
-                  <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                    {studentReportData?.reportMonth || 'آبان ۱۴۰۳'}
-                  </span>
-                </div>
+              {studentReportData?.overallScore ? (
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-900/30 via-emerald-950/20 to-black/40 border border-purple-500/20 text-right space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-white">{playerName}</span>
+                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                      {studentReportData.reportMonth || 'ماه جاری'}
+                    </span>
+                  </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-white/10">
-                  <div>
-                    <div className="text-xs text-muted-foreground">حضور منظم</div>
-                    <div className="text-base font-black text-emerald-400 mt-0.5">
-                      {studentReportData?.attendancePercent || 94}٪
+                  <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-white/10">
+                    <div>
+                      <div className="text-xs text-muted-foreground">حضور منظم</div>
+                      <div className="text-base font-black text-emerald-400 mt-0.5">
+                        {studentReportData.attendancePercent}٪
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">نمره عملکرد</div>
+                      <div className="text-base font-black text-purple-400 mt-0.5">
+                        {studentReportData.overallScore}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">انضباط تیمی</div>
+                      <div className="text-base font-black text-sky-400 mt-0.5">۱۰۰٪</div>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">نمره عملکرد</div>
-                    <div className="text-base font-black text-purple-400 mt-0.5">
-                      {studentReportData?.overallScore || 89}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">انضباط تیمی</div>
-                    <div className="text-base font-black text-sky-400 mt-0.5">۱۰۰٪</div>
-                  </div>
-                </div>
 
-                {studentReportData?.coachFeedback && (
-                  <p className="text-[11px] text-slate-300 pt-2 border-t border-white/10 leading-relaxed">
-                    «{studentReportData.coachFeedback}»
+                  {studentReportData.coachFeedback && (
+                    <p className="text-[11px] text-slate-300 pt-2 border-t border-white/10 leading-relaxed">
+                      «{studentReportData.coachFeedback}»
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
+                  <Award className="h-10 w-10 text-purple-400/60 mx-auto" />
+                  <h4 className="text-xs font-black text-white">گزارش عملکرد هنوز ثبت نشده است</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    به محض ثبت ارزیابی فنی و انضباطی پایان ماه توسط مربی در پنل مدیریت، کارنامه و شاخص‌های فنی بازیکن در این بخش قرار می‌گیرد.
                   </p>
-                )}
-              </div>
-
-              {/* Skills Radar / Bars */}
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-right">
-                <h4 className="text-xs font-bold text-muted-foreground">شاخص‌های فنی بازیکن:</h4>
-
-                <div className="space-y-2">
-                  {(studentReportData?.metrics || [
-                    { label: 'شتاب و چابکی اولیه', score: 92, status: 'عالی' },
-                    { label: 'تکنیک لمس اول و جهت‌دار', score: 88, status: 'خوب' },
-                    { label: 'استقامت سرعت در نیمه دوم', score: 85, status: 'در حال ارتقا' },
-                    { label: 'رعایت پروتکل تغذیه و آب', score: 93, status: 'عالی' },
-                  ]).map((m: any, idx: number) => (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between text-[11px] font-semibold">
-                        <span>{m.label}</span>
-                        <span className="text-emerald-400">{m.score}٪ ({m.status})</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
-                          style={{ width: `${m.score}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
                 </div>
-              </div>
+              )}
+
+              {/* Skills Radar / Bars if report exists */}
+              {studentReportData?.metrics && studentReportData.metrics.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-right">
+                  <h4 className="text-xs font-bold text-muted-foreground">شاخص‌های فنی بازیکن:</h4>
+
+                  <div className="space-y-2">
+                    {studentReportData.metrics.map((m: any, idx: number) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex justify-between text-[11px] font-semibold">
+                          <span>{m.label}</span>
+                          <span className="text-emerald-400">{m.score}٪ ({m.status})</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                            style={{ width: `${m.score}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}

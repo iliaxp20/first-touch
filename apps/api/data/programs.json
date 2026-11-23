@@ -1,5 +1,85 @@
 [
   {
+    "id": "prog-1794729612105",
+    "title": "برنامه تست سرعت و چابکی با ویدیو",
+    "coachName": "استاد حمید درخشان",
+    "coachTitle": "سرمربی آکادمی",
+    "goal": "توسعه شتاب و چابکی تخصصی و تست رکوردهای سرعتی",
+    "difficulty": "پیشرفته",
+    "ageGroup": "عمومی",
+    "durationWeeks": 4,
+    "sessionsPerWeek": 3,
+    "equipment": [
+      "توپ فوتبال",
+      "مخروط"
+    ],
+    "description": "برنامه تست تخصصی سرعت و چابکی به همراه ویدیوی آموزشی اضافه شده از پنل مدیریت",
+    "price": "رایگان",
+    "priceNumber": 0,
+    "isFree": true,
+    "studentsCount": 45,
+    "rating": 5,
+    "completedSessions": 0,
+    "totalSessions": 12,
+    "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
+    "videoUrl": "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4",
+    "drillsSummary": [
+      "شتاب گام اول",
+      "نردبان چابکی",
+      "تست سرعت ۵-۱۰-۵",
+      "تغییر مسیر انفجاری"
+    ],
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "جلسه تمرین اول - شتاب اولیه", "focus": "گرم‌کردن و لمس توپ", "durationMinutes": 45, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4" },
+          { "dayName": "دوشنبه", "title": "جلسه تمرین دوم - چابکی فرکانسی", "focus": "چابکی و شتاب", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4" },
+          { "dayName": "چهارشنبه", "title": "جلسه تمرین سوم - تکنیک تحت فشار", "focus": "تکنیک و انتقال", "durationMinutes": 50, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "prog-1794729591094",
+    "title": "برنامه تست سرعت و چابکی پایه‌ای",
+    "coachName": "استاد حمید درخشان",
+    "coachTitle": "سرمربی آکادمی",
+    "goal": "توسعه شتاب و چابکی پایه و بهبود هماهنگی عصب و عضله",
+    "difficulty": "متوسط",
+    "ageGroup": "عمومی",
+    "durationWeeks": 4,
+    "sessionsPerWeek": 3,
+    "equipment": [
+      "توپ فوتبال",
+      "مخروط"
+    ],
+    "description": "پروتکل تمرینات پایه چابکی با تأکید بر فرکانس پای بالا و استارت‌های انفجاری",
+    "price": "رایگان",
+    "priceNumber": 0,
+    "isFree": true,
+    "studentsCount": 38,
+    "rating": 5,
+    "completedSessions": 0,
+    "totalSessions": 12,
+    "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
+    "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4",
+    "drillsSummary": [
+      "شتاب گام اول",
+      "نردبان چابکی"
+    ],
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "جلسه تمرین اول", "focus": "گرم‌کردن و لمس توپ", "durationMinutes": 45, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4" },
+          { "dayName": "دوشنبه", "title": "جلسه تمرین دوم", "focus": "چابکی و شتاب", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4" },
+          { "dayName": "چهارشنبه", "title": "جلسه تمرین سوم", "focus": "تکنیک و انتقال", "durationMinutes": 50, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327449051-07FA6972-DC08-426A-8636-BD7DB1DAC477.mp4" }
+        ]
+      }
+    ]
+  },
+  {
     "id": "prog-1",
     "title": "افزایش سرعت و شتاب انفجاری در فوتبال",
     "coachName": "استاد حمید درخشان",
@@ -16,69 +96,27 @@
     ],
     "description": "این برنامه بر اساس متدهای پیشرفته شتاب‌گیری و فرکانس گام فوتبال مدرن طراحی شده و در ۴ هفته رکوردهای سرعتی شما را به شکل چشمگیری بهبود می‌بخشد.",
     "price": "۳۹۰,۰۰۰ تومان",
+    "priceNumber": 390000,
     "isFree": false,
     "studentsCount": 28,
     "rating": 4.9,
-    "imageUrl": "https://images.openai.com/static-rsc-4/57Fxx5YigrvTD5plecW8SeNc4w8CPdQkPYMimsdhsM8qDK3EbwD-v0WLOjaqiF9q_2x_Ewakc6pwZVPc7jZnZrBIA05SsSxJT4j68XVdWfjgKXXDbFXrey8xPwC-h7FFUo4XxODM4OpxXi24UUu4NwEV8sJLTD7JTyKaJMNs1o0?purpose=inline",
+    "videoUrl": "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4",
+    "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
+    "drillsSummary": [
+      "شتاب اولیه",
+      "واکنش به محرک",
+      "شاتل ۵-۱۰-۵",
+      "ترمز و تغییر جهت"
+    ],
     "completedSessions": 0,
     "totalSessions": 12,
     "schedule": [
       {
         "weekNumber": 1,
         "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "تمرین چابکی و تغییر جهت ۴۵ درجه",
-            "focus": "شتاب اولیه و گام اول",
-            "durationMinutes": 45,
-            "completed": false,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "دوشنبه",
-            "title": "تمرین سرعت واکنش به سوت و رنگ",
-            "focus": "شروع انفجاری و زمان واکنش",
-            "durationMinutes": 40,
-            "completed": false,
-            "drillsCount": 4
-          },
-          {
-            "dayName": "چهارشنبه",
-            "title": "تمرین هماهنگی نردبان و شاتل ۵-۱۰-۵",
-            "focus": "ریتم فرکانس پا",
-            "durationMinutes": 50,
-            "completed": false,
-            "drillsCount": 6
-          }
-        ]
-      },
-      {
-        "weekNumber": 2,
-        "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "تغییر مسیر ۹۰ درجه با ترمز فوری",
-            "focus": "توان برون‌گرا و ترمز",
-            "durationMinutes": 45,
-            "completed": false,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "دوشنبه",
-            "title": "دویدن‌های منحنی و عبور مارپیچ",
-            "focus": "سرعت زاویه‌ای",
-            "durationMinutes": 45,
-            "completed": false,
-            "drillsCount": 4
-          },
-          {
-            "dayName": "چهارشنبه",
-            "title": "شتاب انفجاری ۲۰ متری با محرک دیداری",
-            "focus": "بیشینه سرعت",
-            "durationMinutes": 50,
-            "completed": false,
-            "drillsCount": 5
-          }
+          { "dayName": "شنبه", "title": "تمرین چابکی و تغییر جهت ۴۵ درجه", "focus": "شتاب اولیه و گام اول", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4" },
+          { "dayName": "دوشنبه", "title": "تمرین سرعت واکنش به سوت و رنگ", "focus": "شروع انفجاری و زمان واکنش", "durationMinutes": 40, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4" },
+          { "dayName": "چهارشنبه", "title": "تمرین هماهنگی نردبان و شاتل ۵-۱۰-۵", "focus": "ریتم فرکانس پا", "durationMinutes": 50, "completed": false, "drillsCount": 6, "videoUrl": "/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4" }
         ]
       }
     ]
@@ -87,7 +125,7 @@
     "id": "prog-2",
     "title": "افزایش قدرت بدنی با وزن بدن برای فوتبالیست",
     "coachName": "دکتر علیرضا سلیمانی",
-    "coachTitle": "متخصص فیزیولوژی ورزشی آکادمی ملی فوتبال",
+    "coachTitle": "متخصص فیزیولوژی ورزشی فرست تاچ ملی فوتبال",
     "goal": "تقویت تنه، همسترینگ، چهارسر و ثبات مچ و زانو بدون نیاز به دمبل و وزنه",
     "difficulty": "مبتدی",
     "ageGroup": "عمومی (۱۰ سال به بالا)",
@@ -99,69 +137,26 @@
     ],
     "description": "تمرینات ساختاری و کاربردی وزن بدن شامل اسکوات‌های تخصصی، نوردیک همسترینگ، پل‌های باسن و پلانک‌های ضدچرخش متناسب با فشارهای مسابقه فوتبال.",
     "price": "رایگان",
+    "priceNumber": 0,
     "isFree": true,
     "studentsCount": 94,
     "rating": 4.8,
-    "imageUrl": "https://images.openai.com/static-rsc-4/CxfOtg9pGWQInGVDGNI8acyWURpQO5JrF-74ajR5bbizzZ0g4V88M-4EAxTUKeyFyHhxSLAAu98RHQ9Y_SDVD51oEkmb2l3IzkiMNfJfNDEMcWYZodnobofAp_9mqLPdFFI9CGItFTsaR3WpLHJymTnyx7Q3J9Ar17PRjouAuQI?purpose=inline",
+    "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4",
+    "imageUrl": "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
+    "drillsSummary": [
+      "نوردیک همسترینگ",
+      "اسکوات فانکشنال",
+      "ثبات مرکزی کور"
+    ],
     "completedSessions": 0,
     "totalSessions": 18,
     "schedule": [
       {
         "weekNumber": 1,
         "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "تقویت زنجیره خلفی و تعادل تک‌پا",
-            "focus": "همسترینگ و پل باسن",
-            "durationMinutes": 40,
-            "completed": false,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "دوشنبه",
-            "title": "ثبات مرکزی و پلانک‌های ایزومتریک",
-            "focus": "عضلات شکم و مفاصل ستون فقرات",
-            "durationMinutes": 35,
-            "completed": false,
-            "drillsCount": 4
-          },
-          {
-            "dayName": "چهارشنبه",
-            "title": "اسکوات‌های فانکشنال و تقویت چهارسر",
-            "focus": "قدرت پایین‌تنه",
-            "durationMinutes": 45,
-            "completed": false,
-            "drillsCount": 5
-          }
-        ]
-      },
-      {
-        "weekNumber": 2,
-        "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "لانج‌های چندجهته و تثبیت زانو",
-            "focus": "تعادل حرکتی",
-            "durationMinutes": 40,
-            "completed": false,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "دوشنبه",
-            "title": "شنای سوئدی و قدرت کمربند شانه‌ای",
-            "focus": "تنه و بالاتنه دفاعی",
-            "durationMinutes": 40,
-            "completed": false,
-            "drillsCount": 4
-          },
-          {
-            "dayName": "چهارشنبه",
-            "title": "مدار قدرتی تک‌پای فوتبال",
-            "focus": "هماهنگی عصب و عضله",
-            "durationMinutes": 45,
-            "completed": false,
-            "drillsCount": 6
-          }
+          { "dayName": "شنبه", "title": "تقویت زنجیره خلفی و تعادل تک‌پا", "focus": "همسترینگ و پل باسن", "durationMinutes": 40, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4" },
+          { "dayName": "دوشنبه", "title": "ثبات مرکزی و پلانک‌های ایزومتریک", "focus": "عضلات شکم و مفاصل ستون فقرات", "durationMinutes": 35, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4" },
+          { "dayName": "چهارشنبه", "title": "اسکوات‌های فانکشنال و تقویت چهارسر", "focus": "قدرت پایین‌تنه", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795327449051-07FA6972-DC08-426A-8636-BD7DB1DAC477.mp4" }
         ]
       }
     ]
@@ -183,48 +178,28 @@
     ],
     "description": "۸ هفته تمرین فشرده روزانه لمس توپ با بیش از ۱۰۰۰ تماس در هر جلسه برای ساخت حافظه عضلانی ناخودآگاه در کنترل و ارسال پاس.",
     "price": "۴۹۰,۰۰۰ تومان",
+    "priceNumber": 490000,
     "isFree": false,
     "studentsCount": 52,
-    "rating": 5,
-    "imageUrl": "https://images.openai.com/static-rsc-4/cUkZqoO26WIfrDnkmfFWU7rcT1Qj6dt1LWBB8oQsg118YwUWlmKeveCjHKphVdRNyk0iUTOVxozdPSfyWcS5xsJ0-nHIP5byNAiwF3DaJu802puLB25z0JB3WZ5Vup9qSNGrywekTnXOXLmcxPbLyVDS6yPyeDKUt4k2O8WQqdM?purpose=inline",
+    "rating": 5.0,
+    "videoUrl": "/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4",
+    "imageUrl": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=80",
+    "drillsSummary": [
+      "لمس اول جهت‌دار",
+      "دریبل مارپیچ",
+      "حرکت کرویف",
+      "کنترل هوایی"
+    ],
     "completedSessions": 8,
     "totalSessions": 32,
     "schedule": [
       {
         "weekNumber": 1,
         "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "لمس اول با بغل پای موافق و مخالف",
-            "focus": "دقت کنترل استپ اول",
-            "durationMinutes": 45,
-            "completed": true,
-            "drillsCount": 6
-          },
-          {
-            "dayName": "یکشنبه",
-            "title": "دریبل مارپیچ با بیرون و داخل پا",
-            "focus": "چسبندگی توپ به پا",
-            "durationMinutes": 40,
-            "completed": true,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "سه‌شنبه",
-            "title": "حرکت کرویف و کشیدن توپ به عقب",
-            "focus": "فریب‌های جهتی",
-            "durationMinutes": 45,
-            "completed": true,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "پنج‌شنبه",
-            "title": "کنترل توپ‌های هوایی با سینه و روی پا",
-            "focus": "تعادل فرود توپ",
-            "durationMinutes": 50,
-            "completed": false,
-            "drillsCount": 6
-          }
+          { "dayName": "شنبه", "title": "لمس اول با بغل پای موافق و مخالف", "focus": "دقت کنترل استپ اول", "durationMinutes": 45, "completed": true, "drillsCount": 6, "videoUrl": "/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4" },
+          { "dayName": "یکشنبه", "title": "دریبل مارپیچ با بیرون و داخل پا", "focus": "چسبندگی توپ به پا", "durationMinutes": 40, "completed": true, "drillsCount": 5, "videoUrl": "/uploads/1795327449051-07FA6972-DC08-426A-8636-BD7DB1DAC477.mp4" },
+          { "dayName": "سه‌شنبه", "title": "حرکت کرویف و کشیدن توپ به عقب", "focus": "فریب‌های جهتی", "durationMinutes": 45, "completed": true, "drillsCount": 5, "videoUrl": "/uploads/1795327581772-9066C8B2-F712-47F9-B2FF-F7CAEE3F55F2.mp4" },
+          { "dayName": "پنج‌شنبه", "title": "کنترل توپ‌های هوایی با سینه و روی پا", "focus": "تعادل فرود توپ", "durationMinutes": 50, "completed": false, "drillsCount": 6, "videoUrl": "/uploads/1795328024187-3E954364-7B55-4A71-9B41-04BC81B80308.mp4" }
         ]
       }
     ]
@@ -233,7 +208,7 @@
     "id": "prog-4",
     "title": "افزایش چابکی تخصصی و رفلکس‌های چندجهته",
     "coachName": "استاد مهدی مهدوی‌کیا",
-    "coachTitle": "آکادمی کیا - کارشناس تمرینات رده‌های پایه",
+    "coachTitle": "فرست تاچ کیا - کارشناس تمرینات رده‌های پایه",
     "goal": "حداکثرسازی چابکی بدون توپ، هماهنگی عصبی و رفلکس گام در کورس‌های سرعتی",
     "difficulty": "پیشرفته",
     "ageGroup": "نوجوانان و بزرگسالان",
@@ -246,48 +221,28 @@
     ],
     "description": "این برنامه به صورت تخصصی بر تمرینات آینه‌ای، ایکی شافل، برش‌های تند ۴۵ و ۹۰ درجه و تغییر جهت‌های واکنشی تمرکز دارد.",
     "price": "۴۲۰,۰۰۰ تومان",
+    "priceNumber": 420000,
     "isFree": false,
     "studentsCount": 41,
     "rating": 4.9,
-    "imageUrl": "https://images.openai.com/static-rsc-4/ICoXl52bLCdc5Z4PVk79BVOiGgQyecbK8xGlVVtk8MOzT7mCj6n1--GtWr_WdJMNwz1JeUprJKpdi8zkvuQCm3H-9gGNwEuyLcICwSJtEGEuN-PmkWp-p0EELCkhCbnanj54W9iCqWHUfXjyR2eAlTkPJ2jPP6LFt7mVorn1uW8?purpose=inline",
+    "videoUrl": "/uploads/1795327449051-07FA6972-DC08-426A-8636-BD7DB1DAC477.mp4",
+    "imageUrl": "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=600&q=80",
+    "drillsSummary": [
+      "ایکی شافل",
+      "برش‌های زاویه‌دار",
+      "سرعت واکنش",
+      "دریبلینگ انفجاری"
+    ],
     "completedSessions": 2,
     "totalSessions": 16,
     "schedule": [
       {
         "weekNumber": 1,
         "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "تمرین چابکی و تغییر جهت",
-            "focus": "برش‌های زاویه‌دار",
-            "durationMinutes": 45,
-            "completed": true,
-            "drillsCount": 6
-          },
-          {
-            "dayName": "دوشنبه",
-            "title": "تمرین سرعت واکنش",
-            "focus": "محرک‌های صوتی و بینایی",
-            "durationMinutes": 40,
-            "completed": true,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "چهارشنبه",
-            "title": "تمرین هماهنگی و تعادل",
-            "focus": "نردبان چابکی و تعادل تک‌پا",
-            "durationMinutes": 45,
-            "completed": false,
-            "drillsCount": 6
-          },
-          {
-            "dayName": "پنج‌شنبه",
-            "title": "تمرین چابکی با توپ",
-            "focus": "دریبلینگ انفجاری",
-            "durationMinutes": 50,
-            "completed": false,
-            "drillsCount": 5
-          }
+          { "dayName": "شنبه", "title": "تمرین چابکی و تغییر جهت", "focus": "برش‌های زاویه‌دار", "durationMinutes": 45, "completed": true, "drillsCount": 6, "videoUrl": "/uploads/1795327449051-07FA6972-DC08-426A-8636-BD7DB1DAC477.mp4" },
+          { "dayName": "دوشنبه", "title": "تمرین سرعت واکنش", "focus": "محرک‌های صوتی و بینایی", "durationMinutes": 40, "completed": true, "drillsCount": 5, "videoUrl": "/uploads/1795327581772-9066C8B2-F712-47F9-B2FF-F7CAEE3F55F2.mp4" },
+          { "dayName": "چهارشنبه", "title": "تمرین هماهنگی و تعادل", "focus": "نردبان چابکی و تعادل تک‌پا", "durationMinutes": 45, "completed": false, "drillsCount": 6, "videoUrl": "/uploads/1795328024187-3E954364-7B55-4A71-9B41-04BC81B80308.mp4" },
+          { "dayName": "پنج‌شنبه", "title": "تمرین چابکی با توپ", "focus": "دریبلینگ انفجاری", "durationMinutes": 50, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328370919-D5E3B0A0-7933-43C2-831D-0099B9E47D26.mp4" }
         ]
       }
     ]
@@ -310,56 +265,222 @@
     ],
     "description": "پروتکل جامع پیش‌فصل شامل تست‌های یویو، اینتروال‌های شدید بی‌هوازی، تمرینات کپنهاگ کشاله ران و مسابقات فشرده ابعاد کوچک.",
     "price": "۶۵۰,۰۰۰ تومان",
+    "priceNumber": 650000,
     "isFree": false,
     "studentsCount": 37,
     "rating": 4.9,
-    "imageUrl": "https://images.openai.com/static-rsc-4/A5MgHsMsNwN63JX7f0tRszU4wp10P0POi_6Di4RHJMesuIyWWv9LrqPWLNYkJxBu0kZ-4DJ6z8sdE6ngScdC99Bkcpa5Al9j1-y6WodjBVy__FIKeDgqmiCnT6hMpsvlDHO0b-UaqZvdNkr8YnPqEV6Z1MNRZ3vHzhPGaW3NcQM?purpose=inline",
+    "videoUrl": "/uploads/1795327581772-9066C8B2-F712-47F9-B2FF-F7CAEE3F55F2.mp4",
+    "imageUrl": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=600&q=80",
+    "drillsSummary": [
+      "تست یویو",
+      "تمرینات کپنهاگ",
+      "اینتروال شدید",
+      "ریکاوری فعال"
+    ],
     "completedSessions": 10,
     "totalSessions": 40,
     "schedule": [
       {
         "weekNumber": 1,
         "sessions": [
-          {
-            "dayName": "شنبه",
-            "title": "تمرینات هوازی و پایه‌های توان تنفسی",
-            "focus": "استقامت قلبی",
-            "durationMinutes": 60,
-            "completed": true,
-            "drillsCount": 5
-          },
-          {
-            "dayName": "یکشنبه",
-            "title": "قدرت عضلات مرکزی و ثبات لگن",
-            "focus": "پیشگیری از آسیب کشاله",
-            "durationMinutes": 45,
-            "completed": true,
-            "drillsCount": 6
-          },
-          {
-            "dayName": "سه‌شنبه",
-            "title": "شاتل‌های متناوب و استارت‌های چابکی",
-            "focus": "سازگاری لاکتیک",
-            "durationMinutes": 55,
-            "completed": true,
-            "drillsCount": 6
-          },
-          {
-            "dayName": "چهارشنبه",
-            "title": "بازی‌های در ابعاد کوچک ۳ در برابر ۳",
-            "focus": "فشار بازی رسمی",
-            "durationMinutes": 50,
-            "completed": false,
-            "drillsCount": 4
-          },
-          {
-            "dayName": "پنج‌شنبه",
-            "title": "ریکاوری فعال و موبیلیتی مفاصل",
-            "focus": "انعطاف‌پذیری و کشش",
-            "durationMinutes": 40,
-            "completed": false,
-            "drillsCount": 5
-          }
+          { "dayName": "شنبه", "title": "تمرینات هوازی و پایه‌های توان تنفسی", "focus": "استقامت قلبی", "durationMinutes": 60, "completed": true, "drillsCount": 5, "videoUrl": "/uploads/1795327581772-9066C8B2-F712-47F9-B2FF-F7CAEE3F55F2.mp4" },
+          { "dayName": "یکشنبه", "title": "قدرت عضلات مرکزی و ثبات لگن", "focus": "پیشگیری از آسیب کشاله", "durationMinutes": 45, "completed": true, "drillsCount": 6, "videoUrl": "/uploads/1795328024187-3E954364-7B55-4A71-9B41-04BC81B80308.mp4" },
+          { "dayName": "سه‌شنبه", "title": "شاتل‌های متناوب و استارت‌های چابکی", "focus": "سازگاری لاکتیک", "durationMinutes": 55, "completed": true, "drillsCount": 6, "videoUrl": "/uploads/1795328370919-D5E3B0A0-7933-43C2-831D-0099B9E47D26.mp4" },
+          { "dayName": "چهارشنبه", "title": "بازی‌های در ابعاد کوچک ۳ در برابر ۳", "focus": "فشار بازی رسمی", "durationMinutes": 50, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795328492965-F5288CA7-137D-4535-8433-9FCE3E764367.mp4" },
+          { "dayName": "پنج‌شنبه", "title": "ریکاوری فعال و موبیلیتی مفاصل", "focus": "انعطاف‌پذیری و کشش", "durationMinutes": 40, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328615717-451CA789-1BB6-4C2D-82F5-EDA57648251E.mp4" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ready-plan-free-football",
+    "title": "برنامه آمادگی بدنی و لمس توپ فرست تاچ",
+    "ageGroup": "تمامی رده‌ها",
+    "price": "رایگان",
+    "priceNumber": 0,
+    "durationWeeks": 4,
+    "sessionsPerWeek": 3,
+    "totalSessions": 12,
+    "difficulty": "متوسط",
+    "goal": "تقویت لمس اول، چابکی فرکانسی و هماهنگی عصبی عضلانی فوتبال",
+    "description": "برنامه پایه استاندارد آکادمی فرست تاچ شامل ۱۲ جلسه تقویمی با ویدیو و چک‌لیست حرکات.",
+    "equipment": [
+      "توپ فوتبال",
+      "مخروط",
+      "نردبان چابکی"
+    ],
+    "coachName": "کادر فنی فرست تاچ",
+    "rating": 4.9,
+    "studentsCount": 650,
+    "videoUrl": "/uploads/1795328024187-3E954364-7B55-4A71-9B41-04BC81B80308.mp4",
+    "drillsSummary": [
+      "شتاب گام اول",
+      "نردبان چابکی",
+      "دریبل مارپیچ",
+      "پاس تک‌ضرب"
+    ],
+    "isFree": true,
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "شتاب گام اول و لمس جهت‌دار", "focus": "شتاب اولیه و کنترل", "durationMinutes": 45, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795328024187-3E954364-7B55-4A71-9B41-04BC81B80308.mp4" },
+          { "dayName": "دوشنبه", "title": "نردبان چابکی و هماهنگی گام", "focus": "چابکی پا", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328370919-D5E3B0A0-7933-43C2-831D-0099B9E47D26.mp4" },
+          { "dayName": "چهارشنبه", "title": "دریبل مارپیچ و پاس تک‌ضرب", "focus": "تکنیک انتقال", "durationMinutes": 50, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328492965-F5288CA7-137D-4535-8433-9FCE3E764367.mp4" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ready-plan-u12",
+    "title": "برنامه پایه چابکی، لمس اول و هماهنگی نونهالان",
+    "ageGroup": "نونهالان (زیر ۱۲ سال)",
+    "price": "۱۹۹,۰۰۰ تومان",
+    "priceNumber": 199000,
+    "durationWeeks": 4,
+    "sessionsPerWeek": 3,
+    "totalSessions": 12,
+    "difficulty": "مبتدی",
+    "goal": "تقویت ریتم گام‌برداری، شادی تمرین و لمس جهت‌دار با هر دو پا",
+    "description": "طراحی شده بر مبنای متدهای پایه آکادمی‌های اروپایی برای رشد عصبی-عضلانی زیر ۱۲ سال بدون وزنه.",
+    "equipment": [
+      "نردبان چابکی سبک",
+      "مخروط رنگی",
+      "توپ شماره ۴"
+    ],
+    "coachName": "دپارتمان آکادمی نونهالان فرست تاچ",
+    "rating": 4.9,
+    "studentsCount": 312,
+    "videoUrl": "/uploads/1795328370919-D5E3B0A0-7933-43C2-831D-0099B9E47D26.mp4",
+    "drillsSummary": [
+      "ایکی شافل مقدماتی",
+      "بازی واکنش رنگی",
+      "کنترل با کفی و بغل پا",
+      "استارت ۱۰ متر تفریحی"
+    ],
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "ایکی شافل و ریتم گام", "focus": "چابکی مقدماتی", "durationMinutes": 40, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795328370919-D5E3B0A0-7933-43C2-831D-0099B9E47D26.mp4" },
+          { "dayName": "دوشنبه", "title": "بازی واکنش رنگی و استارت تفریحی", "focus": "شتاب و سرگرمی", "durationMinutes": 40, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795328492965-F5288CA7-137D-4535-8433-9FCE3E764367.mp4" },
+          { "dayName": "چهارشنبه", "title": "کنترل کفی و بغل پا", "focus": "لمس اول", "durationMinutes": 45, "completed": false, "drillsCount": 4, "videoUrl": "/uploads/1795328615717-451CA789-1BB6-4C2D-82F5-EDA57648251E.mp4" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ready-plan-u16",
+    "title": "برنامه شتاب انفجاری، پرس و استقامت عضلانی نوجوانان",
+    "ageGroup": "نوجوانان (۱۲ تا ۱۵ سال)",
+    "price": "۱۹۹,۰۰۰ تومان",
+    "priceNumber": 199000,
+    "durationWeeks": 6,
+    "sessionsPerWeek": 4,
+    "totalSessions": 24,
+    "difficulty": "متوسط",
+    "goal": "ارتقای شتاب گام اول، استقامت بی‌هوازی و تکنیک در موقعیت‌های تحت فشار",
+    "description": "برنامه جامع بدنسازی تخصصی نوجوانان فوتبال با تأکید بر قدرت عملکردی وزن بدن و لمس دوم.",
+    "equipment": [
+      "مخروط",
+      "کش مقاومتی مینی‌لوپ",
+      "توپ شماره ۵",
+      "نردبان"
+    ],
+    "coachName": "کادر ارشد استعدادیابی فرست تاچ",
+    "rating": 4.8,
+    "studentsCount": 485,
+    "videoUrl": "/uploads/1795328492965-F5288CA7-137D-4535-8433-9FCE3E764367.mp4",
+    "drillsSummary": [
+      "تست ۵-۱۰-۵ حرفه‌ای",
+      "اسکات پرشی تک‌پا",
+      "شاتل شتاب زاویه‌دار",
+      "پرس پرسرعت ۲ به ۲"
+    ],
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "شاتل شتاب زاویه‌دار", "focus": "شتاب اولیه", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328492965-F5288CA7-137D-4535-8433-9FCE3E764367.mp4" },
+          { "dayName": "دوشنبه", "title": "اسکات پرشی و توان پلیومتریک", "focus": "توان پرش", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328615717-451CA789-1BB6-4C2D-82F5-EDA57648251E.mp4" },
+          { "dayName": "چهارشنبه", "title": "پرس پرسرعت ۲ به ۲", "focus": "تکنیک تحت فشار", "durationMinutes": 50, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328728584-D5774462-9F86-4D86-B4D6-86A1EA4F9468.mp4" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ready-plan-u19",
+    "title": "برنامه قدرت، موبیلیتی و سرعت پیش‌فصل جوانان",
+    "ageGroup": "جوانان (۱۶ تا ۱۹ سال)",
+    "price": "۱۹۹,۰۰۰ تومان",
+    "priceNumber": 199000,
+    "durationWeeks": 8,
+    "sessionsPerWeek": 4,
+    "totalSessions": 32,
+    "difficulty": "پیشرفته",
+    "goal": "آماده‌سازی برای تست‌های باشگاهی و لیگ جوانان، بهبود توان انفجاری و ریکاوری",
+    "description": "شامل پروتکل‌های حرفه‌ای FIFA 11+، تمرینات RSA استقامت در سرعت و کنترل پاس‌های پرفشار.",
+    "equipment": [
+      "بوسوبال",
+      "موانع پرش",
+      "وزنه آزاد / مدیسن بال",
+      "توپ"
+    ],
+    "coachName": "مربی بدنساز رسمی فیفا",
+    "rating": 5.0,
+    "studentsCount": 620,
+    "videoUrl": "/uploads/1795328615717-451CA789-1BB6-4C2D-82F5-EDA57648251E.mp4",
+    "drillsSummary": [
+      "تکرار اسپرینت بی‌هوازی",
+      "موبیلیتی ۹۰/۹۰ لگن",
+      "پاس تک‌ضرب تحت فشار",
+      "پرش سرزنی با فرود مقاومتی"
+    ],
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "اسپرینت بی‌هوازی و شتاب", "focus": "توان بی‌هوازی", "durationMinutes": 50, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328615717-451CA789-1BB6-4C2D-82F5-EDA57648251E.mp4" },
+          { "dayName": "دوشنبه", "title": "موبیلیتی ۹۰/۹۰ و قدرت مرکزی", "focus": "انعطاف و ثبات", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328728584-D5774462-9F86-4D86-B4D6-86A1EA4F9468.mp4" },
+          { "dayName": "چهارشنبه", "title": "پاس تک‌ضرب تحت فشار شدید", "focus": "دقت و سرعت انتقال", "durationMinutes": 50, "completed": false, "drillsCount": 6, "videoUrl": "/uploads/1795328891622-BFEC9A5E-BEC6-4A76-A963-A7C8637B7689.mp4" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ready-plan-senior",
+    "title": "برنامه جامع آماده‌سازی فیزیکی و تاکتیکی بزرگسالان",
+    "ageGroup": "بزرگسالان (+۱۹ سال)",
+    "price": "۱۹۹,۰۰۰ تومان",
+    "priceNumber": 199000,
+    "durationWeeks": 8,
+    "sessionsPerWeek": 4,
+    "totalSessions": 32,
+    "difficulty": "حرفه‌ای",
+    "goal": "رسیدن به اوج آمادگی بدنی مسابقاتی، چابکی عرضی و استقامت ۹۰ دقیقه‌ای",
+    "description": "تمرینات ویژه لیگ و بازیکنان باشگاهی با بالاترین چگالی تمرین و آنالیز بار کاری.",
+    "equipment": [
+      "کامل آکادمی",
+      "جی‌پی‌اس یا ساعت هوشمند",
+      "وزنه"
+    ],
+    "coachName": "سرمربی بین‌المللی UEFA Pro",
+    "rating": 4.9,
+    "studentsCount": 290,
+    "videoUrl": "/uploads/1795328728584-D5774462-9F86-4D86-B4D6-86A1EA4F9468.mp4",
+    "drillsSummary": [
+      "RSA فوتبال ۹۰ دقیقه",
+      "شیرجه و انتقال موقعیت",
+      "شوت‌زنی بعد از استارت ۴۰ متری",
+      "حرکات ضد مصدومیت کشاله"
+    ],
+    "schedule": [
+      {
+        "weekNumber": 1,
+        "sessions": [
+          { "dayName": "شنبه", "title": "RSA و استقامت در سرعت مسابقه", "focus": "توان ۹۰ دقیقه‌ای", "durationMinutes": 60, "completed": false, "drillsCount": 6, "videoUrl": "/uploads/1795328728584-D5774462-9F86-4D86-B4D6-86A1EA4F9468.mp4" },
+          { "dayName": "دوشنبه", "title": "تمرینات ضد مصدومیت کشاله و موبیلیتی", "focus": "پیشگیری و کشش", "durationMinutes": 45, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795328891622-BFEC9A5E-BEC6-4A76-A963-A7C8637B7689.mp4" },
+          { "dayName": "چهارشنبه", "title": "شوت‌زنی پس از استارت ۴۰ متری", "focus": "شتاب و تمام‌کنندگی", "durationMinutes": 55, "completed": false, "drillsCount": 5, "videoUrl": "/uploads/1795329001469-91EEF27A-E319-42A0-96BF-3A1698707010.mp4" }
         ]
       }
     ]

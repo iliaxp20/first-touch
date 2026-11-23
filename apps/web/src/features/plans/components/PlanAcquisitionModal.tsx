@@ -24,10 +24,6 @@ import {
   syncDrillsWithServer,
 } from '../data/freeTrainingCategories';
 import {
-  NUTRITION_CATEGORIES_FREE,
-  FREE_NUTRITION_ITEMS,
-} from '../data/freeNutritionCategories';
-import {
   getReadyTrainingPlans,
   getReadyNutritionPlans,
   syncProgramsWithServer,
@@ -39,8 +35,27 @@ import {
 } from '../data/readyProgramsStore';
 import { useAuth } from '@/context/AuthContext';
 import { DrillDetailModal } from './DrillDetailModal';
+import { VideoModal } from '@/features/admin/components/VideoModal';
 
 type AcquisitionTab = 'free' | 'ready' | 'custom-coach';
+
+const IRANIAN_FOOD_CATEGORIES = [
+  { key: 'all', title: 'همه غذاها' },
+  { key: 'breakfast', title: 'صبحانه' },
+  { key: 'iranian_dishes', title: 'غذاهای ایرانی' },
+  { key: 'meat_poultry', title: 'گوشت و مرغ' },
+  { key: 'fish_seafood', title: 'ماهی و دریایی' },
+  { key: 'bread_grains', title: 'نان و غلات' },
+  { key: 'rice_grains', title: 'برنج و ماکارونی' },
+  { key: 'eggs_dairy', title: 'تخم‌مرغ و لبنیات' },
+  { key: 'legumes', title: 'حبوبات و پروتئین' },
+  { key: 'vegetables', title: 'سبزیجات' },
+  { key: 'fruits', title: 'میوه‌ها' },
+  { key: 'snacks', title: 'میان‌وعده‌ها' },
+  { key: 'soups', title: 'سوپ‌ها' },
+  { key: 'salads', title: 'سالادها' },
+  { key: 'beverages', title: 'نوشیدنی‌ها' },
+];
 
 interface PlanAcquisitionModalProps {
   isOpen: boolean;
@@ -77,6 +92,12 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   const [readyTrainingPlans, setReadyTrainingPlans] = useState<ReadyTrainingPlan[]>([]);
   const [readyNutritionPlans, setReadyNutritionPlans] = useState<ReadyNutritionPlan[]>([]);
 
+  // --- 800+ FOOD DATABASE STATE ---
+  const [foodList, setFoodList] = useState<any[]>([]);
+  const [selectedFoodCategory, setSelectedFoodCategory] = useState<string>('all');
+  const [foodSearchText, setFoodSearchText] = useState<string>('');
+  const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null);
+
   // --- CUSTOM COACH TAB STATE ---
   const [coachSearch, setCoachSearch] = useState('');
   const [coaches, setCoaches] = useState<any[]>([]);
@@ -110,6 +131,18 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
       setTrainingDrills(getTrainingDrills());
     };
     window.addEventListener('ft_drills_updated', handleDrillsUpdate);
+
+    // Fetch 800+ Foods for Nutrition Free Tab
+    if (mode === 'nutrition') {
+      fetch('/first_touch_food_database_800.json')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && Array.isArray(data.foods)) {
+            setFoodList(data.foods);
+          }
+        })
+        .catch(() => {});
+    }
 
     // Fetch Coaches
     const fetchCoaches = async () => {
@@ -353,6 +386,55 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
     onClose();
   };
 
+  const handleActivateFoodPlan = (food: any) => {
+    const calories = Math.round(food.nutrition_per_100g?.energy_kcal || 250);
+    const protein = Math.round(food.nutrition_per_100g?.protein_g || 15);
+    const carbs = Math.round(food.nutrition_per_100g?.carbohydrate_g || 30);
+    const foodName = food.name?.fa || food.name || 'خوراک فوتبال';
+
+    const newPlan = {
+      id: `nut-plan-${Date.now()}`,
+      title: `برنامه غذایی ورزشی (${foodName})`,
+      price: 'رایگان',
+      priceNumber: 0,
+      dailyCalories: calories > 0 ? calories * 4 : 2400,
+      goal: `تغذیه غنی با ${foodName} جهت سوخت‌رسانی تمرین و ریکاوری`,
+      focus: `${protein * 4 + 80} گرم پروتئین • ${carbs * 3 + 150} گرم کربوهیدرات`,
+      description: `برنامه ۵ وعده‌ای منطبق بر بانک اطلاعاتی فرست تاچ با محوریت ${foodName} و توزیع متوازن درشت‌مغذی‌ها.`,
+      mealsSummary: [
+        { name: 'صبحانه', food: `${foodName} به همراه نان سبوس‌دار و تخم‌مرغ`, time: '۰۸:۰۰' },
+        { name: 'میان‌وعده صبح', food: 'شیرموز یا میوه فصل با خرما و مغز گردو', time: '۱۱:۰۰' },
+        { name: 'ناهار', food: `سینه مرغ یا فیله ماهی با برنج کته و ${foodName}`, time: '۱۴:۰۰' },
+        { name: 'عصرانه قبل تمرین', food: 'نان تست جو با عسل طبیعی و اوتمیل', time: '۱۷:۳۰' },
+        { name: 'شام ریکاوری', food: `سوپ سبزیجات و ${foodName} با سالاد زیتون`, time: '۲۱:۰۰' },
+      ],
+    };
+
+    saveUnlockedPlan(newPlan.id, newPlan.title);
+    try {
+      localStorage.setItem('first_touch_student_active_nutrition_plan', JSON.stringify(newPlan));
+      window.dispatchEvent(new Event('ft_student_nutrition_updated'));
+    } catch {}
+    onPlanActivated(newPlan);
+    onClose();
+  };
+
+  const activeFoods = useMemo(() => {
+    let list = foodList;
+    if (selectedFoodCategory && selectedFoodCategory !== 'all') {
+      list = list.filter((f) => f.category === selectedFoodCategory);
+    }
+    if (foodSearchText.trim()) {
+      const q = foodSearchText.trim().toLowerCase();
+      list = list.filter((f) => {
+        const faName = f.name?.fa?.toLowerCase() || '';
+        const enName = f.name?.en?.toLowerCase() || '';
+        return faName.includes(q) || enName.includes(q);
+      });
+    }
+    return list;
+  }, [foodList, selectedFoodCategory, foodSearchText]);
+
   // Filtered Drills for Search & Category (Reactive with Admin additions)
   const activeCategoryDrills = useMemo(() => {
     let list = trainingDrills;
@@ -374,12 +456,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
     return list;
   }, [trainingDrills, selectedCategoryKey, drillSearchText]);
 
-  // Filtered Nutrition Items
-  const activeNutritionItems = FREE_NUTRITION_ITEMS.filter(
-    (n) => n.categoryKey === selectedCategoryKey
-  );
-
-  // Filtered Coaches
+// Filtered Coaches
   const filteredCoaches = coaches.filter(
     (c) =>
       !coachSearch.trim() ||
@@ -859,86 +936,145 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 </div>
               </>
             ) : (
-              /* TAB 1 - NUTRITION CATEGORIES (DECLUTTERED) */
+              /* TAB 1 - NUTRITION CATEGORIES & 800+ FOODS DATABASE */
               <div className="space-y-3.5">
-                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                  {NUTRITION_CATEGORIES_FREE.map((n) => (
-                    <button
-                      key={n.key}
-                      type="button"
-                      onClick={() => setSelectedCategoryKey(n.key)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all border cursor-pointer ${
-                        selectedCategoryKey === n.key
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-transparent hover:border-emerald-300'
-                      }`}
-                    >
-                      {n.title}
-                    </button>
-                  ))}
+                {/* Standard 5-Meal Football Plan Quick Activation Card */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-900/30 border border-emerald-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-emerald-400" />
+                      <h4 className="text-xs sm:text-sm font-black text-white">
+                        برنامه غذایی ۵ وعده‌ای استاندارد آکادمی (رایگان)
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-emerald-200/80 mt-1">
+                      شامل صبحانه، میان‌وعده، ناهار، عصرانه قبل تمرین و شام ریکاوری با ۲۴۰۰ کیلوکالری
+                    </p>
+                  </div>
+                  <Button
+                    variant="primary"
+                    onClick={() =>
+                      handleActivateFoodPlan({
+                        name: { fa: 'رژیم اصولی و متوازن فوتبالیست' },
+                        nutrition_per_100g: { energy_kcal: 2400, protein_g: 135, carbohydrate_g: 280, total_fat_g: 65 },
+                      })
+                    }
+                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-4 h-9 shadow-md cursor-pointer shrink-0"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    فعال‌سازی برنامه پیش‌فرض
+                  </Button>
                 </div>
 
-                <div className="space-y-3">
-                  {activeNutritionItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-4 rounded-2xl border border-emerald-100 dark:border-slate-700 bg-white dark:bg-slate-800/60 space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                            {item.categoryTitle}
-                          </span>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1">
-                            {item.title}
-                          </h4>
-                        </div>
-                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                          کالری تقریبی: {item.approxCalories}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {item.summary}
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-white/5">
-                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                            مواد لازم و فرمول:
-                          </span>
-                          <ul className="list-disc list-inside space-y-0.5 text-slate-500 dark:text-slate-400">
-                            {item.keyIngredients.map((ing, i) => (
-                              <li key={i}>{ing}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-white/5">
-                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                            زمان مصرف ایده‌آل:
-                          </span>
-                          <p className="text-slate-600 dark:text-slate-400">{item.idealTiming}</p>
-                          <span className="font-bold text-slate-700 dark:text-slate-300 block mt-2 mb-1">
-                            نکته مربی تغذیه:
-                          </span>
-                          <p className="text-emerald-700 dark:text-emerald-400">{item.coachingNotes}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="primary"
-                        onClick={() =>
-                          triggerActivationFlow({
-                            id: `nut-free-${Date.now()}`,
-                            title: `برنامه غذایی پایه: ${item.title}`,
-                            price: 'رایگان',
-                            dailyCalories: 2400,
-                            goal: item.summary,
-                          })
-                        }
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer"
+                {/* Search Bar for 800 Foods */}
+                <div className="relative">
+                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={foodSearchText}
+                    onChange={(e) => setFoodSearchText(e.target.value)}
+                    placeholder="جستجو در بین ۸۰۰ ماده و غذای ایرانی (تخم‌مرغ، برنج، مرغ، موز، عدسی...)"
+                    className="w-full pr-10 pl-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* Iranian Food Category Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none">
+                  {IRANIAN_FOOD_CATEGORIES.map((cat) => {
+                    const isSelected = selectedFoodCategory === cat.key;
+                    return (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => setSelectedFoodCategory(cat.key)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-500 text-slate-950 font-black shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+                            : 'bg-white/10 dark:bg-white/[0.05] text-slate-300 hover:text-white hover:bg-white/15 border border-white/10'
+                        }`}
                       >
-                        فعال‌سازی این راهنمای غذایی در پنل من
-                      </Button>
+                        {cat.title}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Foods Counter */}
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold px-1">
+                  <span>نمایش غذاها ({activeFoods.length} مورد از بانک غذایی فرست تاچ):</span>
+                  {selectedFoodCategory !== 'all' && (
+                    <span className="text-emerald-400">
+                      دسته‌بندی: {IRANIAN_FOOD_CATEGORIES.find((c) => c.key === selectedFoodCategory)?.title}
+                    </span>
+                  )}
+                </div>
+
+                {/* 800 Foods Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
+                  {activeFoods.slice(0, 80).map((food) => {
+                    const kcal = Math.round(food.nutrition_per_100g?.energy_kcal || 0);
+                    const protein = food.nutrition_per_100g?.protein_g ?? 0;
+                    const carbs = food.nutrition_per_100g?.carbohydrate_g ?? 0;
+                    const fat = food.nutrition_per_100g?.total_fat_g ?? 0;
+                    const foodName = food.name?.fa || food.name || '';
+                    const servingLabel = food.serving_sizes && food.serving_sizes[0]?.label_fa;
+
+                    return (
+                      <div
+                        key={food.id}
+                        className="p-3.5 rounded-2xl border border-white/10 bg-white/5 dark:bg-white/[0.04] backdrop-blur-xl flex flex-col justify-between space-y-2.5 hover:border-emerald-500/40 transition-all text-right"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                              {food.state || 'آماده مصرف'}
+                            </span>
+                            <span className="text-xs font-black text-amber-400">
+                              {kcal} کیلوکالری
+                            </span>
+                          </div>
+                          <h4 className="text-xs sm:text-sm font-black text-white line-clamp-1">
+                            {foodName}
+                          </h4>
+                          {servingLabel && (
+                            <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                              واحد مصرف: {servingLabel}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Nutrition Macros breakdown */}
+                        <div className="grid grid-cols-3 gap-1 p-1.5 rounded-xl bg-black/30 text-center text-[10px] border border-white/5">
+                          <div>
+                            <span className="text-slate-400 block text-[9px]">پروتئین</span>
+                            <span className="font-bold text-emerald-400">{protein}g</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[9px]">کربوهیدرات</span>
+                            <span className="font-bold text-sky-400">{carbs}g</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[9px]">چربی</span>
+                            <span className="font-bold text-amber-400">{fat}g</span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleActivateFoodPlan(food)}
+                          className="w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>فعال‌سازی برنامه با این ماده</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {activeFoods.length === 0 && (
+                    <div className="col-span-full py-12 text-center text-slate-400 text-xs">
+                      هیچ ماده غذایی با عبارت «{foodSearchText}» یافت نشد.
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -1013,11 +1149,34 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                             {plan.title}
                           </h4>
 
-                          {/* Video Indicator if video attached */}
+                          {/* Video Preview Box if video attached */}
                           {plan.videoUrl && (
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                              <Play className="h-3 w-3 fill-current" />
-                              <span>دارای ویدیوی اختصاصی آموزش تمرین</span>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewVideo({
+                                  url: plan.videoUrl || '',
+                                  title: plan.title,
+                                });
+                              }}
+                              className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 cursor-pointer group shadow-lg border border-white/10 my-1"
+                            >
+                              <video
+                                src={`${resolveMediaUrl(plan.videoUrl)}#t=0.5`}
+                                preload="metadata"
+                                muted
+                                playsInline
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 group-hover:via-black/10 transition-colors flex items-center justify-center">
+                                <div className="h-10 w-10 rounded-full bg-emerald-500/90 text-white flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.7)] group-hover:scale-110 transition-transform border border-white/30 backdrop-blur-xs">
+                                  <Play className="h-5 w-5 fill-white text-white ml-0.5" />
+                                </div>
+                              </div>
+                              <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/90 text-slate-950 flex items-center gap-1 shadow-sm">
+                                <Play className="h-2.5 w-2.5 fill-current" />
+                                <span>پیش‌نمایش ویدیو</span>
+                              </span>
                             </div>
                           )}
 
@@ -1337,6 +1496,15 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 commonMistakes: freeDrillDetail.commonMistakes,
               } as any
             }
+          />
+        )}
+        {/* VIDEO PREVIEW MODAL */}
+        {previewVideo && (
+          <VideoModal
+            isOpen={!!previewVideo}
+            onClose={() => setPreviewVideo(null)}
+            title={previewVideo.title}
+            videoUrl={previewVideo.url}
           />
         )}
       </Card>

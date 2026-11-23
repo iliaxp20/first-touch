@@ -19,12 +19,7 @@ export class ProgramsService {
         const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
         const list: TrainingProgramItem[] = JSON.parse(raw);
         if (Array.isArray(list) && list.length > 0) {
-          const cleaned = list.filter(
-            (p) =>
-              !p.title?.includes('تست') &&
-              !p.title?.toLowerCase().includes('test') &&
-              !p.description?.includes('تستی')
-          );
+          const cleaned = list.filter((p) => p && p.id && p.title);
           const customIds = new Set(cleaned.map((p) => p.id));
           const remaining = INITIAL_TRAINING_PROGRAMS.filter((p) => !customIds.has(p.id));
           this.programs = [...cleaned, ...remaining];
@@ -340,35 +335,30 @@ export class ProgramsService {
       const p = this.getHealthSleepFilePath();
       if (fs.existsSync(p)) {
         const raw = fs.readFileSync(p, 'utf-8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
       }
     } catch {}
 
-    const defaultHealth = {
-      sleepHours: 8.2,
+    return {
+      isRecorded: false,
+      sleepHours: null,
       sleepTarget: 8.5,
-      sleepQualityPercent: 91,
-      deepSleepMinutes: 110,
-      restingHeartRate: 52,
-      recoveryScore: 88,
-      waterGlasses: 7,
+      sleepQualityPercent: null,
+      deepSleepMinutes: null,
+      restingHeartRate: null,
+      recoveryScore: null,
+      waterGlasses: 0,
       waterTarget: 8,
-      hydrationLevelPercent: 87,
-      fatigueLevel: 'پایین (آماده تمرین سنگین)',
-      lastSync: new Date().toISOString(),
+      hydrationLevelPercent: 0,
+      fatigueLevel: 'ثبت نشده',
+      lastSync: null,
     };
-
-    try {
-      const p = this.getHealthSleepFilePath();
-      fs.writeFileSync(p, JSON.stringify(defaultHealth, null, 2), 'utf-8');
-    } catch {}
-
-    return defaultHealth;
   }
 
   saveHealthSleep(data: any) {
     const current = this.getHealthSleep();
-    const updated = { ...current, ...data, lastSync: new Date().toISOString() };
+    const updated = { ...current, ...data, isRecorded: true, lastSync: new Date().toISOString() };
     try {
       const p = this.getHealthSleepFilePath();
       fs.writeFileSync(p, JSON.stringify(updated, null, 2), 'utf-8');
@@ -388,36 +378,26 @@ export class ProgramsService {
       const p = this.getStudentReportFilePath();
       if (fs.existsSync(p)) {
         const raw = fs.readFileSync(p, 'utf-8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
       }
     } catch {}
 
-    const defaultReport = {
-      reportMonth: 'آبان ۱۴۰۳',
-      overallScore: 89,
-      attendancePercent: 94,
-      coachFeedback: 'پیشرفت چشمگیر در شتاب گام اول و تصمیم‌گیری تحت فشار در زمین مسابقه. ریتم تمرینی عالی است.',
-      metrics: [
-        { label: 'شتاب و چابکی اولیه', score: 92, status: 'عالی' },
-        { label: 'تکنیک لمس اول و جهت‌دار', score: 88, status: 'خوب' },
-        { label: 'استقامت سرعت در نیمه دوم', score: 85, status: 'در حال ارتقا' },
-        { label: 'رعایت پروتکل تغذیه و آب', score: 93, status: 'عالی' },
-      ],
-      coachSignature: 'کادر ارشد آکادمی فرست تاچ',
-      date: '۱۴۰۳/۰۸/۲۵',
+    return {
+      isRecorded: false,
+      reportMonth: null,
+      overallScore: null,
+      attendancePercent: null,
+      coachFeedback: null,
+      metrics: [],
+      coachSignature: null,
+      date: null,
     };
-
-    try {
-      const p = this.getStudentReportFilePath();
-      fs.writeFileSync(p, JSON.stringify(defaultReport, null, 2), 'utf-8');
-    } catch {}
-
-    return defaultReport;
   }
 
   saveStudentReport(data: any) {
     const current = this.getStudentReport();
-    const updated = { ...current, ...data };
+    const updated = { ...current, ...data, isRecorded: true, date: new Date().toLocaleDateString('fa-IR') };
     try {
       const p = this.getStudentReportFilePath();
       fs.writeFileSync(p, JSON.stringify(updated, null, 2), 'utf-8');

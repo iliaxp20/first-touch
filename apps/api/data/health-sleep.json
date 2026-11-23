@@ -1,0 +1,14 @@
+{
+  "isRecorded": false,
+  "sleepHours": null,
+  "sleepTarget": 8.5,
+  "sleepQualityPercent": null,
+  "deepSleepMinutes": null,
+  "restingHeartRate": null,
+  "recoveryScore": null,
+  "waterGlasses": 0,
+  "waterTarget": 8,
+  "hydrationLevelPercent": 0,
+  "fatigueLevel": "ثبت نشده",
+  "lastSync": null
+}

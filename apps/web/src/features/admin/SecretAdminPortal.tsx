@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Search,
   Layers,
+  Award,
 } from 'lucide-react';
 import { API_BASE_URL, uploadFile, resolveMediaUrl } from '@/lib/api';
 import { VideoModal } from './components/VideoModal';
@@ -237,6 +238,40 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
     fats: 65,
     mealsCount: 4,
   });
+
+  // Student Evaluation Report Form State
+  const [studentReportForm, setStudentReportForm] = useState({
+    reportMonth: 'آبان ۱۴۰۳',
+    overallScore: 90,
+    attendancePercent: 95,
+    coachFeedback: 'پیشرفت محسوس در سرعت انتقال توپ و هماهنگی گام. استمرار در تمرینات چابکی توصیه می‌شود.',
+  });
+
+  const handleSaveStudentReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        ...studentReportForm,
+        overallScore: Number(studentReportForm.overallScore),
+        attendancePercent: Number(studentReportForm.attendancePercent),
+        isRecorded: true,
+        metrics: [
+          { label: 'شتاب و چابکی اولیه', score: Number(studentReportForm.overallScore), status: 'عالی' },
+          { label: 'تکنیک لمس اول و جهت‌دار', score: Math.max(70, Number(studentReportForm.overallScore) - 4), status: 'خوب' },
+          { label: 'استقامت سرعت در نیمه دوم', score: Math.max(70, Number(studentReportForm.overallScore) - 6), status: 'خوب' },
+          { label: 'رعایت پروتکل تغذیه و آب', score: 94, status: 'عالی' },
+        ],
+      };
+      await fetch(`${API_BASE_URL}/programs/student-report`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      showToast('کارنامه عملکرد شاگرد با موفقیت در سیستم ثبت گردید.');
+    } catch {
+      showToast('خطا در ثبت کارنامه.');
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // Load Data
@@ -1870,6 +1905,73 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
                 کاربران ثبت‌نامی از طریق اپلیکیشن مستقیماً در پایگاه‌داده PostgreSQL سرور ثبت و همگام می‌شوند.
               </div>
             )}
+
+            {/* Coach Student Evaluation Form */}
+            <div className="rounded-2xl p-4 sm:p-5 bg-[#06150c] border border-purple-500/30 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-white/10 pb-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">ثبت ارزیابی فنی و کارنامه ماهانه شاگرد (مربی)</h3>
+                  <p className="text-[11px] text-slate-400">این اطلاعات مستقیماً در دیالوگ گزارش عملکرد داشبورد شاگرد نمایش داده می‌شود</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveStudentReport} className="space-y-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-300 block mb-1">ماه ارزیابی:</label>
+                    <input
+                      type="text"
+                      value={studentReportForm.reportMonth}
+                      onChange={(e) => setStudentReportForm({ ...studentReportForm, reportMonth: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-bold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-300 block mb-1">نمره کل عملکرد (از ۱۰۰):</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={studentReportForm.overallScore}
+                      onChange={(e) => setStudentReportForm({ ...studentReportForm, overallScore: Number(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-bold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-300 block mb-1">درصد حضور در جلسات:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={studentReportForm.attendancePercent}
+                      onChange={(e) => setStudentReportForm({ ...studentReportForm, attendancePercent: Number(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-bold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">یادداشت و فیدبک سرمربی:</label>
+                  <textarea
+                    rows={2}
+                    value={studentReportForm.coachFeedback}
+                    onChange={(e) => setStudentReportForm({ ...studentReportForm, coachFeedback: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="py-2.5 px-6 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  ثبت رسمی کارنامه در داشبورد شاگرد
+                </button>
+              </form>
+            </div>
           </div>
         )}
 
