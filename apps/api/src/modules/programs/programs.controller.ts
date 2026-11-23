@@ -63,6 +63,19 @@ export class ProgramsController {
     return this.programsService.saveStudentReport(body);
   }
 
+  @Get('suggested-drills')
+  @ApiOperation({ summary: 'دریافت تمرینات پیشنهادی صفحه اصلی' })
+  async getSuggestedDrills() {
+    return this.programsService.getSuggestedDrills();
+  }
+
+  @Put('suggested-drills')
+  @ApiOperation({ summary: 'ویرایش و انتشار تمرینات پیشنهادی توسط مدیر' })
+  async updateSuggestedDrills(@Body() body: any) {
+    const list = Array.isArray(body) ? body : body.drills;
+    return this.programsService.saveSuggestedDrills(list);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'مشاهده جزئیات برنامه و تقویم اجرایی جلسات' })
   async getProgramById(@Param('id') id: string) {

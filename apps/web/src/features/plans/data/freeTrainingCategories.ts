@@ -60,6 +60,42 @@ export const saveSuggestedDrills = (drills: SuggestedDrill[]): void => {
   } catch {}
 };
 
+export const syncSuggestedDrillsWithServer = async (): Promise<SuggestedDrill[]> => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/programs/suggested-drills`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem(SUGGESTED_DRILLS_KEY, JSON.stringify(data));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('ft_suggested_drills_updated'));
+        }
+        return data;
+      }
+    }
+  } catch {}
+  return getSuggestedDrills();
+};
+
+export const saveSuggestedDrillsToServer = async (drills: SuggestedDrill[]): Promise<SuggestedDrill[]> => {
+  saveSuggestedDrills(drills);
+  try {
+    const res = await fetch(`${API_BASE_URL}/programs/suggested-drills`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(drills),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      if (Array.isArray(updated) && updated.length > 0) {
+        saveSuggestedDrills(updated);
+        return updated;
+      }
+    }
+  } catch {}
+  return drills;
+};
+
 export interface FreeDrill {
   id: string;
   categoryKey: string;

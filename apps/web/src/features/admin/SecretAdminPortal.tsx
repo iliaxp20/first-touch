@@ -51,6 +51,8 @@ import {
   syncDrillsWithServer,
   getSuggestedDrills,
   saveSuggestedDrills,
+  syncSuggestedDrillsWithServer,
+  saveSuggestedDrillsToServer,
   SuggestedDrill,
   FreeDrill,
   TrainingCategoryMeta,
@@ -116,6 +118,7 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
 
   // Suggested Drills State (مدیریت تمرینات پیشنهادی)
   const [suggestedDrills, setSuggestedDrillsState] = useState<SuggestedDrill[]>(getSuggestedDrills);
+  const [isSavingSuggestedDrills, setIsSavingSuggestedDrills] = useState(false);
 
   // 800 Food Database Explorer State
   const [foodDatabase, setFoodDatabase] = useState<any[]>([]);
@@ -328,6 +331,18 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
     }
   };
 
+  const handleSaveAllSuggestedDrills = async () => {
+    setIsSavingSuggestedDrills(true);
+    try {
+      await saveSuggestedDrillsToServer(suggestedDrills);
+      showToast('تمرینات پیشنهادی با موفقیت در سرور ثبت و برای همه کاربران منتشر شد.');
+    } catch {
+      showToast('خطا در ذخیره تمرینات پیشنهادی.');
+    } finally {
+      setIsSavingSuggestedDrills(false);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // Load Data
   // ---------------------------------------------------------------------------
@@ -342,6 +357,14 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
     }
     const cats = getTrainingCategories();
     setCategories(cats);
+
+    // Suggested Drills - Direct sync from server
+    try {
+      const sDrills = await syncSuggestedDrillsWithServer();
+      if (sDrills && sDrills.length > 0) setSuggestedDrillsState(sDrills);
+    } catch {
+      setSuggestedDrillsState(getSuggestedDrills());
+    }
 
     // Programs - Direct sync with server
     try {
@@ -1185,87 +1208,181 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
             {/* =============================================================
                 SUGGESTED DRILLS MANAGER (مدیریت ۳ تمرین پیشنهادی صفحه تمرینات)
                 ============================================================= */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#06150c] border border-amber-500/30 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#06150c] border border-amber-500/40 space-y-4 shadow-lg shadow-amber-500/5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
                     <Dumbbell className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs sm:text-sm font-black text-white">
-                      مدیریت ۳ تمرین پیشنهادی (Suggested Drills)
+                    <h3 className="text-sm font-black text-white flex items-center gap-2">
+                      <span>مدیریت تمرینات پیشنهادی کادر فنی (۳ جایگاه صفحه تمرینات)</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">
+                        ذخیره در سرور
+                      </span>
                     </h3>
-                    <p className="text-[10px] text-slate-400">
-                      این ۳ تمرین مستقیماً در صفحه اصلی تمرینات نمایش داده می‌شوند و با کلیک روی هرکدام ویدیوی آن پخش می‌شود.
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      عنوان، مدت زمان (مثلاً ۱۰ یا ۱۵ دقیقه)، سطح و ویدیوی هر تمرین را مستقیماً تعیین کنید تا در صفحه اصلی کاربر به‌روز شود.
                     </p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  disabled={isSavingSuggestedDrills}
+                  onClick={handleSaveAllSuggestedDrills}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-md shadow-amber-500/20 shrink-0"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  {isSavingSuggestedDrills ? 'در حال ذخیره...' : 'ذخیره تغییرات در سرور'}
+                </button>
               </div>
 
               {/* 3 Suggested Drills Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {suggestedDrills.map((sDrill, sIdx) => (
                   <div
                     key={sDrill.id}
-                    className="p-3 rounded-xl bg-black/40 border border-amber-500/20 space-y-2 text-right"
+                    className="p-3.5 rounded-2xl bg-black/40 border border-amber-500/25 space-y-2.5 text-right flex flex-col justify-between"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-amber-400 px-2 py-0.5 rounded bg-amber-500/10">
-                        جایگاه {sIdx + 1}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold">{sDrill.difficultyLabel}</span>
-                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-amber-400 px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/20">
+                          جایگاه {sIdx + 1}
+                        </span>
+                        {sDrill.videoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewVideo({ url: sDrill.videoUrl!, title: sDrill.title })}
+                            className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                            پیش‌نمایش ویدیو
+                          </button>
+                        )}
+                      </div>
 
-                    <input
-                      type="text"
-                      value={sDrill.title}
-                      onChange={(e) => {
-                        const updated = [...suggestedDrills];
-                        updated[sIdx] = { ...sDrill, title: e.target.value };
-                        setSuggestedDrillsState(updated);
-                        saveSuggestedDrills(updated);
-                      }}
-                      className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white font-bold outline-none focus:border-amber-400"
-                      placeholder="عنوان تمرین"
-                    />
+                      {/* Select from existing Drills */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">
+                          انتخاب از بانک تمرینات:
+                        </label>
+                        <select
+                          onChange={(e) => {
+                            const found = drills.find((d) => d.id === e.target.value);
+                            if (found) {
+                              const diffLabel = found.difficulty === 'مبتدی' ? 'آسان' : (found.difficulty === 'پیشرفته' || found.difficulty === 'حرفه‌ای') ? 'سخت' : 'متوسط';
+                              const updated = [...suggestedDrills];
+                              updated[sIdx] = {
+                                ...sDrill,
+                                id: found.id,
+                                title: found.title,
+                                duration: found.duration || '۱۵ دقیقه',
+                                difficultyLabel: diffLabel,
+                                difficultyBars:
+                                  diffLabel === 'آسان'
+                                    ? [true, false, false]
+                                    : diffLabel === 'سخت'
+                                    ? [true, true, true]
+                                    : [true, true, false],
+                                barColor: diffLabel === 'سخت' ? 'purple' : 'emerald',
+                                videoUrl: found.videoUrl || sDrill.videoUrl,
+                              };
+                              setSuggestedDrillsState(updated);
+                              saveSuggestedDrills(updated);
+                            }
+                          }}
+                          className="w-full h-8 px-2 rounded-xl bg-slate-900 border border-white/10 text-[11px] text-slate-200 outline-none cursor-pointer"
+                        >
+                          <option value="">-- کپی اطلاعات از یک تمرین --</option>
+                          {drills.map((d) => (
+                            <option key={d.id} value={d.id} className="bg-slate-900 text-white">
+                              {d.title} ({d.duration})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={sDrill.duration}
-                        onChange={(e) => {
-                          const updated = [...suggestedDrills];
-                          updated[sIdx] = { ...sDrill, duration: e.target.value };
-                          setSuggestedDrillsState(updated);
-                          saveSuggestedDrills(updated);
-                        }}
-                        className="w-24 h-7 px-2 rounded-lg bg-white/5 border border-white/10 text-[11px] text-emerald-400 font-bold outline-none"
-                        placeholder="۱۵ دقیقه"
-                      />
-                      <select
-                        value={sDrill.difficultyLabel}
-                        onChange={(e) => {
-                          const updated = [...suggestedDrills];
-                          updated[sIdx] = {
-                            ...sDrill,
-                            difficultyLabel: e.target.value,
-                            difficultyBars:
-                              e.target.value === 'آسان'
-                                ? [true, false, false]
-                                : e.target.value === 'سخت'
-                                ? [true, true, true]
-                                : [true, true, false],
-                            barColor: e.target.value === 'سخت' ? 'purple' : 'emerald',
-                          };
-                          setSuggestedDrillsState(updated);
-                          saveSuggestedDrills(updated);
-                        }}
-                        className="flex-1 h-7 px-1.5 rounded-lg bg-slate-900 border border-white/10 text-[10px] text-slate-200 outline-none cursor-pointer"
-                      >
-                        <option value="آسان">آسان</option>
-                        <option value="متوسط">متوسط</option>
-                        <option value="سخت">سخت</option>
-                      </select>
+                      {/* Title */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">عنوان تمرین:</label>
+                        <input
+                          type="text"
+                          value={sDrill.title}
+                          onChange={(e) => {
+                            const updated = [...suggestedDrills];
+                            updated[sIdx] = { ...sDrill, title: e.target.value };
+                            setSuggestedDrillsState(updated);
+                            saveSuggestedDrills(updated);
+                          }}
+                          className="w-full h-8 px-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white font-bold outline-none focus:border-amber-400"
+                          placeholder="مثلاً: پاس‌کاری دقیق"
+                        />
+                      </div>
+
+                      {/* Duration & Difficulty */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 mb-1">مدت زمان:</label>
+                          <input
+                            type="text"
+                            value={sDrill.duration}
+                            onChange={(e) => {
+                              const updated = [...suggestedDrills];
+                              updated[sIdx] = { ...sDrill, duration: e.target.value };
+                              setSuggestedDrillsState(updated);
+                              saveSuggestedDrills(updated);
+                            }}
+                            className="w-full h-8 px-2 rounded-xl bg-white/5 border border-white/10 text-xs text-emerald-400 font-bold outline-none focus:border-emerald-500"
+                            placeholder="مثلاً: ۱۰ دقیقه یا ۱۵ دقیقه"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 mb-1">سطح دشواری:</label>
+                          <select
+                            value={sDrill.difficultyLabel}
+                            onChange={(e) => {
+                              const updated = [...suggestedDrills];
+                              updated[sIdx] = {
+                                ...sDrill,
+                                difficultyLabel: e.target.value,
+                                difficultyBars:
+                                  e.target.value === 'آسان'
+                                    ? [true, false, false]
+                                    : e.target.value === 'سخت'
+                                    ? [true, true, true]
+                                    : [true, true, false],
+                                barColor: e.target.value === 'سخت' ? 'purple' : 'emerald',
+                              };
+                              setSuggestedDrillsState(updated);
+                              saveSuggestedDrills(updated);
+                            }}
+                            className="w-full h-8 px-2 rounded-xl bg-slate-900 border border-white/10 text-[11px] text-slate-200 outline-none cursor-pointer"
+                          >
+                            <option value="آسان">آسان</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="سخت">سخت</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Video Link */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">آدرس ویدیو:</label>
+                        <input
+                          type="text"
+                          value={sDrill.videoUrl || ''}
+                          onChange={(e) => {
+                            const updated = [...suggestedDrills];
+                            updated[sIdx] = { ...sDrill, videoUrl: e.target.value };
+                            setSuggestedDrillsState(updated);
+                            saveSuggestedDrills(updated);
+                          }}
+                          className="w-full h-8 px-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-slate-300 font-mono outline-none ltr"
+                          placeholder="/uploads/video.mp4"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

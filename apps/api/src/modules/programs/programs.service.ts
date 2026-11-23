@@ -404,4 +404,67 @@ export class ProgramsService {
     } catch {}
     return updated;
   }
+
+  private getSuggestedDrillsFilePath(): string {
+    return path.resolve(process.cwd(), 'data', 'suggested-drills.json');
+  }
+
+  getSuggestedDrills(): any[] {
+    const defaultSuggested = [
+      {
+        id: 'drill-passing',
+        title: 'پاس‌کاری دقیق',
+        duration: '۱۵ دقیقه',
+        difficultyLabel: 'آسان',
+        difficultyBars: [true, false, false],
+        barColor: 'emerald',
+        image: '/drill-thumb-passing.png',
+        videoUrl: '/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4',
+      },
+      {
+        id: 'drill-agility',
+        title: 'کنترل توپ در فضاهای تنگ',
+        duration: '۲۰ دقیقه',
+        difficultyLabel: 'سخت',
+        difficultyBars: [true, true, false],
+        barColor: 'purple',
+        image: '/drill-thumb-agility.png',
+        videoUrl: '/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4',
+      },
+      {
+        id: 'drill-cones',
+        title: 'دریبلینگ با مخروط‌ها',
+        duration: '۱۵ دقیقه',
+        difficultyLabel: 'متوسط',
+        difficultyBars: [true, true, false],
+        barColor: 'emerald',
+        image: '/drill-thumb-cones.png',
+        videoUrl: '/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4',
+      },
+    ];
+
+    try {
+      const p = this.getSuggestedDrillsFilePath();
+      if (fs.existsSync(p)) {
+        const raw = fs.readFileSync(p, 'utf-8');
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.length > 0) return list;
+      }
+    } catch {}
+
+    return defaultSuggested;
+  }
+
+  saveSuggestedDrills(drills: any[]): any[] {
+    if (!Array.isArray(drills)) return this.getSuggestedDrills();
+    try {
+      const p = this.getSuggestedDrillsFilePath();
+      const dir = path.dirname(p);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(p, JSON.stringify(drills, null, 2), 'utf-8');
+    } catch (err: any) {
+      this.logger.error(`Failed saving suggested drills: ${err.message}`);
+    }
+    return drills;
+  }
 }

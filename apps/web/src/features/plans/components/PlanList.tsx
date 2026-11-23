@@ -4,7 +4,7 @@ import { Bell, X, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PlanAcquisitionModal } from './PlanAcquisitionModal';
 import { ActiveTrainingPlanCard } from './ActiveTrainingPlanCard';
-import { getSuggestedDrills, SuggestedDrill } from '../data/freeTrainingCategories';
+import { getSuggestedDrills, syncSuggestedDrillsWithServer, SuggestedDrill } from '../data/freeTrainingCategories';
 import { VideoModal } from '@/features/admin/components/VideoModal';
 import { resolveMediaUrl } from '@/lib/api';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -50,6 +50,12 @@ export const PlanList: React.FC = () => {
     const handleSuggestedUpdate = () => {
       setSuggestedDrills(getSuggestedDrills());
     };
+
+    syncSuggestedDrillsWithServer().then((drills) => {
+      if (drills && drills.length > 0) {
+        setSuggestedDrills(drills);
+      }
+    });
 
     window.addEventListener('ft_student_plan_updated', handlePlanUpdate);
     window.addEventListener('ft_suggested_drills_updated', handleSuggestedUpdate);
