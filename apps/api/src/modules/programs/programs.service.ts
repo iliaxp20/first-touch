@@ -25,7 +25,7 @@ export class ProgramsService {
               p.id &&
               p.title &&
               !p.id.startsWith('ready-plan-') &&
-              !p.id.startsWith('prog-1') &&
+              p.id !== 'prog-1' &&
               p.id !== 'prog-2' &&
               p.id !== 'prog-3' &&
               p.id !== 'prog-4' &&

@@ -1,34 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   ArrowRight,
   Scale,
-  Activity,
   Plus,
   CheckCircle2,
   X,
-  Award,
-  Zap,
+  Camera,
+  Image as ImageIcon,
+  Trash2,
+  Eye,
 } from 'lucide-react';
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL, uploadFile, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 
-type MetricType = 'weight' | 'arm' | 'thigh' | 'fat' | 'agility';
+export interface WeightRecord {
+  id: string;
+  week: string;
+  date: string;
+  weight: number;
+  photoUrl?: string;
+  note?: string;
+}
 
 export const ProgressReportPage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const [selectedMetric, setSelectedMetric] = useState<MetricType>('weight');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [metricsData, setMetricsData] = useState<any>(null);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
 
-  // Form state for logging new measurement
+  // Form state
   const [newWeight, setNewWeight] = useState('');
-  const [newArm, setNewArm] = useState('');
-  const [newThigh, setNewThigh] = useState('');
-  const [newFat, setNewFat] = useState('');
+  const [newPhotoUrl, setNewPhotoUrl] = useState('');
+  const [newNote, setNewNote] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const triggerHaptic = () => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -50,42 +60,38 @@ export const ProgressReportPage: React.FC = () => {
       }
     } catch {}
 
-    // Genuine baseline from currentUser profile or clean initial state
-    const profileWeight = currentUser?.weight ? Number(currentUser.weight) : null;
-    const profileArm = currentUser?.bicep ? Number(currentUser.bicep) : null;
-    const profileThigh = currentUser?.thigh ? Number(currentUser.thigh) : null;
-    const profileHeight = currentUser?.height ? Number(currentUser.height) : null;
-    const playerName = currentUser?.fullName || (currentUser?.phoneNumber ? `کاربر ${currentUser.phoneNumber.slice(-4)}` : 'ورزشکار فرست تاچ');
+    // Fallback to localStorage or profile
+    try {
+      const local = localStorage.getItem('ft_athlete_progress_metrics');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed && Array.isArray(parsed.history) && parsed.history.length > 0) {
+          setMetricsData(parsed);
+          return;
+        }
+      }
+    } catch {}
 
-    const hasProfileMetrics = profileWeight !== null || profileArm !== null || profileThigh !== null;
+    const profileWeight = currentUser?.weight ? Number(currentUser.weight) : 72;
+    const playerName =
+      currentUser?.fullName ||
+      (currentUser?.phoneNumber ? `کاربر ${currentUser.phoneNumber.slice(-4)}` : 'ورزشکار فرست تاچ');
 
-    const initialHistory = hasProfileMetrics
-      ? [
-          {
-            week: 'رکورد پایه',
-            date: new Date().toLocaleDateString('fa-IR'),
-            weight: profileWeight || 70,
-            armCircumference: profileArm || 32,
-            thighCircumference: profileThigh || 54,
-            bodyFat: 14,
-            agilityTime: 6.5,
-          },
-        ]
-      : [];
+    const initialHistory: WeightRecord[] = [
+      {
+        id: 'rec-base',
+        week: 'رکورد پایه',
+        date: new Date().toLocaleDateString('fa-IR'),
+        weight: profileWeight,
+      },
+    ];
 
     const baseline = {
       playerName,
-      initialDate: hasProfileMetrics ? new Date().toLocaleDateString('fa-IR') : '',
+      initialDate: new Date().toLocaleDateString('fa-IR'),
+      currentWeight: profileWeight,
+      baseWeight: profileWeight,
       history: initialHistory,
-      current: {
-        weight: profileWeight || 70,
-        targetWeight: profileWeight ? profileWeight + 2 : 72,
-        armCircumference: profileArm || 32,
-        thighCircumference: profileThigh || 54,
-        bodyFat: 14,
-        height: profileHeight || 178,
-        vo2max: 52,
-      },
     };
     setMetricsData(baseline);
   };
@@ -94,42 +100,64 @@ export const ProgressReportPage: React.FC = () => {
     loadMetrics();
   }, [currentUser]);
 
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const res = await uploadFile(file);
+      if (res && res.url) {
+        setNewPhotoUrl(res.url);
+      }
+    } catch (err) {
+      // Offline fallback: convert to Data URL so photo preview & saving still works
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setNewPhotoUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const handleSaveMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!metricsData) return;
 
-    const w = Number(newWeight) || metricsData.current?.weight || 70;
-    const a = Number(newArm) || metricsData.current?.armCircumference || 32;
-    const t = Number(newThigh) || metricsData.current?.thighCircumference || 54;
-    const f = Number(newFat) || metricsData.current?.bodyFat || 14;
-
-    const newWeekNum = metricsData.history.length + 1;
+    const w = Number(newWeight) || metricsData.currentWeight || 72;
+    const newWeekNum = (metricsData.history?.length || 0) + 1;
     const nowFa = new Date().toLocaleDateString('fa-IR');
 
-    const newRecord = {
+    const newRecord: WeightRecord = {
+      id: `weight-${Date.now()}`,
       week: `هفته ${newWeekNum}`,
       date: nowFa,
-      weight: w,
-      armCircumference: a,
-      thighCircumference: t,
-      bodyFat: f,
-      agilityTime: Math.max(5.8, Math.round((6.8 - newWeekNum * 0.15) * 10) / 10),
+      weight: Math.round(w * 10) / 10,
+      photoUrl: newPhotoUrl || undefined,
+      note: newNote.trim() || undefined,
     };
 
     const updated = {
       ...metricsData,
+      currentWeight: Math.round(w * 10) / 10,
       history: [...(metricsData.history || []), newRecord],
-      current: {
-        ...(metricsData.current || {}),
-        weight: w,
-        armCircumference: a,
-        thighCircumference: t,
-        bodyFat: f,
-      },
     };
 
     setMetricsData(updated);
+    try {
+      localStorage.setItem('ft_athlete_progress_metrics', JSON.stringify(updated));
+    } catch {}
+
+    // Reset form
+    setNewWeight('');
+    setNewPhotoUrl('');
+    setNewNote('');
     setIsLogModalOpen(false);
+    triggerHaptic();
 
     try {
       await fetch(`${API_BASE_URL}/programs/athlete-metrics`, {
@@ -140,81 +168,44 @@ export const ProgressReportPage: React.FC = () => {
     } catch {}
   };
 
-  const history = metricsData?.history || [];
+  const handleDeleteRecord = async (id: string) => {
+    if (!metricsData) return;
+    const filtered = (metricsData.history || []).filter((h: WeightRecord) => h.id !== id);
+    if (filtered.length === 0) return;
+
+    const last = filtered[filtered.length - 1];
+    const updated = {
+      ...metricsData,
+      currentWeight: last.weight,
+      history: filtered,
+    };
+    setMetricsData(updated);
+    try {
+      localStorage.setItem('ft_athlete_progress_metrics', JSON.stringify(updated));
+      await fetch(`${API_BASE_URL}/programs/athlete-metrics`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+    } catch {}
+  };
+
+  const history: WeightRecord[] = metricsData?.history || [];
   const baseRecord = history[0];
   const lastRecord = history[history.length - 1];
+  const currentWeight = lastRecord?.weight || metricsData?.currentWeight || 72;
+  const baseWeight = baseRecord?.weight || metricsData?.baseWeight || currentWeight;
+  const diffFromBase = Math.round((currentWeight - baseWeight) * 10) / 10;
+  const photosCount = history.filter((h) => Boolean(h.photoUrl)).length;
 
-  const calcDiff = (key: string, unit: string) => {
-    if (history.length <= 1 || !baseRecord || !lastRecord) return 'رکورد اولیه / مبنا';
-    const b = Number(baseRecord[key]) || 0;
-    const l = Number(lastRecord[key]) || 0;
-    const d = Math.round((l - b) * 10) / 10;
-    return `${d > 0 ? '+' : ''}${d} ${unit} تغییر نسبت به پایه`;
-  };
-
-  const metricConfigs = {
-    weight: {
-      title: 'وزن بدن',
-      unit: 'کیلوگرم',
-      key: 'weight',
-      color: '#10b981',
-      gradientId: 'gradWeight',
-      currentVal: metricsData?.current?.weight || (currentUser?.weight ? Number(currentUser.weight) : '-'),
-      baseVal: baseRecord?.weight ? `${baseRecord.weight} kg` : 'ثبت نشده',
-      diff: calcDiff('weight', 'کیلوگرم'),
-    },
-    arm: {
-      title: 'دور بازو',
-      unit: 'سانتی‌متر',
-      key: 'armCircumference',
-      color: '#38bdf8',
-      gradientId: 'gradArm',
-      currentVal: metricsData?.current?.armCircumference || (currentUser?.bicep ? Number(currentUser.bicep) : '-'),
-      baseVal: baseRecord?.armCircumference ? `${baseRecord.armCircumference} cm` : 'ثبت نشده',
-      diff: calcDiff('armCircumference', 'سانتی‌متر'),
-    },
-    thigh: {
-      title: 'دور ران',
-      unit: 'سانتی‌متر',
-      key: 'thighCircumference',
-      color: '#a855f7',
-      gradientId: 'gradThigh',
-      currentVal: metricsData?.current?.thighCircumference || (currentUser?.thigh ? Number(currentUser.thigh) : '-'),
-      baseVal: baseRecord?.thighCircumference ? `${baseRecord.thighCircumference} cm` : 'ثبت نشده',
-      diff: calcDiff('thighCircumference', 'سانتی‌متر'),
-    },
-    fat: {
-      title: 'درصد چربی',
-      unit: '٪',
-      key: 'bodyFat',
-      color: '#f59e0b',
-      gradientId: 'gradFat',
-      currentVal: metricsData?.current?.bodyFat || 14,
-      baseVal: baseRecord?.bodyFat ? `${baseRecord.bodyFat}٪` : 'ثبت نشده',
-      diff: calcDiff('bodyFat', 'درصد'),
-    },
-    agility: {
-      title: 'تست چابکی ۵-۱۰-۵',
-      unit: 'ثانیه',
-      key: 'agilityTime',
-      color: '#ec4899',
-      gradientId: 'gradAgility',
-      currentVal: metricsData?.current?.agilityTime || 6.2,
-      baseVal: baseRecord?.agilityTime ? `${baseRecord.agilityTime}s` : 'ثبت نشده',
-      diff: calcDiff('agilityTime', 'ثانیه'),
-    },
-  };
-
-  const currentCfg = metricConfigs[selectedMetric];
-
-  // SVG Chart calculation
-  const values = history.map((h: any) => h[currentCfg.key] || 0);
-  const minVal = values.length > 0 ? Math.min(...values) * 0.95 : 0;
-  const maxVal = values.length > 0 ? Math.max(...values) * 1.05 : 100;
+  // SVG Chart calculation for Weight
+  const values = history.map((h) => Number(h.weight) || 70);
+  const minVal = values.length > 0 ? Math.floor(Math.min(...values) - 2) : 60;
+  const maxVal = values.length > 0 ? Math.ceil(Math.max(...values) + 2) : 90;
   const range = maxVal - minVal || 1;
 
   const chartWidth = 500;
-  const chartHeight = 220;
+  const chartHeight = 200;
   const paddingX = 40;
   const paddingY = 30;
 
@@ -253,11 +244,11 @@ export const ProgressReportPage: React.FC = () => {
 
         <div className="text-center">
           <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center justify-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-400" />
-            <span>گزارش و تحلیل پیشرفت فیزیکی</span>
+            <Scale className="h-5 w-5 text-emerald-400" />
+            <span>گزارش وزن و تصاویر پیشرفت</span>
           </h1>
           <p className="text-[11px] text-muted-foreground font-semibold">
-            روند تغییرات وزن، دور بازو، دور ران و سرعت شتاب
+            ثبت مداوم وزن بدن به همراه تصاویر مستند
           </p>
         </div>
 
@@ -268,156 +259,83 @@ export const ProgressReportPage: React.FC = () => {
             setIsLogModalOpen(true);
           }}
           className="h-10 w-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/30 transition-colors cursor-pointer shadow-md shadow-emerald-500/20"
-          title="ثبت اندازه‌گیری جدید"
+          title="ثبت وزن و عکس جدید"
         >
           <Plus className="h-5 w-5" />
         </button>
       </header>
 
-      {/* Overview Metric Cards Grid */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 mb-4">
-        {/* Card 1: Weight */}
-        <motion.div
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setSelectedMetric('weight')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-            selectedMetric === 'weight'
-              ? 'border-emerald-500 bg-emerald-500/15 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-              : 'border-border/60 bg-muted/20 hover:border-emerald-500/40'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>وزن بازیکن</span>
-            <Scale className="h-4 w-4 text-emerald-400" />
+      {/* 3 Compact Overview Cards: Current Weight, Baseline, Photos */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mb-4">
+        {/* Card 1: Current Weight */}
+        <div className="p-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.15)] text-right">
+          <div className="flex items-center justify-between text-[11px] text-emerald-400 font-bold mb-1">
+            <span>وزن فعلی</span>
+            <Scale className="h-3.5 w-3.5" />
           </div>
-          <div className="text-xl font-black text-foreground">
-            {metricConfigs.weight.currentVal}{' '}
-            <span className="text-xs font-normal text-muted-foreground">kg</span>
+          <div className="text-lg sm:text-xl font-black text-foreground">
+            {currentWeight} <span className="text-xs font-normal text-muted-foreground">kg</span>
           </div>
-          <span className="text-[10px] text-emerald-400 font-bold block mt-0.5">
-            پایه: {metricConfigs.weight.baseVal}
+          <span className="text-[10px] font-bold block mt-0.5 text-emerald-400">
+            {diffFromBase > 0 ? `+${diffFromBase}` : diffFromBase} kg تغییر
           </span>
-        </motion.div>
+        </div>
 
-        {/* Card 2: Arm Circumference */}
-        <motion.div
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setSelectedMetric('arm')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-            selectedMetric === 'arm'
-              ? 'border-sky-500 bg-sky-500/15 shadow-[0_0_20px_rgba(56,189,248,0.3)]'
-              : 'border-border/60 bg-muted/20 hover:border-sky-500/40'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>دور بازو</span>
-            <Activity className="h-4 w-4 text-sky-400" />
+        {/* Card 2: Base Weight */}
+        <div className="p-3 rounded-2xl border border-border/60 bg-muted/20 text-right">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground font-bold mb-1">
+            <span>وزن پایه</span>
+            <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
           </div>
-          <div className="text-xl font-black text-foreground">
-            {metricConfigs.arm.currentVal}{' '}
-            <span className="text-xs font-normal text-muted-foreground">cm</span>
+          <div className="text-lg sm:text-xl font-black text-foreground">
+            {baseWeight} <span className="text-xs font-normal text-muted-foreground">kg</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground font-bold block mt-0.5">
+            نقطه شروع
+          </span>
+        </div>
+
+        {/* Card 3: Photos Logged */}
+        <div className="p-3 rounded-2xl border border-border/60 bg-muted/20 text-right">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground font-bold mb-1">
+            <span>عکس‌ها</span>
+            <Camera className="h-3.5 w-3.5 text-sky-400" />
+          </div>
+          <div className="text-lg sm:text-xl font-black text-foreground">
+            {photosCount} <span className="text-xs font-normal text-muted-foreground">تصویر</span>
           </div>
           <span className="text-[10px] text-sky-400 font-bold block mt-0.5">
-            پایه: {metricConfigs.arm.baseVal}
+            مستندات بدنی
           </span>
-        </motion.div>
-
-        {/* Card 3: Thigh Circumference */}
-        <motion.div
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setSelectedMetric('thigh')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-            selectedMetric === 'thigh'
-              ? 'border-purple-500 bg-purple-500/15 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
-              : 'border-border/60 bg-muted/20 hover:border-purple-500/40'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>دور ران</span>
-            <Zap className="h-4 w-4 text-purple-400" />
-          </div>
-          <div className="text-xl font-black text-foreground">
-            {metricConfigs.thigh.currentVal}{' '}
-            <span className="text-xs font-normal text-muted-foreground">cm</span>
-          </div>
-          <span className="text-[10px] text-purple-400 font-bold block mt-0.5">
-            پایه: {metricConfigs.thigh.baseVal}
-          </span>
-        </motion.div>
-
-        {/* Card 4: Body Fat */}
-        <motion.div
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setSelectedMetric('fat')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-            selectedMetric === 'fat'
-              ? 'border-amber-500 bg-amber-500/15 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
-              : 'border-border/60 bg-muted/20 hover:border-amber-500/40'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>درصد چربی</span>
-            <Award className="h-4 w-4 text-amber-400" />
-          </div>
-          <div className="text-xl font-black text-foreground">
-            {metricConfigs.fat.currentVal}{' '}
-            <span className="text-xs font-normal text-muted-foreground">٪</span>
-          </div>
-          <span className="text-[10px] text-emerald-400 font-bold block mt-0.5">
-            پایه: {metricConfigs.fat.baseVal}
-          </span>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Metric Selector Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none mb-3">
-        {(Object.keys(metricConfigs) as MetricType[]).map((key) => {
-          const cfg = metricConfigs[key];
-          const isPicked = selectedMetric === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setSelectedMetric(key);
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                isPicked
-                  ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/30'
-                  : 'bg-white/10 dark:bg-white/[0.05] text-slate-400 hover:text-white border border-white/10'
-              }`}
-            >
-              {cfg.title}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Main Animated Chart Card */}
+      {/* Main Weight Trend Chart */}
       <div className="p-4 rounded-3xl bg-card dark:bg-[#07160e] border border-border dark:border-emerald-500/30 shadow-[0_15px_40px_rgba(0,0,0,0.5)] mb-4 space-y-3">
         <div className="flex items-center justify-between border-b border-border dark:border-emerald-500/20 pb-2">
           <div>
             <h3 className="text-sm font-black text-foreground flex items-center gap-2">
-              <span>نمودار روند {currentCfg.title}</span>
+              <span>نمودار روند وزن بدن</span>
               <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
-                {currentCfg.currentVal} {currentCfg.unit}
+                {currentWeight} کیلوگرم
               </span>
             </h3>
             <p className="text-[11px] text-muted-foreground font-semibold mt-0.5">
-              {currentCfg.diff}
+              {history.length > 1
+                ? `${diffFromBase > 0 ? '+' : ''}${diffFromBase} کیلوگرم تغییر نسبت به وزن پایه`
+                : 'رکورد مبنای شروع'}
             </p>
           </div>
           <span className="text-[10px] text-muted-foreground font-bold">هفتگی</span>
         </div>
 
-        {/* SVG Interactive Animated Chart */}
+        {/* SVG Interactive Chart */}
         <div className="w-full overflow-hidden relative">
           <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto">
             <defs>
-              <linearGradient id={currentCfg.gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={currentCfg.color} stopOpacity="0.45" />
-                <stop offset="100%" stopColor={currentCfg.color} stopOpacity="0.0" />
+              <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
@@ -442,7 +360,7 @@ export const ProgressReportPage: React.FC = () => {
             {areaD && (
               <path
                 d={areaD}
-                fill={`url(#${currentCfg.gradientId})`}
+                fill="url(#weightGrad)"
                 className="transition-all duration-500"
               />
             )}
@@ -452,7 +370,7 @@ export const ProgressReportPage: React.FC = () => {
               <path
                 d={pathD}
                 fill="none"
-                stroke={currentCfg.color}
+                stroke="#10b981"
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -460,7 +378,7 @@ export const ProgressReportPage: React.FC = () => {
               />
             )}
 
-            {/* Point circles & tooltips */}
+            {/* Point circles & labels */}
             {points.map((pt: any, idx: number) => (
               <g key={idx}>
                 <circle
@@ -468,7 +386,7 @@ export const ProgressReportPage: React.FC = () => {
                   cy={pt.y}
                   r="5"
                   fill="#07160e"
-                  stroke={currentCfg.color}
+                  stroke="#10b981"
                   strokeWidth="2.5"
                   className="transition-all duration-300"
                 />
@@ -477,7 +395,7 @@ export const ProgressReportPage: React.FC = () => {
                   y={pt.y - 10}
                   textAnchor="middle"
                   fill="currentColor"
-                  fontSize="10"
+                  fontSize="11"
                   fontWeight="bold"
                 >
                   {pt.val}
@@ -498,32 +416,94 @@ export const ProgressReportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* History Table */}
+      {/* Progress History & Photos Timeline */}
       <div className="p-4 rounded-3xl bg-card dark:bg-[#07160e] border border-border dark:border-emerald-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.4)] space-y-3">
         <div className="flex items-center justify-between border-b border-border dark:border-emerald-500/20 pb-2">
-          <h4 className="text-xs font-black text-foreground">جدول رکوردهای هفتگی</h4>
-          <span className="text-[10px] text-muted-foreground">{history.length} رکورد ثبتی</span>
+          <h4 className="text-xs font-black text-foreground flex items-center gap-1.5">
+            <Camera className="h-4 w-4 text-emerald-400" />
+            <span>تاریخچه وزن و تصاویر پیشرفت</span>
+          </h4>
+          <span className="text-[10px] text-muted-foreground">{history.length} رکورد ثبت شده</span>
         </div>
 
         <div className="divide-y divide-border/40 text-xs">
-          {history.map((row: any, i: number) => (
-            <div key={i} className="py-2.5 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-foreground block">{row.week}</span>
-                <span className="text-[10px] text-muted-foreground">{row.date}</span>
+          {history.map((row: WeightRecord, i: number) => {
+            const hasPhoto = Boolean(row.photoUrl);
+            const delta =
+              i === 0
+                ? 'پایه'
+                : `${row.weight - (history[i - 1]?.weight || row.weight) > 0 ? '+' : ''}${
+                    Math.round((row.weight - (history[i - 1]?.weight || row.weight)) * 10) / 10
+                  } kg`;
+
+            return (
+              <div key={row.id || i} className="py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {/* Photo thumbnail */}
+                  {hasPhoto ? (
+                    <div
+                      onClick={() => setPreviewPhotoUrl(row.photoUrl!)}
+                      className="relative h-12 w-12 rounded-xl overflow-hidden border border-emerald-500/40 bg-slate-900 cursor-pointer group shadow-sm shrink-0"
+                      title="مشاهده تصویر پیشرفت"
+                    >
+                      <img
+                        src={resolveMediaUrl(row.photoUrl!)}
+                        alt={row.week}
+                        className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye className="h-4 w-4 text-white" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-12 w-12 rounded-xl border border-dashed border-border bg-muted/20 flex items-center justify-center text-muted-foreground shrink-0">
+                      <ImageIcon className="h-5 w-5 opacity-40" />
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-foreground text-xs">{row.week}</span>
+                      <span className="text-[10px] text-muted-foreground font-semibold">
+                        {row.date}
+                      </span>
+                    </div>
+                    {row.note && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+                        {row.note}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-right">
+                  <div>
+                    <span className="text-sm font-black text-emerald-400 block font-mono">
+                      {row.weight} kg
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-semibold block">
+                      {delta}
+                    </span>
+                  </div>
+
+                  {i > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRecord(row.id)}
+                      className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="حذف این رکورد"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-3 font-mono text-[11px]">
-                <span className="text-emerald-400 font-bold">{row.weight} kg</span>
-                <span className="text-sky-400 font-bold">{row.armCircumference} cm بازو</span>
-                <span className="text-purple-400 font-bold">{row.thighCircumference} cm ران</span>
-                <span className="text-amber-400 font-bold">{row.bodyFat}٪ چربی</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Log Measurement Modal */}
+      {/* Log Measurement Modal (Weight + Photo ONLY) */}
       <AnimatePresence>
         {isLogModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in select-none">
@@ -536,86 +516,159 @@ export const ProgressReportPage: React.FC = () => {
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <Plus className="h-4 w-4" />
+                    <Scale className="h-4 w-4" />
                   </div>
-                  <h3 className="text-sm font-black">ثبت رکورد اندازه‌گیری جدید</h3>
+                  <h3 className="text-sm font-black">ثبت وزن بدن و عکس پیشرفت</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsLogModalOpen(false)}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveMeasurement} className="space-y-3 text-xs">
+              <form onSubmit={handleSaveMeasurement} className="space-y-4 text-xs">
+                {/* Weight Input */}
                 <div>
-                  <label className="font-bold block mb-1">وزن جدید (کیلوگرم):</label>
+                  <label className="font-bold block mb-1 text-slate-800 dark:text-slate-200">
+                    وزن جدید بدن (کیلوگرم):
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      value={newWeight}
+                      onChange={(e) => setNewWeight(e.target.value)}
+                      placeholder={String(currentWeight || 72)}
+                      className="w-full pr-3 pl-12 py-2.5 rounded-xl bg-muted/40 border border-border text-foreground font-mono text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">
+                      kg
+                    </span>
+                  </div>
+                </div>
+
+                {/* Photo Upload Input */}
+                <div>
+                  <label className="font-bold block mb-1.5 text-slate-800 dark:text-slate-200">
+                    عکس پیشرفت بدن (اختیاری):
+                  </label>
                   <input
-                    type="number"
-                    step="0.1"
-                    value={newWeight}
-                    onChange={(e) => setNewWeight(e.target.value)}
-                    placeholder={String(metricsData?.current?.weight || 71.5)}
-                    className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    className="hidden"
+                  />
+
+                  {newPhotoUrl ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 aspect-video bg-slate-900 group">
+                      <img
+                        src={resolveMediaUrl(newPhotoUrl)}
+                        alt="پیش‌نمایش تصویر"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewPhotoUrl('')}
+                        className="absolute top-2 left-2 h-7 w-7 rounded-full bg-black/70 hover:bg-rose-600 text-white flex items-center justify-center transition-colors cursor-pointer"
+                        title="حذف تصویر"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-emerald-400 text-[10px] font-bold">
+                        تصویر آماده ثبت
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPhoto}
+                      className="w-full py-6 px-4 rounded-2xl border-2 border-dashed border-border hover:border-emerald-500/60 bg-muted/20 hover:bg-emerald-500/5 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer group"
+                    >
+                      <div className="h-10 w-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {isUploadingPhoto ? (
+                          <div className="h-5 w-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Camera className="h-5 w-5" />
+                        )}
+                      </div>
+                      <span className="font-bold text-xs text-foreground">
+                        {isUploadingPhoto ? 'در حال بارگذاری تصویر...' : 'انتخاب یا گرفتن عکس جدید'}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        فرمت‌های JPG، PNG و WEBP پشتیبانی می‌شوند
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Optional Note */}
+                <div>
+                  <label className="font-bold block mb-1 text-slate-800 dark:text-slate-200">
+                    یادداشت (اختیاری):
+                  </label>
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="مثلاً: وضعیت بدنی پس از تمرین استقامتی..."
+                    className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
 
-                <div>
-                  <label className="font-bold block mb-1">دور بازو (سانتی‌متر):</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newArm}
-                    onChange={(e) => setNewArm(e.target.value)}
-                    placeholder={String(metricsData?.current?.armCircumference || 32.8)}
-                    className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold block mb-1">دور ران (سانتی‌متر):</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newThigh}
-                    onChange={(e) => setNewThigh(e.target.value)}
-                    placeholder={String(metricsData?.current?.thighCircumference || 56.4)}
-                    className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold block mb-1">درصد چربی بدنی (٪):</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newFat}
-                    onChange={(e) => setNewFat(e.target.value)}
-                    placeholder={String(metricsData?.current?.bodyFat || 12.4)}
-                    className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                </div>
-
+                {/* Actions */}
                 <div className="pt-2 flex items-center gap-2">
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    disabled={isUploadingPhoto}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    ذخیره و ثبت در نمودار
+                    ثبت وزن و تصویر
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsLogModalOpen(false)}
-                    className="px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground font-bold text-xs"
+                    className="px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground font-bold text-xs cursor-pointer"
                   >
                     انصراف
                   </button>
                 </div>
               </form>
             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Full Photo Preview Lightbox */}
+      <AnimatePresence>
+        {previewPhotoUrl && (
+          <div
+            onClick={() => setPreviewPhotoUrl(null)}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in cursor-pointer select-none"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-lg w-full rounded-3xl overflow-hidden bg-black border border-white/20 shadow-2xl"
+            >
+              <button
+                type="button"
+                onClick={() => setPreviewPhotoUrl(null)}
+                className="absolute top-3 left-3 z-10 h-9 w-9 rounded-full bg-black/70 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <img
+                src={resolveMediaUrl(previewPhotoUrl)}
+                alt="تصویر پیشرفت"
+                className="w-full max-h-[80vh] object-contain"
+              />
+            </div>
           </div>
         )}
       </AnimatePresence>

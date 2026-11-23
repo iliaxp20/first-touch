@@ -60,32 +60,18 @@ export class DrillsService implements OnModuleInit {
   }
 
   async findAll(categoryIndex?: number, search?: string): Promise<AgilityDrillItem[]> {
-    try {
-      if ((this.prisma as any).agilityDrill) {
-        const where: any = {};
-        if (categoryIndex) where.categoryIndex = categoryIndex;
-        if (search) {
-          where.OR = [
-            { persianName: { contains: search, mode: 'insensitive' } },
-            { englishName: { contains: search, mode: 'insensitive' } },
-            { targetSkill: { contains: search, mode: 'insensitive' } },
-          ];
-        }
+    let results = this.memoryDrills.filter(
+      (d) =>
+        d &&
+        d.id &&
+        !d.id.startsWith('drill-1-') &&
+        (d.videoUrl?.includes('/uploads/') || d.id.startsWith('drill-adm-')),
+    );
 
-        const dbDrills = await (this.prisma as any).agilityDrill.findMany({
-          where,
-          orderBy: { categoryIndex: 'asc' },
-        });
-
-        if (dbDrills && dbDrills.length > 0) {
-          return dbDrills;
-        }
-      }
-    } catch {
-      // Fallback to in-memory store
+    if (results.length === 0) {
+      results = this.memoryDrills;
     }
 
-    let results = this.memoryDrills;
     if (categoryIndex) {
       results = results.filter((d) => d.categoryIndex === Number(categoryIndex));
     }
@@ -96,7 +82,7 @@ export class DrillsService implements OnModuleInit {
           d.persianName.includes(q) ||
           d.englishName.toLowerCase().includes(q) ||
           d.targetSkill.includes(q) ||
-          d.categoryTitle.includes(q)
+          d.categoryTitle.includes(q),
       );
     }
     return results;

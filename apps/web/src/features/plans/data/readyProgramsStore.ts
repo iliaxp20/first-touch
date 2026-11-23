@@ -177,6 +177,64 @@ const TRAINING_STORAGE_KEY = 'first_touch_ready_training_plans';
 const NUTRITION_STORAGE_KEY = 'first_touch_ready_nutrition_plans';
 const DELETED_PLANS_KEY = 'first_touch_deleted_plan_ids';
 
+// Purge any stale mock items from localStorage on module load
+if (typeof window !== 'undefined') {
+  try {
+    const raw = localStorage.getItem(TRAINING_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (p: any) =>
+            p &&
+            p.id &&
+            !p.id.startsWith('ready-plan-') &&
+            !['prog-1', 'prog-2', 'prog-3', 'prog-4', 'prog-5'].includes(p.id) &&
+            !p.title?.includes('شافل') &&
+            (p.videoUrl?.includes('/uploads/') || p.id?.startsWith('prog-179') || p.isCustomAdminCreated)
+        );
+        localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(cleaned));
+      }
+    }
+  } catch {}
+
+  try {
+    const rawDrills = localStorage.getItem('first_touch_free_training_drills');
+    if (rawDrills) {
+      const parsed = JSON.parse(rawDrills);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (d: any) =>
+            d &&
+            d.id &&
+            !d.id.startsWith('drill-1-') &&
+            !d.title?.includes('شافل') &&
+            (d.videoUrl?.includes('/uploads/') || d.id?.startsWith('drill-adm-'))
+        );
+        localStorage.setItem('first_touch_free_training_drills', JSON.stringify(cleaned));
+      }
+    }
+  } catch {}
+
+  try {
+    const rawActive = localStorage.getItem('first_touch_student_active_plans');
+    if (rawActive) {
+      const parsed = JSON.parse(rawActive);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (p: any) =>
+            p &&
+            p.id &&
+            !p.id.startsWith('ready-plan-') &&
+            !['prog-1', 'prog-2', 'prog-3', 'prog-4', 'prog-5'].includes(p.id) &&
+            !p.title?.includes('شافل')
+        );
+        localStorage.setItem('first_touch_student_active_plans', JSON.stringify(cleaned));
+      }
+    }
+  } catch {}
+}
+
 export const getDeletedPlanIds = (): string[] => {
   try {
     const raw = localStorage.getItem(DELETED_PLANS_KEY);
@@ -209,7 +267,12 @@ export const getReadyTrainingPlans = (): ReadyTrainingPlan[] => {
             p.id &&
             !deletedIds.includes(p.id) &&
             !p.id.startsWith('ready-plan-') &&
-            !(p.id.startsWith('prog-') && p.id.length < 10)
+            p.id !== 'prog-1' &&
+            p.id !== 'prog-2' &&
+            p.id !== 'prog-3' &&
+            p.id !== 'prog-4' &&
+            p.id !== 'prog-5' &&
+            (p.videoUrl?.includes('/uploads/') || p.id?.startsWith('prog-179') || p.isCustomAdminCreated)
         );
         const storedIds = new Set(cleaned.map((p) => p.id));
         const remaining = DEFAULT_READY_TRAINING_PLANS.filter(
@@ -271,7 +334,12 @@ export const syncProgramsWithServer = async (): Promise<ReadyTrainingPlan[]> => 
               p.id &&
               !deletedIds.includes(p.id) &&
               !p.id.startsWith('ready-plan-') &&
-              !(p.id.startsWith('prog-') && p.id.length < 10)
+              p.id !== 'prog-1' &&
+              p.id !== 'prog-2' &&
+              p.id !== 'prog-3' &&
+              p.id !== 'prog-4' &&
+              p.id !== 'prog-5' &&
+              (p.videoUrl?.includes('/uploads/') || p.id?.startsWith('prog-179') || p.isCustomAdminCreated)
           )
           .map((p) => ({
             id: p.id,

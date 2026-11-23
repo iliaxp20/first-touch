@@ -535,7 +535,14 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   // Filtered Drills for Search & Category (Reactive with Admin additions)
   const activeCategoryDrills = useMemo(() => {
-    let list = trainingDrills;
+    let list = trainingDrills.filter(
+      (d) =>
+        d &&
+        d.id &&
+        !d.id.startsWith('drill-1-') &&
+        !d.title?.includes('شافل') &&
+        (d.videoUrl?.includes('/uploads/') || d.id.startsWith('drill-adm-'))
+    );
     if (selectedCategoryKey && selectedCategoryKey !== 'all') {
       list = list.filter((d) => d.categoryKey === selectedCategoryKey);
     }
@@ -1166,6 +1173,13 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {readyTrainingPlans
                   .filter((p) => {
+                    const isGenuine =
+                      p &&
+                      p.id &&
+                      !p.id.startsWith('ready-plan-') &&
+                      !['prog-1', 'prog-2', 'prog-3', 'prog-4', 'prog-5'].includes(p.id) &&
+                      (p.videoUrl?.includes('/uploads/') || p.id.startsWith('prog-179') || p.isCustomAdminCreated);
+                    if (!isGenuine) return false;
                     if (selectedAgeFilter === 'all') return true;
                     return (
                       p.ageGroup === selectedAgeFilter ||

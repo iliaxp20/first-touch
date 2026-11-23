@@ -22,31 +22,34 @@ export const getSuggestedDrills = (): SuggestedDrill[] => {
   } catch {}
   return [
     {
+      id: 'drill-adm-1794802946244',
+      title: 'شتاب و تغییر جهت انفجاری',
+      duration: '20 min',
+      difficultyLabel: 'متوسط',
+      difficultyBars: [true, true, false],
+      barColor: 'emerald',
+      image: '/drill-thumb-agility.png',
+      videoUrl: '/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4',
+    },
+    {
       id: 'drill-passing',
-      title: 'پاس‌کاری دقیق',
+      title: 'پاس‌کاری دقیق و چرخش',
       duration: '15 min',
       difficultyLabel: 'آسان',
       difficultyBars: [true, false, false],
       barColor: 'emerald',
       image: '/drill-thumb-passing.png',
-    },
-    {
-      id: 'drill-agility',
-      title: 'کنترل توپ در فضاهای تنگ',
-      duration: '20 min',
-      difficultyLabel: 'سخت',
-      difficultyBars: [true, true, false],
-      barColor: 'purple',
-      image: '/drill-thumb-agility.png',
+      videoUrl: '/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4',
     },
     {
       id: 'drill-cones',
-      title: 'دریبلینگ با مخروط‌ها',
+      title: 'کنترل توپ و استارت کوتاه',
       duration: '15 min',
       difficultyLabel: 'متوسط',
       difficultyBars: [true, true, false],
       barColor: 'emerald',
       image: '/drill-thumb-cones.png',
+      videoUrl: '/uploads/1795327354521-ECF2C5EF-5D1C-4398-B624-2E4FE9FE1DF5.mp4',
     },
   ];
 };
@@ -129,7 +132,7 @@ export const TRAINING_CATEGORIES_10: TrainingCategoryMeta[] = [
   {
     key: 'agility',
     title: 'چابکی',
-    subContent: 'نردبان چابکی، تغییر جهت، واکنش',
+    subContent: 'شتاب اولیه، تغییر جهت، واکنش',
     iconName: 'Zap',
     color: 'from-amber-500 to-orange-600',
     drillsCount: 6,
@@ -313,18 +316,58 @@ export const getTrainingDrills = (): FreeDrill[] => {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        const valid = parsed.filter(
+          (d: FreeDrill) =>
+            d &&
+            d.id &&
+            !d.id.startsWith('drill-1-') &&
+            !d.id.startsWith('drill-passing') &&
+            !d.id.startsWith('drill-cones') &&
+            !d.title?.includes('شافل') &&
+            (d.videoUrl?.includes('/uploads/') || d.id?.startsWith('drill-adm-'))
+        );
+        if (valid.length > 0) return valid;
       }
     }
   } catch (err) {
     console.error('Failed to get training drills', err);
   }
-  return [];
+  return [
+    {
+      id: 'drill-adm-1794802946244',
+      categoryKey: 'agility',
+      categoryTitle: 'تمرینات چابکی و شتاب',
+      subCategory: 'تمرینات چابکی و شتاب',
+      title: 'شتاب و تغییر جهت انفجاری',
+      englishTitle: 'Agility Sprint',
+      difficulty: 'متوسط',
+      duration: '۲۰ دقیقه',
+      setsReps: '۴ ست',
+      equipment: 'مخروط',
+      targetSkill: 'سرعت و چابکی',
+      videoUrl: '/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80',
+      description: 'استارت‌های انفجاری و چرخش ۹۰ درجه حول مخروط با حداکثر سرعت',
+      steps: ['استارت‌های انفجاری و چرخش ۹۰ درجه حول مخروط با حداکثر سرعت'],
+      coachingTips: 'حفظ مرکز ثقل پایین در زمان چرخش',
+      commonMistakes: 'برخورد به موانع یا گام‌های بیش از حد بلند',
+    },
+  ];
 };
 
 export const saveTrainingDrills = (drills: FreeDrill[]): void => {
   try {
-    localStorage.setItem(DRILLS_STORAGE_KEY, JSON.stringify(drills));
+    const cleanDrills = drills.filter(
+      (d) =>
+        d &&
+        d.id &&
+        !d.id.startsWith('drill-1-') &&
+        !d.id.startsWith('drill-passing') &&
+        !d.id.startsWith('drill-cones') &&
+        !d.title?.includes('شافل') &&
+        (d.videoUrl?.includes('/uploads/') || d.id?.startsWith('drill-adm-'))
+    );
+    localStorage.setItem(DRILLS_STORAGE_KEY, JSON.stringify(cleanDrills));
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('ft_drills_updated'));
     }
@@ -412,8 +455,12 @@ export const syncDrillsWithServer = async (): Promise<FreeDrill[]> => {
         const mapped: FreeDrill[] = serverDrills
           .filter(
             (d: any) =>
+              d &&
+              d.id &&
+              !d.id.startsWith('drill-1-') &&
               !d.persianName?.includes('شافل') &&
-              !d.title?.includes('شافل')
+              !d.title?.includes('شافل') &&
+              (d.videoUrl?.includes('/uploads/') || d.id?.startsWith('drill-adm-'))
           )
           .map((d: any) => ({
             id: d.id,
@@ -435,11 +482,8 @@ export const syncDrillsWithServer = async (): Promise<FreeDrill[]> => {
             commonMistakes: d.commonMistakes || '',
           }));
 
-        const local = getTrainingDrills();
-        const serverIds = new Set(mapped.map((d) => d.id));
-        const merged = [...mapped, ...local.filter((l) => !serverIds.has(l.id))];
-        saveTrainingDrills(merged);
-        return merged;
+        saveTrainingDrills(mapped);
+        return mapped;
       }
     }
   } catch (err) {
