@@ -70,7 +70,7 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   onClose,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!sessionStorage.getItem(SESSION_KEY);
+    return !!localStorage.getItem(SESSION_KEY);
   });
 
   // Auth Inputs
@@ -343,6 +343,34 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
     }
   };
 
+  const handleUploadSuggestedImage = async (sIdx: number, file: File) => {
+    try {
+      showToast('در حال آپلود تصویر تمرین پیشنهادی...');
+      const res = await uploadFile(file);
+      const updated = [...suggestedDrills];
+      updated[sIdx] = { ...updated[sIdx], image: res.url };
+      setSuggestedDrillsState(updated);
+      saveSuggestedDrills(updated);
+      showToast('تصویر با موفقیت بارگذاری گردید.');
+    } catch (err: any) {
+      showToast(err.message || 'خطا در بارگذاری تصویر');
+    }
+  };
+
+  const handleUploadSuggestedVideo = async (sIdx: number, file: File) => {
+    try {
+      showToast('در حال آپلود ویدیوی تمرین پیشنهادی...');
+      const res = await uploadFile(file);
+      const updated = [...suggestedDrills];
+      updated[sIdx] = { ...updated[sIdx], videoUrl: res.url };
+      setSuggestedDrillsState(updated);
+      saveSuggestedDrills(updated);
+      showToast('ویدیو با موفقیت بارگذاری گردید.');
+    } catch (err: any) {
+      showToast(err.message || 'خطا در بارگذاری ویدیو');
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // Load Data
   // ---------------------------------------------------------------------------
@@ -434,11 +462,11 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
           throw new Error(data.message || 'نام کاربری یا رمز عبور نامعتبر است.');
         }
 
-        sessionStorage.setItem(SESSION_KEY, data.token || 'granted');
+        localStorage.setItem(SESSION_KEY, data.token || 'granted');
         setIsAuthenticated(true);
       } catch (err: any) {
         if (usernameInput.trim() === 'admin' && (passwordInput === 'admin1234' || passwordInput === 'ft@admin2026')) {
-          sessionStorage.setItem(SESSION_KEY, 'local_granted');
+          localStorage.setItem(SESSION_KEY, 'local_granted');
           setIsAuthenticated(true);
         } else {
           setAuthError(err.message || 'خطا در ورود به پنل مدیریت.');
@@ -517,7 +545,7 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   // LOGOUT & PASSWORD CHANGE
   // ---------------------------------------------------------------------------
   const handleLogout = () => {
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
     setIsAuthenticated(false);
     onClose();
   };
@@ -533,7 +561,7 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem(SESSION_KEY)}`,
+          Authorization: `Bearer ${localStorage.getItem(SESSION_KEY)}`,
         },
         body: JSON.stringify({ newPassword }),
       });
@@ -1367,21 +1395,85 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
                         </div>
                       </div>
 
-                      {/* Video Link */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-1">آدرس ویدیو:</label>
-                        <input
-                          type="text"
-                          value={sDrill.videoUrl || ''}
-                          onChange={(e) => {
-                            const updated = [...suggestedDrills];
-                            updated[sIdx] = { ...sDrill, videoUrl: e.target.value };
-                            setSuggestedDrillsState(updated);
-                            saveSuggestedDrills(updated);
-                          }}
-                          className="w-full h-8 px-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-slate-300 font-mono outline-none ltr"
-                          placeholder="/uploads/video.mp4"
-                        />
+                      {/* Image Preview & Upload */}
+                      <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold text-slate-300">عکس پیش‌نمایش تمرین:</label>
+                          <label className="px-2 py-0.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-bold cursor-pointer transition-colors">
+                            <span>آپلود عکس جدید</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUploadSuggestedImage(sIdx, file);
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={resolveMediaUrl(sDrill.image) || '/drill-thumb-agility.png'}
+                            alt={sDrill.title}
+                            className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={sDrill.image || ''}
+                            onChange={(e) => {
+                              const updated = [...suggestedDrills];
+                              updated[sIdx] = { ...sDrill, image: e.target.value };
+                              setSuggestedDrillsState(updated);
+                              saveSuggestedDrills(updated);
+                            }}
+                            className="flex-1 h-7 px-2 rounded-lg bg-black/40 border border-white/10 text-[10px] text-slate-300 font-mono outline-none ltr"
+                            placeholder="/drill-thumb-cones.png یا آدرس عکس"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Video Preview & Upload */}
+                      <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold text-slate-300">ویدیوی تمرین:</label>
+                          <label className="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold cursor-pointer transition-colors">
+                            <span>آپلود ویدیو</span>
+                            <input
+                              type="file"
+                              accept="video/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUploadSuggestedVideo(sIdx, file);
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={sDrill.videoUrl || ''}
+                            onChange={(e) => {
+                              const updated = [...suggestedDrills];
+                              updated[sIdx] = { ...sDrill, videoUrl: e.target.value };
+                              setSuggestedDrillsState(updated);
+                              saveSuggestedDrills(updated);
+                            }}
+                            className="flex-1 h-7 px-2 rounded-lg bg-black/40 border border-white/10 text-[10px] text-slate-300 font-mono outline-none ltr"
+                            placeholder="/uploads/video.mp4"
+                          />
+                          {sDrill.videoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewVideo({ url: sDrill.videoUrl!, title: sDrill.title })}
+                              className="px-2 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+                            >
+                              <Play className="w-2.5 h-2.5 fill-current" />
+                              پخش
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

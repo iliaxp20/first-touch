@@ -43,47 +43,65 @@ export const ProgressReportPage: React.FC = () => {
       const res = await fetch(`${API_BASE_URL}/programs/athlete-metrics`);
       if (res.ok) {
         const data = await res.json();
-        setMetricsData(data);
-        return;
+        if (data && data.history && data.history.length > 0) {
+          setMetricsData(data);
+          return;
+        }
       }
     } catch {}
 
-    // Fallback default
-    const fallback = {
-      playerName: currentUser?.fullName || 'مهدی طارمی',
-      initialDate: '۱۴۰۳/۰۶/۰۱',
-      history: [
-        { week: 'هفته ۱', date: '۱۴۰۳/۰۶/۰۱', weight: 69.2, armCircumference: 31.0, thighCircumference: 54.0, bodyFat: 14.2, agilityTime: 6.8 },
-        { week: 'هفته ۲', date: '۱۴۰۳/۰۶/۱۵', weight: 69.8, armCircumference: 31.4, thighCircumference: 54.5, bodyFat: 13.8, agilityTime: 6.6 },
-        { week: 'هفته ۳', date: '۱۴۰۳/۰۷/۰۱', weight: 70.4, armCircumference: 31.9, thighCircumference: 55.2, bodyFat: 13.2, agilityTime: 6.4 },
-        { week: 'هفته ۴', date: '۱۴۰۳/۰۷/۱۵', weight: 70.9, armCircumference: 32.3, thighCircumference: 55.8, bodyFat: 12.8, agilityTime: 6.2 },
-        { week: 'هفته ۵', date: '۱۴۰۳/۰۸/۰۱', weight: 71.5, armCircumference: 32.8, thighCircumference: 56.4, bodyFat: 12.4, agilityTime: 6.0 },
-      ],
+    // Genuine baseline from currentUser profile or clean initial state
+    const profileWeight = currentUser?.weight ? Number(currentUser.weight) : null;
+    const profileArm = currentUser?.bicep ? Number(currentUser.bicep) : null;
+    const profileThigh = currentUser?.thigh ? Number(currentUser.thigh) : null;
+    const profileHeight = currentUser?.height ? Number(currentUser.height) : null;
+    const playerName = currentUser?.fullName || (currentUser?.phoneNumber ? `کاربر ${currentUser.phoneNumber.slice(-4)}` : 'ورزشکار فرست تاچ');
+
+    const hasProfileMetrics = profileWeight !== null || profileArm !== null || profileThigh !== null;
+
+    const initialHistory = hasProfileMetrics
+      ? [
+          {
+            week: 'رکورد پایه',
+            date: new Date().toLocaleDateString('fa-IR'),
+            weight: profileWeight || 70,
+            armCircumference: profileArm || 32,
+            thighCircumference: profileThigh || 54,
+            bodyFat: 14,
+            agilityTime: 6.5,
+          },
+        ]
+      : [];
+
+    const baseline = {
+      playerName,
+      initialDate: hasProfileMetrics ? new Date().toLocaleDateString('fa-IR') : '',
+      history: initialHistory,
       current: {
-        weight: 71.5,
-        targetWeight: 72.5,
-        armCircumference: 32.8,
-        thighCircumference: 56.4,
-        bodyFat: 12.4,
-        height: 182,
-        vo2max: 54.2,
+        weight: profileWeight || 70,
+        targetWeight: profileWeight ? profileWeight + 2 : 72,
+        armCircumference: profileArm || 32,
+        thighCircumference: profileThigh || 54,
+        bodyFat: 14,
+        height: profileHeight || 178,
+        vo2max: 52,
       },
     };
-    setMetricsData(fallback);
+    setMetricsData(baseline);
   };
 
   useEffect(() => {
     loadMetrics();
-  }, []);
+  }, [currentUser]);
 
   const handleSaveMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!metricsData) return;
 
-    const w = Number(newWeight) || metricsData.current.weight;
-    const a = Number(newArm) || metricsData.current.armCircumference;
-    const t = Number(newThigh) || metricsData.current.thighCircumference;
-    const f = Number(newFat) || metricsData.current.bodyFat;
+    const w = Number(newWeight) || metricsData.current?.weight || 70;
+    const a = Number(newArm) || metricsData.current?.armCircumference || 32;
+    const t = Number(newThigh) || metricsData.current?.thighCircumference || 54;
+    const f = Number(newFat) || metricsData.current?.bodyFat || 14;
 
     const newWeekNum = metricsData.history.length + 1;
     const nowFa = new Date().toLocaleDateString('fa-IR');
@@ -100,9 +118,9 @@ export const ProgressReportPage: React.FC = () => {
 
     const updated = {
       ...metricsData,
-      history: [...metricsData.history, newRecord],
+      history: [...(metricsData.history || []), newRecord],
       current: {
-        ...metricsData.current,
+        ...(metricsData.current || {}),
         weight: w,
         armCircumference: a,
         thighCircumference: t,
@@ -122,6 +140,18 @@ export const ProgressReportPage: React.FC = () => {
     } catch {}
   };
 
+  const history = metricsData?.history || [];
+  const baseRecord = history[0];
+  const lastRecord = history[history.length - 1];
+
+  const calcDiff = (key: string, unit: string) => {
+    if (history.length <= 1 || !baseRecord || !lastRecord) return 'رکورد اولیه / مبنا';
+    const b = Number(baseRecord[key]) || 0;
+    const l = Number(lastRecord[key]) || 0;
+    const d = Math.round((l - b) * 10) / 10;
+    return `${d > 0 ? '+' : ''}${d} ${unit} تغییر نسبت به پایه`;
+  };
+
   const metricConfigs = {
     weight: {
       title: 'وزن بدن',
@@ -129,8 +159,9 @@ export const ProgressReportPage: React.FC = () => {
       key: 'weight',
       color: '#10b981',
       gradientId: 'gradWeight',
-      currentVal: metricsData?.current?.weight || 71.5,
-      diff: '+۲.۳ کیلوگرم (افزایش توده بدون چربی)',
+      currentVal: metricsData?.current?.weight || (currentUser?.weight ? Number(currentUser.weight) : '-'),
+      baseVal: baseRecord?.weight ? `${baseRecord.weight} kg` : 'ثبت نشده',
+      diff: calcDiff('weight', 'کیلوگرم'),
     },
     arm: {
       title: 'دور بازو',
@@ -138,8 +169,9 @@ export const ProgressReportPage: React.FC = () => {
       key: 'armCircumference',
       color: '#38bdf8',
       gradientId: 'gradArm',
-      currentVal: metricsData?.current?.armCircumference || 32.8,
-      diff: '+۱.۸ سانتی‌متر هایپرتروفی',
+      currentVal: metricsData?.current?.armCircumference || (currentUser?.bicep ? Number(currentUser.bicep) : '-'),
+      baseVal: baseRecord?.armCircumference ? `${baseRecord.armCircumference} cm` : 'ثبت نشده',
+      diff: calcDiff('armCircumference', 'سانتی‌متر'),
     },
     thigh: {
       title: 'دور ران',
@@ -147,8 +179,9 @@ export const ProgressReportPage: React.FC = () => {
       key: 'thighCircumference',
       color: '#a855f7',
       gradientId: 'gradThigh',
-      currentVal: metricsData?.current?.thighCircumference || 56.4,
-      diff: '+۲.۴ سانتی‌متر قدرت عضلانی',
+      currentVal: metricsData?.current?.thighCircumference || (currentUser?.thigh ? Number(currentUser.thigh) : '-'),
+      baseVal: baseRecord?.thighCircumference ? `${baseRecord.thighCircumference} cm` : 'ثبت نشده',
+      diff: calcDiff('thighCircumference', 'سانتی‌متر'),
     },
     fat: {
       title: 'درصد چربی',
@@ -156,8 +189,9 @@ export const ProgressReportPage: React.FC = () => {
       key: 'bodyFat',
       color: '#f59e0b',
       gradientId: 'gradFat',
-      currentVal: metricsData?.current?.bodyFat || 12.4,
-      diff: '-۱.۸٪ چربی‌سوزی هدفمند',
+      currentVal: metricsData?.current?.bodyFat || 14,
+      baseVal: baseRecord?.bodyFat ? `${baseRecord.bodyFat}٪` : 'ثبت نشده',
+      diff: calcDiff('bodyFat', 'درصد'),
     },
     agility: {
       title: 'تست چابکی ۵-۱۰-۵',
@@ -165,13 +199,13 @@ export const ProgressReportPage: React.FC = () => {
       key: 'agilityTime',
       color: '#ec4899',
       gradientId: 'gradAgility',
-      currentVal: 6.0,
-      diff: '-۰.۸ ثانیه بهبود شتاب',
+      currentVal: metricsData?.current?.agilityTime || 6.2,
+      baseVal: baseRecord?.agilityTime ? `${baseRecord.agilityTime}s` : 'ثبت نشده',
+      diff: calcDiff('agilityTime', 'ثانیه'),
     },
   };
 
   const currentCfg = metricConfigs[selectedMetric];
-  const history = metricsData?.history || [];
 
   // SVG Chart calculation
   const values = history.map((h: any) => h[currentCfg.key] || 0);
@@ -257,11 +291,11 @@ export const ProgressReportPage: React.FC = () => {
             <Scale className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="text-xl font-black text-foreground">
-            {metricsData?.current?.weight || 71.5}{' '}
+            {metricConfigs.weight.currentVal}{' '}
             <span className="text-xs font-normal text-muted-foreground">kg</span>
           </div>
           <span className="text-[10px] text-emerald-400 font-bold block mt-0.5">
-            پایه: ۶۹.۲ kg (+۲.۳)
+            پایه: {metricConfigs.weight.baseVal}
           </span>
         </motion.div>
 
@@ -280,11 +314,11 @@ export const ProgressReportPage: React.FC = () => {
             <Activity className="h-4 w-4 text-sky-400" />
           </div>
           <div className="text-xl font-black text-foreground">
-            {metricsData?.current?.armCircumference || 32.8}{' '}
+            {metricConfigs.arm.currentVal}{' '}
             <span className="text-xs font-normal text-muted-foreground">cm</span>
           </div>
           <span className="text-[10px] text-sky-400 font-bold block mt-0.5">
-            پایه: ۳۱.۰ cm (+۱.۸)
+            پایه: {metricConfigs.arm.baseVal}
           </span>
         </motion.div>
 
@@ -303,11 +337,11 @@ export const ProgressReportPage: React.FC = () => {
             <Zap className="h-4 w-4 text-purple-400" />
           </div>
           <div className="text-xl font-black text-foreground">
-            {metricsData?.current?.thighCircumference || 56.4}{' '}
+            {metricConfigs.thigh.currentVal}{' '}
             <span className="text-xs font-normal text-muted-foreground">cm</span>
           </div>
           <span className="text-[10px] text-purple-400 font-bold block mt-0.5">
-            پایه: ۵۴.۰ cm (+۲.۴)
+            پایه: {metricConfigs.thigh.baseVal}
           </span>
         </motion.div>
 
@@ -326,11 +360,11 @@ export const ProgressReportPage: React.FC = () => {
             <Award className="h-4 w-4 text-amber-400" />
           </div>
           <div className="text-xl font-black text-foreground">
-            {metricsData?.current?.bodyFat || 12.4}{' '}
+            {metricConfigs.fat.currentVal}{' '}
             <span className="text-xs font-normal text-muted-foreground">٪</span>
           </div>
           <span className="text-[10px] text-emerald-400 font-bold block mt-0.5">
-            پایه: ۱۴.۲٪ (-۱.۸٪ چربی‌سوزی)
+            پایه: {metricConfigs.fat.baseVal}
           </span>
         </motion.div>
       </div>

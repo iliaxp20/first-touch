@@ -19,10 +19,8 @@ export class ProgramsService {
         const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
         const list: TrainingProgramItem[] = JSON.parse(raw);
         if (Array.isArray(list) && list.length > 0) {
-          const cleaned = list.filter((p) => p && p.id && p.title);
-          const customIds = new Set(cleaned.map((p) => p.id));
-          const remaining = INITIAL_TRAINING_PROGRAMS.filter((p) => !customIds.has(p.id));
-          this.programs = [...cleaned, ...remaining];
+          const cleaned = list.filter((p) => p && p.id && p.title && !p.id.startsWith('prog-1') && p.id !== 'prog-2' && p.id !== 'prog-3' && p.id !== 'prog-4' && p.id !== 'prog-5');
+          this.programs = cleaned.length > 0 ? cleaned : list.filter((p) => p && p.id && p.title);
           this.logger.log(`Loaded ${this.programs.length} total training programs.`);
           return;
         }
@@ -287,30 +285,11 @@ export class ProgramsService {
     } catch {}
 
     const defaultMetrics = {
-      playerName: 'مهدی طارمی',
-      initialDate: '۱۴۰۳/۰۶/۰۱',
-      history: [
-        { week: 'هفته ۱ (پایه)', date: '۱۴۰۳/۰۶/۰۱', weight: 69.2, armCircumference: 31.0, thighCircumference: 54.0, bodyFat: 14.2, agilityTime: 6.8 },
-        { week: 'هفته ۲', date: '۱۴۰۳/۰۶/۱۵', weight: 69.8, armCircumference: 31.4, thighCircumference: 54.5, bodyFat: 13.8, agilityTime: 6.6 },
-        { week: 'هفته ۳', date: '۱۴۰۳/۰۷/۰۱', weight: 70.4, armCircumference: 31.9, thighCircumference: 55.2, bodyFat: 13.2, agilityTime: 6.4 },
-        { week: 'هفته ۴', date: '۱۴۰۳/۰۷/۱۵', weight: 70.9, armCircumference: 32.3, thighCircumference: 55.8, bodyFat: 12.8, agilityTime: 6.2 },
-        { week: 'هفته ۵ (جاری)', date: '۱۴۰۳/۰۸/۰۱', weight: 71.5, armCircumference: 32.8, thighCircumference: 56.4, bodyFat: 12.4, agilityTime: 6.0 },
-      ],
-      current: {
-        weight: 71.5,
-        targetWeight: 72.5,
-        armCircumference: 32.8,
-        thighCircumference: 56.4,
-        bodyFat: 12.4,
-        height: 182,
-        vo2max: 54.2,
-      },
+      playerName: '',
+      initialDate: '',
+      history: [],
+      current: null,
     };
-
-    try {
-      const p = this.getMetricsFilePath();
-      fs.writeFileSync(p, JSON.stringify(defaultMetrics, null, 2), 'utf-8');
-    } catch {}
 
     return defaultMetrics;
   }

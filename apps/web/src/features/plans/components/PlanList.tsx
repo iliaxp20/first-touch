@@ -425,7 +425,7 @@ export const PlanList: React.FC = () => {
             onClick={() => {
               triggerHaptic();
               setActiveVideo({
-                url: drill.videoUrl || '/uploads/drill_agility.mp4',
+                url: resolveMediaUrl(drill.videoUrl || '/uploads/drill_agility.mp4'),
                 title: drill.title,
               });
             }}
@@ -433,14 +433,24 @@ export const PlanList: React.FC = () => {
           >
             {/* Thumbnail Header with Duration Badge */}
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-black/40">
-              <img
-                src={drill.image}
-                alt={drill.title}
-                loading="eager"
-                decoding="sync"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                draggable={false}
-              />
+              {drill.image ? (
+                <img
+                  src={resolveMediaUrl(drill.image)}
+                  alt={drill.title}
+                  loading="eager"
+                  decoding="sync"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  draggable={false}
+                />
+              ) : drill.videoUrl ? (
+                <video
+                  src={`${resolveMediaUrl(drill.videoUrl)}#t=0.5`}
+                  preload="metadata"
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : null}
               <div
                 dir="ltr"
                 className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/30 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-400"

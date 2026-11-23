@@ -185,10 +185,12 @@ export const DashboardView: React.FC = () => {
       .catch(() => {});
   }, []);
 
-  // Player details for banner
-  const playerName = currentUser?.fullName || 'مهدی طارمی';
-  const playerAge = currentUser?.age || 17;
-  const playerPosition = currentUser?.position || 'هافبک دفاعی';
+  // Player details for banner (real authenticated profile data)
+  const playerName =
+    currentUser?.fullName ||
+    (currentUser?.phoneNumber ? `کاربر ${currentUser.phoneNumber.slice(-4)}` : 'ورزشکار فرست تاچ');
+  const playerAge = currentUser?.age ? `${currentUser.age} سال` : '';
+  const playerPosition = currentUser?.position || '';
 
   return (
     <div
@@ -389,11 +391,13 @@ export const DashboardView: React.FC = () => {
                 {playerName}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] md:text-xs font-bold text-emerald-400 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] truncate max-w-full">
-              <span>{playerAge} سال</span>
-              <span className="text-emerald-500/70">•</span>
-              <span className="text-emerald-300 font-extrabold">{playerPosition}</span>
-            </div>
+            {(playerAge || playerPosition) && (
+              <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] md:text-xs font-bold text-emerald-400 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] truncate max-w-full">
+                {playerAge && <span>{playerAge}</span>}
+                {playerAge && playerPosition && <span className="text-emerald-500/70">•</span>}
+                {playerPosition && <span className="text-emerald-300 font-extrabold">{playerPosition}</span>}
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
