@@ -53,144 +53,48 @@ export const getAgeGroupFromAge = (
 
 const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [
   {
-    "id": "prog-1794729612105",
-    "title": "برنامه تست سرعت و چابکی با ویدیو",
-    "coachName": "استاد حمید درخشان",
-    "coachTitle": "سرمربی آکادمی",
-    "goal": "توسعه شتاب و چابکی تخصصی و تست رکوردهای سرعتی",
-    "difficulty": "پیشرفته",
-    "ageGroup": "تمامی رده‌ها",
-    "durationWeeks": 4,
-    "sessionsPerWeek": 3,
-    "equipment": ["توپ فوتبال", "مخروط"],
-    "description": "برنامه تست تخصصی سرعت و چابکی به همراه ویدیوی آموزشی اضافه شده از پنل مدیریت",
-    "price": "رایگان",
-    "priceNumber": 0,
-    "isFree": true,
-    "studentsCount": 45,
-    "rating": 5,
-    "videoUrl": "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4",
-    "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
-    "totalSessions": 12,
-    "drillsSummary": ["شتاب گام اول", "نردبان چابکی", "تست سرعت ۵-۱۰-۵", "تغییر مسیر انفجاری"],
-  },
-  {
-    "id": "prog-1794729591094",
-    "title": "برنامه تست سرعت و چابکی پایه‌ای",
-    "coachName": "استاد حمید درخشان",
-    "coachTitle": "سرمربی آکادمی",
-    "goal": "توسعه شتاب و چابکی پایه و بهبود هماهنگی عصب و عضله",
-    "difficulty": "متوسط",
-    "ageGroup": "تمامی رده‌ها",
-    "durationWeeks": 4,
-    "sessionsPerWeek": 3,
-    "equipment": ["توپ فوتبال", "مخروط"],
-    "description": "پروتکل تمرینات پایه چابکی با تأکید بر فرکانس پای بالا و استارت‌های انفجاری",
-    "price": "رایگان",
-    "priceNumber": 0,
-    "isFree": true,
-    "studentsCount": 38,
-    "rating": 5,
-    "videoUrl": "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4",
-    "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
-    "totalSessions": 12,
-    "drillsSummary": ["شتاب گام اول", "نردبان چابکی"],
-  },
-  {
-    id: 'ready-plan-free-football',
-    title: 'برنامه آمادگی بدنی و لمس توپ فرست تاچ',
-    ageGroup: 'تمامی رده‌ها',
-    price: 'رایگان',
+    id: "prog-1794729612105",
+    title: "برنامه تست سرعت و چابکی با ویدیو",
+    coachName: "استاد حمید درخشان",
+    coachTitle: "سرمربی آکادمی",
+    goal: "توسعه شتاب و چابکی تخصصی و تست رکوردهای سرعتی",
+    difficulty: "پیشرفته",
+    ageGroup: "تمامی رده‌ها",
+    durationWeeks: 4,
+    sessionsPerWeek: 3,
+    equipment: ["توپ فوتبال", "مخروط"],
+    description: "برنامه تست تخصصی سرعت و چابکی به همراه ویدیوی آموزشی اضافه شده از پنل مدیریت",
+    price: "رایگان",
     priceNumber: 0,
-    durationWeeks: 4,
-    sessionsPerWeek: 3,
-    totalSessions: 12,
-    difficulty: 'متوسط',
-    goal: 'تقویت لمس اول، چابکی فرکانسی و هماهنگی عصبی عضلانی فوتبال',
-    description: 'برنامه پایه استاندارد آکادمی فرست تاچ شامل ۱۲ جلسه تقویمی با ویدیو و چک‌لیست حرکات.',
-    equipment: ['توپ فوتبال', 'مخروط', 'نردبان چابکی'],
-    coachName: 'کادر فنی فرست تاچ',
-    rating: 4.9,
-    studentsCount: 650,
-    videoUrl: '/uploads/1795328024187-3E954364-7B55-4A71-9B41-04BC81B80308.mp4',
-    drillsSummary: ['شتاب گام اول', 'نردبان چابکی', 'دریبل مارپیچ', 'پاس تک‌ضرب'],
     isFree: true,
+    studentsCount: 45,
+    rating: 5,
+    videoUrl: "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4",
+    imageUrl: "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
+    totalSessions: 12,
+    drillsSummary: ["شتاب گام اول", "نردبان چابکی", "تست سرعت ۵-۱۰-۵", "تغییر مسیر انفجاری"],
   },
   {
-    id: 'ready-plan-u12',
-    title: 'برنامه پایه چابکی، لمس اول و هماهنگی نونهالان',
-    ageGroup: 'نونهالان (زیر ۱۲ سال)',
-    price: '۱۹۹,۰۰۰ تومان',
-    priceNumber: 199000,
+    id: "prog-1794729591094",
+    title: "برنامه تست سرعت و چابکی پایه‌ای",
+    coachName: "استاد حمید درخشان",
+    coachTitle: "سرمربی آکادمی",
+    goal: "توسعه شتاب و چابکی پایه و بهبود هماهنگی عصب و عضله",
+    difficulty: "متوسط",
+    ageGroup: "تمامی رده‌ها",
     durationWeeks: 4,
     sessionsPerWeek: 3,
+    equipment: ["توپ فوتبال", "مخروط"],
+    description: "پروتکل تمرینات پایه چابکی با تأکید بر فرکانس پای بالا و استارت‌های انفجاری",
+    price: "رایگان",
+    priceNumber: 0,
+    isFree: true,
+    studentsCount: 38,
+    rating: 5,
+    videoUrl: "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4",
+    imageUrl: "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
     totalSessions: 12,
-    difficulty: 'مبتدی',
-    goal: 'تقویت ریتم گام‌برداری، شادی تمرین و لمس جهت‌دار با هر دو پا',
-    description: 'طراحی شده بر مبنای متدهای پایه آکادمی‌های اروپایی برای رشد عصبی-عضلانی زیر ۱۲ سال بدون وزنه.',
-    equipment: ['نردبان چابکی سبک', 'مخروط رنگی', 'توپ شماره ۴'],
-    coachName: 'دپارتمان آکادمی نونهالان فرست تاچ',
-    rating: 4.9,
-    studentsCount: 312,
-    videoUrl: '/uploads/1795328370919-D5E3B0A0-7933-43C2-831D-0099B9E47D26.mp4',
-    drillsSummary: ['ایکی شافل مقدماتی', 'بازی واکنش رنگی', 'کنترل با کفی و بغل پا', 'استارت ۱۰ متر تفریحی'],
-  },
-  {
-    id: 'ready-plan-u16',
-    title: 'برنامه شتاب انفجاری، پرس و استقامت عضلانی نوجوانان',
-    ageGroup: 'نوجوانان (۱۲ تا ۱۵ سال)',
-    price: '۱۹۹,۰۰۰ تومان',
-    priceNumber: 199000,
-    durationWeeks: 6,
-    sessionsPerWeek: 4,
-    totalSessions: 24,
-    difficulty: 'متوسط',
-    goal: 'ارتقای شتاب گام اول، استقامت بی‌هوازی و تکنیک در موقعیت‌های تحت فشار',
-    description: 'برنامه جامع بدنسازی تخصصی نوجوانان فوتبال با تأکید بر قدرت عملکردی وزن بدن و لمس دوم.',
-    equipment: ['مخروط', 'کش مقاومتی مینی‌لوپ', 'توپ شماره ۵', 'نردبان'],
-    coachName: 'کادر ارشد استعدادیابی فرست تاچ',
-    rating: 4.8,
-    studentsCount: 485,
-    videoUrl: '/uploads/1795328492965-F5288CA7-137D-4535-8433-9FCE3E764367.mp4',
-    drillsSummary: ['تست ۵-۱۰-۵ حرفه‌ای', 'اسکات پرشی تک‌پا', 'شاتل شتاب زاویه‌دار', 'پرس پرسرعت ۲ به ۲'],
-  },
-  {
-    id: 'ready-plan-u19',
-    title: 'برنامه قدرت، موبیلیتی و سرعت پیش‌فصل جوانان',
-    ageGroup: 'جوانان (۱۶ تا ۱۹ سال)',
-    price: '۱۹۹,۰۰۰ تومان',
-    priceNumber: 199000,
-    durationWeeks: 8,
-    sessionsPerWeek: 4,
-    totalSessions: 32,
-    difficulty: 'پیشرفته',
-    goal: 'آماده‌سازی برای تست‌های باشگاهی و لیگ جوانان، بهبود توان انفجاری و ریکاوری',
-    description: 'شامل پروتکل‌های حرفه‌ای FIFA 11+، تمرینات RSA استقامت در سرعت و کنترل پاس‌های پرفشار.',
-    equipment: ['بوسوبال', 'موانع پرش', 'وزنه آزاد / مدیسن بال', 'توپ'],
-    coachName: 'مربی بدنساز رسمی فیفا',
-    rating: 5.0,
-    studentsCount: 620,
-    videoUrl: '/uploads/1795328615717-451CA789-1BB6-4C2D-82F5-EDA57648251E.mp4',
-    drillsSummary: ['تکرار اسپرینت بی‌هوازی', 'موبیلیتی ۹۰/۹۰ لگن', 'پاس تک‌ضرب تحت فشار', 'پرش سرزنی با فرود مقاومتی'],
-  },
-  {
-    id: 'ready-plan-senior',
-    title: 'برنامه جامع آماده‌سازی فیزیکی و تاکتیکی بزرگسالان',
-    ageGroup: 'بزرگسالان (+۱۹ سال)',
-    price: '۱۹۹,۰۰۰ تومان',
-    priceNumber: 199000,
-    durationWeeks: 8,
-    sessionsPerWeek: 4,
-    totalSessions: 32,
-    difficulty: 'حرفه‌ای',
-    goal: 'رسیدن به اوج آمادگی بدنی مسابقاتی، چابکی عرضی و استقامت ۹۰ دقیقه‌ای',
-    description: 'تمرینات ویژه لیگ و بازیکنان باشگاهی با بالاترین چگالی تمرین و آنالیز بار کاری.',
-    equipment: ['کامل آکادمی', 'جی‌پی‌اس یا ساعت هوشمند', 'وزنه'],
-    coachName: 'سرمربی بین‌المللی UEFA Pro',
-    rating: 4.9,
-    studentsCount: 290,
-    videoUrl: '/uploads/1795328728584-D5774462-9F86-4D86-B4D6-86A1EA4F9468.mp4',
-    drillsSummary: ['RSA فوتبال ۹۰ دقیقه', 'شیرجه و انتقال موقعیت', 'شوت‌زنی بعد از استارت ۴۰ متری', 'حرکات ضد مصدومیت کشاله'],
+    drillsSummary: ["شتاب گام اول", "نردبان چابکی"],
   },
 ];
 
@@ -300,10 +204,17 @@ export const getReadyTrainingPlans = (): ReadyTrainingPlan[] => {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const cleaned = parsed.filter(
-          (p: ReadyTrainingPlan) => p && p.id && !deletedIds.includes(p.id)
+          (p: ReadyTrainingPlan) =>
+            p &&
+            p.id &&
+            !deletedIds.includes(p.id) &&
+            !p.id.startsWith('ready-plan-') &&
+            !(p.id.startsWith('prog-') && p.id.length < 10)
         );
         const storedIds = new Set(cleaned.map((p) => p.id));
-        const remaining = DEFAULT_READY_TRAINING_PLANS.filter((p) => !deletedIds.includes(p.id) && !storedIds.has(p.id));
+        const remaining = DEFAULT_READY_TRAINING_PLANS.filter(
+          (p) => !deletedIds.includes(p.id) && !storedIds.has(p.id)
+        );
         return [...cleaned, ...remaining];
       }
     }
@@ -356,10 +267,11 @@ export const syncProgramsWithServer = async (): Promise<ReadyTrainingPlan[]> => 
         const mapped: ReadyTrainingPlan[] = serverPrograms
           .filter(
             (p) =>
+              p &&
+              p.id &&
               !deletedIds.includes(p.id) &&
-              !p.title?.includes('تست') &&
-              !p.title?.toLowerCase().includes('test') &&
-              !p.description?.includes('تستی')
+              !p.id.startsWith('ready-plan-') &&
+              !(p.id.startsWith('prog-') && p.id.length < 10)
           )
           .map((p) => ({
             id: p.id,

@@ -242,6 +242,29 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   const handleFinishAndApply = () => {
     if (completedPlanResult) {
+      if (mode === 'nutrition') {
+        try {
+          const planId = completedPlanResult.id;
+          const weekDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+          const dailyObj: any = {};
+          const summaries = completedPlanResult.mealsSummary || [];
+          const bFood = summaries.find((s: any) => s.name?.includes('صبح'))?.food || 'نان سنگک و پنیر';
+          const lFood = summaries.find((s: any) => s.name?.includes('ناهار'))?.food || 'سینه مرغ گریل با برنج';
+          const sFood = summaries.find((s: any) => s.name?.includes('میان') || s.name?.includes('عصر'))?.food || 'سیب درختی و خرما';
+          const dFood = summaries.find((s: any) => s.name?.includes('شام'))?.food || 'فیله ماهی یا خوراک عدسی';
+
+          weekDays.forEach((d) => {
+            dailyObj[d] = {
+              breakfast: [{ id: `${d}-b1`, title: bFood, calories: 350, completed: false }],
+              lunch: [{ id: `${d}-l1`, title: lFood, calories: 600, completed: false }],
+              snack: [{ id: `${d}-s1`, title: sFood, calories: 250, completed: false }],
+              dinner: [{ id: `${d}-d1`, title: dFood, calories: 400, completed: false }],
+            };
+          });
+          localStorage.setItem(`ft_daily_nutrition_meals_${planId}`, JSON.stringify(dailyObj));
+          localStorage.setItem('ft_daily_nutrition_meals_default', JSON.stringify(dailyObj));
+        } catch {}
+      }
       onPlanActivated(completedPlanResult);
     }
     // Reset state
@@ -391,7 +414,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   const handleAssignFoodToMeal = (
     food: any,
-    mealType: 'صبحانه' | 'میان‌وعده' | 'ناهار' | 'عصرانه' | 'شام'
+    mealType: 'صبحانه' | 'ناهار' | 'میان وعده' | 'میان‌وعده' | 'عصرانه' | 'شام'
   ) => {
     triggerHaptic();
     const foodName = food.name?.fa || food.name || 'خوراک فوتبال';
@@ -411,10 +434,9 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
     const defaultMealsSummary = [
       { name: 'صبحانه', food: 'نان سنگک، ۲ عدد تخم‌مرغ و پنیر', time: '۰۸:۰۰' },
-      { name: 'میان‌وعده', food: 'سیب، ۳ عدد خرما و بادام', time: '۱۱:۰۰' },
-      { name: 'ناهار', food: 'سینه مرغ گریل با برنج کته و سالاد', time: '۱۴:۰۰' },
-      { name: 'عصرانه', food: 'موز با اوتمیل و شیر کم‌چرب', time: '۱۷:۳۰' },
-      { name: 'شام', food: 'خوراک لوبیا یا فیله ماهی با سبزیجات', time: '۲۱:۰۰' },
+      { name: 'ناهار', food: 'سینه مرغ گریل با برنج کته و سالاد', time: '۱۳:۳۰' },
+      { name: 'میان وعده', food: 'سیب، ۳ عدد خرما و بادام', time: '۱۷:۰۰' },
+      { name: 'شام', food: 'خوراک عدسی یا فیله ماهی با سبزیجات', time: '۲۱:۰۰' },
     ];
 
     const mealsSummary = currentPlan?.mealsSummary
@@ -422,7 +444,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
       : defaultMealsSummary;
 
     const mealIdx = mealsSummary.findIndex(
-      (m: any) => m.name === mealType || (mealType === 'میان‌وعده' && m.name?.includes('میان'))
+      (m: any) => m.name === mealType || (mealType.includes('میان') && m.name?.includes('میان'))
     );
     if (mealIdx >= 0) {
       mealsSummary[mealIdx] = {
@@ -442,45 +464,49 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
       dailyCalories: 2350,
       goal: 'تغذیه بهینه تمرین و ریکاوری با بانک غذاهای فرست تاچ',
       focus: 'پروتئین استاندارد • کربوهیدرات کمپلکس',
-      description: `برنامه ۵ وعده‌ای روزانه با تنظیم وعده ${mealType}: ${foodName}.`,
+      description: `برنامه ۴ وعده‌ای روزانه با تنظیم وعده ${mealType}: ${foodName}.`,
       mealsSummary,
     };
 
-    // Update daily calendar meals storage
+    // Update daily calendar meals storage (Structured for the 4 clean meals)
     try {
-      const calendarKey = `ft_nutrition_calendar_meals_${planId}`;
-      const savedCalendar = localStorage.getItem(calendarKey);
-      const calendarData: Record<string, any[]> = savedCalendar ? JSON.parse(savedCalendar) : {};
+      const sectionKey: 'breakfast' | 'lunch' | 'snack' | 'dinner' =
+        mealType === 'صبحانه'
+          ? 'breakfast'
+          : mealType === 'ناهار'
+          ? 'lunch'
+          : mealType === 'شام'
+          ? 'dinner'
+          : 'snack';
+
+      const dailyKey = `ft_daily_nutrition_meals_${planId}`;
+      const savedDaily = localStorage.getItem(dailyKey) || localStorage.getItem('ft_daily_nutrition_meals_default');
+      const dailyData: Record<string, any> = savedDaily ? JSON.parse(savedDaily) : {};
       const weekDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+
       weekDays.forEach((d) => {
-        if (!calendarData[d]) {
-          calendarData[d] = [
-            { id: `${d}-m1`, type: 'صبحانه', title: 'نان سنگک و تخم‌مرغ', desc: '', calories: 350, protein: 20, completed: false },
-            { id: `${d}-m2`, type: 'ناهار', title: 'سینه مرغ و برنج', desc: '', calories: 600, protein: 45, completed: false },
-            { id: `${d}-m3`, type: 'میان‌وعده', title: 'موز و مغزها', desc: '', calories: 250, protein: 12, completed: false },
-            { id: `${d}-m4`, type: 'شام', title: 'ماهی یا خوراک عدسی', desc: '', calories: 400, protein: 30, completed: false },
-          ];
+        if (!dailyData[d]) {
+          dailyData[d] = {
+            breakfast: [{ id: `${d}-b1`, title: 'نان سنگک و پنیر', calories: 280, protein: 12, completed: false }],
+            lunch: [{ id: `${d}-l1`, title: 'سینه مرغ و برنج', calories: 550, protein: 42, completed: false }],
+            snack: [{ id: `${d}-s1`, title: 'سیب و خرما', calories: 160, protein: 2, completed: false }],
+            dinner: [{ id: `${d}-d1`, title: 'فیله ماهی یا عدسی', calories: 380, protein: 28, completed: false }],
+          };
         }
-        const mItem = calendarData[d].find((m: any) => m.type === mealType || (mealType === 'میان‌وعده' && m.type?.includes('میان')));
-        if (mItem) {
-          mItem.title = foodName;
-          mItem.desc = `واحد: ${serving}`;
-          mItem.calories = calories;
-          mItem.protein = protein;
-        } else {
-          calendarData[d].push({
-            id: `${d}-${Date.now()}`,
-            type: mealType,
-            title: foodName,
-            desc: `واحد: ${serving}`,
-            calories,
-            protein,
-            completed: false,
-          });
+        if (!dailyData[d][sectionKey]) {
+          dailyData[d][sectionKey] = [];
         }
+        dailyData[d][sectionKey].push({
+          id: `food-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          title: foodName,
+          calories,
+          protein,
+          completed: false,
+        });
       });
-      localStorage.setItem(calendarKey, JSON.stringify(calendarData));
-      localStorage.setItem(`ft_nutrition_calendar_meals_default`, JSON.stringify(calendarData));
+
+      localStorage.setItem(dailyKey, JSON.stringify(dailyData));
+      localStorage.setItem('ft_daily_nutrition_meals_default', JSON.stringify(dailyData));
     } catch {}
 
     saveUnlockedPlan(newPlan.id, newPlan.title);
@@ -1030,6 +1056,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                   {activeFoods.slice(0, foodDisplayLimit).map((food) => {
                     const foodName = food.name?.fa || food.name || '';
                     const servingLabel = food.default_serving?.display_label_fa || food.default_serving?.label_fa || '۱۰۰ گرم';
+                    const foodCal = Math.round(food.nutrition_per_100g?.energy_kcal || 250);
 
                     return (
                       <div
@@ -1040,22 +1067,22 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           <h4 className="text-xs sm:text-sm font-black text-white truncate">
                             {foodName}
                           </h4>
-                          <span className="text-[10px] text-slate-400 block mt-0.5">
-                            واحد: {servingLabel}
+                          <span className="text-[10px] text-amber-400 font-bold block mt-0.5">
+                            {foodCal} کالری • {servingLabel}
                           </span>
                         </div>
 
-                        {/* Direct Meal Selection [صبحانه] [میان‌وعده] [ناهار] [عصرانه] [شام] */}
+                        {/* Direct Meal Selection [صبحانه] [ناهار] [میان وعده] [شام] */}
                         <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-none py-0.5">
-                          {(['صبحانه', 'میان‌وعده', 'ناهار', 'عصرانه', 'شام'] as const).map((meal) => (
+                          {(['صبحانه', 'ناهار', 'میان وعده', 'شام'] as const).map((meal) => (
                             <button
                               key={meal}
                               type="button"
                               onClick={() => handleAssignFoodToMeal(food, meal)}
                               className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white/10 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 transition-all cursor-pointer whitespace-nowrap active:scale-95 border border-white/5 hover:border-emerald-400"
-                              title={`افزودن ${foodName} به وعده ${meal}`}
+                              title={`افزودن به ${meal}`}
                             >
-                              {meal}
+                              + {meal}
                             </button>
                           ))}
                         </div>

@@ -19,9 +19,21 @@ export class ProgramsService {
         const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
         const list: TrainingProgramItem[] = JSON.parse(raw);
         if (Array.isArray(list) && list.length > 0) {
-          const cleaned = list.filter((p) => p && p.id && p.title && !p.id.startsWith('prog-1') && p.id !== 'prog-2' && p.id !== 'prog-3' && p.id !== 'prog-4' && p.id !== 'prog-5');
-          this.programs = cleaned.length > 0 ? cleaned : list.filter((p) => p && p.id && p.title);
+          const cleaned = list.filter(
+            (p) =>
+              p &&
+              p.id &&
+              p.title &&
+              !p.id.startsWith('ready-plan-') &&
+              !p.id.startsWith('prog-1') &&
+              p.id !== 'prog-2' &&
+              p.id !== 'prog-3' &&
+              p.id !== 'prog-4' &&
+              p.id !== 'prog-5',
+          );
+          this.programs = cleaned.length > 0 ? cleaned : [...INITIAL_TRAINING_PROGRAMS];
           this.logger.log(`Loaded ${this.programs.length} total training programs.`);
+          this.saveToDisk();
           return;
         }
       }
