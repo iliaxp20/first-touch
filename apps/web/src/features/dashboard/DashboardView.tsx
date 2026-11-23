@@ -54,6 +54,18 @@ export const DashboardView: React.FC = () => {
   // Real Training & Performance Data
   const [weeklyPerformanceData, setWeeklyPerformanceData] = useState<DayPoint[]>([]);
   const [activeProgram, setActiveProgram] = useState<any>(null);
+  const [healthData, setHealthData] = useState<any>(null);
+  const [studentReportData, setStudentReportData] = useState<any>(null);
+
+  // Sync health & water with API
+  const updateWater = useCallback((newVal: number) => {
+    setWaterGlasses(newVal);
+    fetch(`${API_BASE_URL}/programs/health-sleep`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ waterGlasses: newVal }),
+    }).catch(() => {});
+  }, []);
 
   // Haptic feedback
   const triggerHaptic = useCallback(() => {
@@ -129,6 +141,25 @@ export const DashboardView: React.FC = () => {
         if (d?.points && Array.isArray(d.points)) {
           setWeeklyPerformanceData(d.points);
         }
+      })
+      .catch(() => {});
+
+    // Real Health & Sleep Data
+    fetch(`${API_BASE_URL}/programs/health-sleep`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setHealthData(d);
+          if (d.waterGlasses !== undefined) setWaterGlasses(d.waterGlasses);
+        }
+      })
+      .catch(() => {});
+
+    // Real Student Evaluation Report
+    fetch(`${API_BASE_URL}/programs/student-report`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setStudentReportData(d);
       })
       .catch(() => {});
   }, []);
@@ -391,10 +422,10 @@ export const DashboardView: React.FC = () => {
             whileTap={{ scale: 0.97 }}
             onClick={() => {
               triggerHaptic();
-              setIsProgressModalOpen(true);
+              navigate('/progress');
             }}
             className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
-            title="مشاهده گزارش پیشرفت"
+            title="مشاهده گزارش و تحلیل پیشرفت"
           >
             <img
               src="/dashboard-cards/card_progress.webp"
@@ -622,12 +653,15 @@ export const DashboardView: React.FC = () => {
                     <Moon className="h-4 w-4 text-indigo-400" />
                     خواب دیشب
                   </span>
-                  <span className="text-xs font-black text-indigo-400">۸ ساعت و ۱۵ دقیقه</span>
+                  <span className="text-xs font-black text-indigo-400">
+                    {healthData?.sleepHours || 8.2} ساعت
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-[11px] text-muted-foreground pt-1 border-t border-white/5">
-                  <span>زمان خواب: ۲۳:۱۵</span>
-                  <span>زمان بیداری: ۰۷:۳۰</span>
-                  <span className="text-emerald-400 font-bold">کیفیت: عالی (۹۴٪)</span>
+                  <span>ضربان استراحت: {healthData?.restingHeartRate || 52} bpm</span>
+                  <span className="text-emerald-400 font-bold">
+                    ریکاوری: {healthData?.recoveryScore || 88}٪
+                  </span>
                 </div>
               </div>
 
@@ -665,7 +699,7 @@ export const DashboardView: React.FC = () => {
                     variant="outline"
                     onClick={() => {
                       triggerHaptic();
-                      setWaterGlasses((prev) => Math.max(0, prev - 1));
+                      updateWater(Math.max(0, waterGlasses - 1));
                     }}
                     className="h-8 flex-1 text-xs font-bold border-white/10 hover:bg-white/10"
                   >
@@ -677,7 +711,7 @@ export const DashboardView: React.FC = () => {
                     variant="primary"
                     onClick={() => {
                       triggerHaptic();
-                      setWaterGlasses((prev) => Math.min(16, prev + 1));
+                      updateWater(Math.min(16, waterGlasses + 1));
                     }}
                     className="h-8 flex-1 text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white"
                   >
@@ -728,67 +762,61 @@ export const DashboardView: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-white">{playerName}</span>
                   <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                    رده برتر ماه
+                    {studentReportData?.reportMonth || 'آبان ۱۴۰۳'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-white/10">
                   <div>
                     <div className="text-xs text-muted-foreground">حضور منظم</div>
-                    <div className="text-base font-black text-emerald-400 mt-0.5">۹۴٪</div>
+                    <div className="text-base font-black text-emerald-400 mt-0.5">
+                      {studentReportData?.attendancePercent || 94}٪
+                    </div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">نمره مهارت</div>
-                    <div className="text-base font-black text-purple-400 mt-0.5">A+</div>
+                    <div className="text-xs text-muted-foreground">نمره عملکرد</div>
+                    <div className="text-base font-black text-purple-400 mt-0.5">
+                      {studentReportData?.overallScore || 89}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground">انضباط تیمی</div>
                     <div className="text-base font-black text-sky-400 mt-0.5">۱۰۰٪</div>
                   </div>
                 </div>
+
+                {studentReportData?.coachFeedback && (
+                  <p className="text-[11px] text-slate-300 pt-2 border-t border-white/10 leading-relaxed">
+                    «{studentReportData.coachFeedback}»
+                  </p>
+                )}
               </div>
 
               {/* Skills Radar / Bars */}
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-right">
                 <h4 className="text-xs font-bold text-muted-foreground">شاخص‌های فنی بازیکن:</h4>
 
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-semibold">
-                    <span>کنترل توپ و فرست تاچ</span>
-                    <span className="text-emerald-400">۹۲٪</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full w-[92%]" />
-                  </div>
+                <div className="space-y-2">
+                  {(studentReportData?.metrics || [
+                    { label: 'شتاب و چابکی اولیه', score: 92, status: 'عالی' },
+                    { label: 'تکنیک لمس اول و جهت‌دار', score: 88, status: 'خوب' },
+                    { label: 'استقامت سرعت در نیمه دوم', score: 85, status: 'در حال ارتقا' },
+                    { label: 'رعایت پروتکل تغذیه و آب', score: 93, status: 'عالی' },
+                  ]).map((m: any, idx: number) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-semibold">
+                        <span>{m.label}</span>
+                        <span className="text-emerald-400">{m.score}٪ ({m.status})</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                          style={{ width: `${m.score}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-semibold">
-                    <span>دید و هوش بازی (تاکتیک)</span>
-                    <span className="text-sky-400">۸۸٪</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full bg-sky-500 rounded-full w-[88%]" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-semibold">
-                    <span>استقامت و چابکی</span>
-                    <span className="text-purple-400">۸۵٪</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full w-[85%]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Coach Feedback Note */}
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-right space-y-1">
-                <span className="text-[11px] font-black text-emerald-400">نظر سرمربی:</span>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  تمرکز روی جاگیری در فاز دفاعی و سرعت انتقال توپ بسیار مثبت بوده است. تداوم تمرینات هفتگی حفظ شود.
-                </p>
               </div>
             </motion.div>
           </div>

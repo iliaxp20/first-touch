@@ -13,6 +13,7 @@ import { QuizRewardsView } from '@/features/quiz/QuizRewardsView';
 import { AuthScreen } from '@/features/auth/components/AuthScreen';
 import { LockedFeatureView } from '@/components/ui/LockedFeatureView';
 import { SecretAdminPortal } from '@/features/admin/SecretAdminPortal';
+import { ProgressReportPage } from '@/features/dashboard/ProgressReportPage';
 
 // Layout wrapper for authenticated pages
 const AuthenticatedLayout: React.FC = () => {
@@ -123,6 +124,8 @@ export const AppRoutes: React.FC = () => {
       >
         <Route path="/" element={<DashboardView />} />
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        <Route path="/progress" element={<ProgressReportPage />} />
+        <Route path="/performance-report" element={<Navigate to="/progress" replace />} />
         
         {/* Practice and exercises routes */}
         <Route path="/practice" element={<PracticeRoute />} />

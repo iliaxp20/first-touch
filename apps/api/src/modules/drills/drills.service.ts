@@ -8,7 +8,7 @@ import * as path from 'path';
 @Injectable()
 export class DrillsService implements OnModuleInit {
   private readonly logger = new Logger(DrillsService.name);
-  private memoryDrills: AgilityDrillItem[] = [];
+  private memoryDrills: AgilityDrillItem[] = [...INITIAL_AGILITY_DRILLS];
   private readonly storageFilePath = path.resolve(process.cwd(), 'data', 'drills.json');
 
   constructor(private readonly prisma: PrismaService) {
@@ -25,16 +25,24 @@ export class DrillsService implements OnModuleInit {
         const raw = fs.readFileSync(this.storageFilePath, 'utf-8');
         const customDrills: AgilityDrillItem[] = JSON.parse(raw);
         if (Array.isArray(customDrills) && customDrills.length > 0) {
-          // Merge custom drills at top of memoryDrills, avoiding duplicates
-          const customIds = new Set(customDrills.map((d) => d.id));
-          const remaining = this.memoryDrills.filter((d) => !customIds.has(d.id));
-          this.memoryDrills = [...customDrills, ...remaining];
-          this.logger.log(`Loaded ${customDrills.length} custom drills from disk.`);
+          // Filter out dummy test items
+          const cleaned = customDrills.filter(
+            (d) =>
+              !d.persianName?.includes('تست') &&
+              !d.englishName?.toLowerCase().includes('test') &&
+              !d.description?.includes('تستی')
+          );
+          const customIds = new Set(cleaned.map((d) => d.id));
+          const remaining = INITIAL_AGILITY_DRILLS.filter((d) => !customIds.has(d.id));
+          this.memoryDrills = [...cleaned, ...remaining];
+          this.logger.log(`Loaded ${this.memoryDrills.length} total drills from INITIAL + disk.`);
+          return;
         }
       }
     } catch (err: any) {
       this.logger.warn(`Failed loading drills from disk: ${err.message}`);
     }
+    this.memoryDrills = [...INITIAL_AGILITY_DRILLS];
   }
 
   private saveToDisk() {

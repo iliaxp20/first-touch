@@ -4,10 +4,12 @@ import { Bell, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PlanAcquisitionModal } from './PlanAcquisitionModal';
 import { ActiveNutritionPlanCard } from './ActiveNutritionPlanCard';
+import { NutritionGuideModal } from './NutritionGuideModal';
 
 export const NutritionView: React.FC = () => {
   const navigate = useNavigate();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isPlanPressed, setIsPlanPressed] = useState(false);
   const [isAcquisitionOpen, setIsAcquisitionOpen] = useState(false);
@@ -234,17 +236,27 @@ export const NutritionView: React.FC = () => {
 
       {/* =========================================================================
           HEALTHY EATING NUTRITION BANNER / SLIDER
-          (فقط خود تصویر اسلایدر تغذیه بدون کادر اضافه)
+          (کلیک روی این بنر دیالوگ راهنمای جامع تغذیه را باز می‌کند)
           ========================================================================= */}
       <div className="w-full my-2">
-        <img
-          src="/healthy-eating-banner.png"
-          alt="برنامه تغذیه سالم و ورزشی فرست تاچ"
-          loading="eager"
-          decoding="sync"
-          className="w-full h-auto rounded-2xl sm:rounded-3xl cursor-pointer"
-          onClick={triggerHaptic}
-        />
+        <motion.div
+          whileHover={{ scale: 1.015 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            triggerHaptic();
+            setIsGuideOpen(true);
+          }}
+          className="cursor-pointer"
+          title="مشاهده راهنمای جامع تغذیه"
+        >
+          <img
+            src="/healthy-eating-banner.png"
+            alt="برنامه تغذیه سالم و ورزشی فرست تاچ"
+            loading="eager"
+            decoding="sync"
+            className="w-full h-auto rounded-2xl sm:rounded-3xl shadow-lg"
+          />
+        </motion.div>
       </div>
 
       {/* =========================================================================
@@ -370,6 +382,12 @@ export const NutritionView: React.FC = () => {
           }}
         />
       )}
+
+      {/* Modal راهنمای جامع تغذیه */}
+      <NutritionGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
     </div>
   );
 };

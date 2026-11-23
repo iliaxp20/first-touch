@@ -28,6 +28,18 @@ export class NutritionController {
     return this.nutritionService.getDailyTarget();
   }
 
+  @Get('guide')
+  @ApiOperation({ summary: 'دریافت راهنمای جامع تغذیه و سوخت‌رسانی' })
+  async getNutritionGuide() {
+    return this.nutritionService.getNutritionGuide();
+  }
+
+  @Put('guide')
+  @ApiOperation({ summary: 'ویرایش راهنمای جامع تغذیه از پنل مدیریت' })
+  async updateNutritionGuide(@Body() body: any) {
+    return this.nutritionService.updateNutritionGuide(body);
+  }
+
   @Put('target')
   @ApiOperation({ summary: 'ویرایش کالری هدف و درشت‌مغذی‌ها' })
   @ApiResponse({ status: 200, description: 'هدف تغذیه‌ای به‌روزرسانی شد' })

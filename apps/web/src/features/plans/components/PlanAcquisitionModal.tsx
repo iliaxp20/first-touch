@@ -65,9 +65,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   // --- FREE TAB STATE ---
   const [drillSearchText, setDrillSearchText] = useState('');
-  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string>(
-    mode === 'training' ? 'agility' : 'hydration'
-  );
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string>('all');
   const [trainingDrills, setTrainingDrills] = useState<FreeDrill[]>(() => getTrainingDrills());
   const [freeDrillDetail, setFreeDrillDetail] = useState<FreeDrill | null>(null);
   const [selectedFreeItems, setSelectedFreeItems] = useState<string[]>([]);
@@ -357,9 +355,13 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
   // Filtered Drills for Search & Category (Reactive with Admin additions)
   const activeCategoryDrills = useMemo(() => {
+    let list = trainingDrills;
+    if (selectedCategoryKey && selectedCategoryKey !== 'all') {
+      list = list.filter((d) => d.categoryKey === selectedCategoryKey);
+    }
     if (drillSearchText.trim()) {
       const q = drillSearchText.trim().toLowerCase();
-      return trainingDrills.filter(
+      list = list.filter(
         (d) =>
           (d.title && d.title.toLowerCase().includes(q)) ||
           (d.subCategory && d.subCategory.toLowerCase().includes(q)) ||
@@ -369,8 +371,8 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
           (d.difficulty && d.difficulty.toLowerCase().includes(q))
       );
     }
-    return trainingDrills;
-  }, [trainingDrills, drillSearchText]);
+    return list;
+  }, [trainingDrills, selectedCategoryKey, drillSearchText]);
 
   // Filtered Nutrition Items
   const activeNutritionItems = FREE_NUTRITION_ITEMS.filter(
@@ -683,16 +685,49 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           </div>
                         )}
 
-                        {/* Search Input replacing Category Bar (با توضیحات کم) */}
+                        {/* Search Input */}
                         <div className="relative">
                           <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                           <input
                             type="text"
                             value={drillSearchText}
                             onChange={(e) => setDrillSearchText(e.target.value)}
-                            placeholder="جستجو (چابکی، سرعت، شوت...)"
+                            placeholder="جستجوی تمرین (چابکی، سرعت، شوت، پرس...)"
                             className="w-full pr-10 pl-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                           />
+                        </div>
+
+                        {/* Category Filter Pills (چابکی، قدرتی، سرعتی، تکنیکی، استقامت...) */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none">
+                          {[
+                            { key: 'all', title: 'همه تمرینات' },
+                            { key: 'agility', title: 'چابکی' },
+                            { key: 'strength', title: 'قدرتی' },
+                            { key: 'speed', title: 'سرعت' },
+                            { key: 'endurance', title: 'استقامت' },
+                            { key: 'technique', title: 'تکنیکی' },
+                            { key: 'tactics', title: 'تاکتیکی' },
+                            { key: 'balance', title: 'تعادل و هماهنگی' },
+                            { key: 'flexibility', title: 'انعطاف‌پذیری' },
+                            { key: 'goalkeeping', title: 'دروازه‌بانی' },
+                            { key: 'warmup', title: 'گرم‌کردن و سردکردن' },
+                          ].map((cat) => {
+                            const isSelected = selectedCategoryKey === cat.key;
+                            return (
+                              <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => setSelectedCategoryKey(cat.key)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-emerald-500 text-slate-950 font-black shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+                                    : 'bg-white/10 dark:bg-white/[0.05] text-slate-300 hover:text-white hover:bg-white/15 border border-white/10'
+                                }`}
+                              >
+                                {cat.title}
+                              </button>
+                            );
+                          })}
                         </div>
 
                         {/* Drills Grid (Clean, Responsive, Mobile-friendly) */}
@@ -933,14 +968,21 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
             {/* Ready Programs List */}
             {mode === 'training' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {readyTrainingPlans
-                  .filter(
+                {(
+                  readyTrainingPlans.filter(
                     (p) =>
                       !userAgeGroup ||
                       p.ageGroup.includes(userAgeGroup) ||
                       p.ageGroup === 'تمامی رده‌ها'
-                  )
-                  .map((plan) => {
+                  ).length > 0
+                    ? readyTrainingPlans.filter(
+                        (p) =>
+                          !userAgeGroup ||
+                          p.ageGroup.includes(userAgeGroup) ||
+                          p.ageGroup === 'تمامی رده‌ها'
+                      )
+                    : readyTrainingPlans
+                ).map((plan) => {
                     const isUnlocked = isPlanUnlocked(plan.id, plan.title);
                     return (
                       <div
@@ -1065,14 +1107,21 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
             ) : (
               /* Ready Nutrition Plans */
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {readyNutritionPlans
-                  .filter(
+                {(
+                  readyNutritionPlans.filter(
                     (p) =>
                       !userAgeGroup ||
                       p.ageGroup.includes(userAgeGroup) ||
                       p.ageGroup === 'تمامی رده‌ها'
-                  )
-                  .map((nutPlan) => {
+                  ).length > 0
+                    ? readyNutritionPlans.filter(
+                        (p) =>
+                          !userAgeGroup ||
+                          p.ageGroup.includes(userAgeGroup) ||
+                          p.ageGroup === 'تمامی رده‌ها'
+                      )
+                    : readyNutritionPlans
+                ).map((nutPlan) => {
                     const isNutUnlocked = isPlanUnlocked(nutPlan.id, nutPlan.title);
                     return (
                       <div

@@ -164,6 +164,59 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
   const [isUploadingProgramVideo, setIsUploadingProgramVideo] = useState(false);
 
+  // Nutrition Guide Editor State
+  const [guideForm, setGuideForm] = useState({
+    title: 'راهنمای جامع تغذیه و سوخت‌رسانی فوتبال',
+    subtitle: 'اصول تخصصی تغذیه مسابقه، آب‌رسانی و بازسازی گلیکوژن برای فوتبالیست‌ها',
+    summary: 'تغذیه مناسب تا ۴۰٪ در راندمان بدنی، استقامت ۹۰ دقیقه‌ای و جلوگیری از گرفتگی عضلات در نیمه دوم مؤثر است.',
+    preMatchMeal: 'وعده اصلی ۳ تا ۴ ساعت قبل مسابقه (کربوهیدرات پیچیده با شاخص گلیسمی متوسط + پروتئین کم‌چرب)\nمیان‌وعده سبک ۶۰ تا ۹۰ دقیقه قبل مسابقه (موز، نان تست با عسل طبیعی)\nپرهیز از غذاهای چرب، پرادویه و فیبر سنگین قبل از سوت آغاز بازی',
+    postMatchRecovery: 'پنجره آنابولیک ۳۰ دقیقه اول: مصرف پروتئین باکیفیت (۲۰ تا ۳۰ گرم) به همراه کربوهیدرات ساده\nشیک اسموتی پروتئینی با شیر کم‌چرب، موز، پودر کاکائو یا وی\nوعده شام ریکاوری: ماهی سالمون یا سینه مرغ به همراه برنج قهوه‌ای و سبزیجات سبز',
+    hydrationGuidelines: 'نوشیدن ۵۰۰ میلی‌لیتر آب یا نوشیدنی الکترولیت ۲ ساعت قبل از تمرین\nمصرف جرعه‌های کوچک (۱۵۰ تا ۲۰۰ میلی‌لیتر) هر ۱۵ تا ۲۰ دقیقه حین فعالیت\nجایگزینی وزن آب از دست رفته پس از مسابقه (به ازای هر کیلو افت وزن، ۱.۵ لیتر آب و املاح)',
+    supplementNotes: 'مصرف کراتین، منیزیم، ویتامین D3 و امگا ۳ تنها تحت نظارت پزشک تیم یا مربی مجرب توصیه می‌شود.',
+  });
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/nutrition/guide`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && data.title) {
+          setGuideForm({
+            title: data.title || '',
+            subtitle: data.subtitle || '',
+            summary: data.summary || '',
+            preMatchMeal: Array.isArray(data.preMatchMeal) ? data.preMatchMeal.join('\n') : data.preMatchMeal || '',
+            postMatchRecovery: Array.isArray(data.postMatchRecovery) ? data.postMatchRecovery.join('\n') : data.postMatchRecovery || '',
+            hydrationGuidelines: Array.isArray(data.hydrationGuidelines) ? data.hydrationGuidelines.join('\n') : data.hydrationGuidelines || '',
+            supplementNotes: data.supplementNotes || '',
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveGuide = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      title: guideForm.title,
+      subtitle: guideForm.subtitle,
+      summary: guideForm.summary,
+      preMatchMeal: guideForm.preMatchMeal.split('\n').map((s) => s.trim()).filter(Boolean),
+      postMatchRecovery: guideForm.postMatchRecovery.split('\n').map((s) => s.trim()).filter(Boolean),
+      hydrationGuidelines: guideForm.hydrationGuidelines.split('\n').map((s) => s.trim()).filter(Boolean),
+      supplementNotes: guideForm.supplementNotes,
+    };
+    try {
+      await fetch(`${API_BASE_URL}/nutrition/guide`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      showToast('راهنمای تغذیه با موفقیت ذخیره و به‌روزرسانی شد.');
+    } catch {
+      showToast('خطا در ذخیره راهنمای تغذیه.');
+    }
+  };
+
   // Quiz Form State
   const [newQuiz, setNewQuiz] = useState({
     question: '',
@@ -1658,6 +1711,104 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
                     })}
                 </div>
               )}
+            </div>
+
+            {/* ===================================================================
+                مدیریت راهنمای جامع تغذیه (دیالوگ بنر تغذیه)
+                =================================================================== */}
+            <div className="rounded-2xl p-4 sm:p-5 bg-[#06150c] border border-emerald-500/20 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <Apple className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white">مدیریت راهنمای جامع تغذیه (دیالوگ بنر تغذیه)</h3>
+                    <p className="text-[11px] text-slate-400">ویرایش متن‌ها، توصیه‌ها و اصول تغذیه ورزشی</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveGuide} className="space-y-3.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-300 block mb-1">عنوان راهنما:</label>
+                    <input
+                      type="text"
+                      value={guideForm.title}
+                      onChange={(e) => setGuideForm({ ...guideForm, title: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-300 block mb-1">زیرعنوان:</label>
+                    <input
+                      type="text"
+                      value={guideForm.subtitle}
+                      onChange={(e) => setGuideForm({ ...guideForm, subtitle: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">خلاصه و پیام اصلی:</label>
+                  <textarea
+                    rows={2}
+                    value={guideForm.summary}
+                    onChange={(e) => setGuideForm({ ...guideForm, summary: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">تغذیه قبل از مسابقه (هر بند در یک خط):</label>
+                  <textarea
+                    rows={3}
+                    value={guideForm.preMatchMeal}
+                    onChange={(e) => setGuideForm({ ...guideForm, preMatchMeal: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">ریکاوری و بازسازی عضلانی (هر بند در یک خط):</label>
+                  <textarea
+                    rows={3}
+                    value={guideForm.postMatchRecovery}
+                    onChange={(e) => setGuideForm({ ...guideForm, postMatchRecovery: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">پروتکل آب‌رسانی و الکترولیت (هر بند در یک خط):</label>
+                  <textarea
+                    rows={3}
+                    value={guideForm.hydrationGuidelines}
+                    onChange={(e) => setGuideForm({ ...guideForm, hydrationGuidelines: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">توصیه‌های مکمل‌ها و احتیاط:</label>
+                  <input
+                    type="text"
+                    value={guideForm.supplementNotes}
+                    onChange={(e) => setGuideForm({ ...guideForm, supplementNotes: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="py-2.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  ذخیره و انتشار راهنمای تغذیه
+                </button>
+              </form>
             </div>
           </div>
         )}

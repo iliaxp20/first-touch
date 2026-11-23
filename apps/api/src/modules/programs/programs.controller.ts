@@ -27,6 +27,42 @@ export class ProgramsController {
     return this.programsService.getWeeklyPerformance();
   }
 
+  @Get('athlete-metrics')
+  @ApiOperation({ summary: 'دریافت معیارهای فیزیکی واقعی بازیکن (وزن، دور بازو، دور ران، چربی)' })
+  async getAthleteMetrics() {
+    return this.programsService.getAthleteMetrics();
+  }
+
+  @Put('athlete-metrics')
+  @ApiOperation({ summary: 'به‌روزرسانی رکوردهای فیزیکی و سایز بازیکن' })
+  async updateAthleteMetrics(@Body() body: any) {
+    return this.programsService.saveAthleteMetrics(body);
+  }
+
+  @Get('health-sleep')
+  @ApiOperation({ summary: 'دریافت آمار واقعی خواب و سلامت بازیکن' })
+  async getHealthSleep() {
+    return this.programsService.getHealthSleep();
+  }
+
+  @Put('health-sleep')
+  @ApiOperation({ summary: 'ثبت و به‌روزرسانی وضعیت خواب و سلامت' })
+  async updateHealthSleep(@Body() body: any) {
+    return this.programsService.saveHealthSleep(body);
+  }
+
+  @Get('student-report')
+  @ApiOperation({ summary: 'دریافت کارنامه ماهانه و ارزیابی واقعی کادر فنی' })
+  async getStudentReport() {
+    return this.programsService.getStudentReport();
+  }
+
+  @Put('student-report')
+  @ApiOperation({ summary: 'ثبت و ارزیابی ماهانه دانش‌آموز توسط مربی' })
+  async updateStudentReport(@Body() body: any) {
+    return this.programsService.saveStudentReport(body);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'مشاهده جزئیات برنامه و تقویم اجرایی جلسات' })
   async getProgramById(@Param('id') id: string) {

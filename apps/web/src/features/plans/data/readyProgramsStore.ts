@@ -49,7 +49,99 @@ export const getAgeGroupFromAge = (
   return 'بزرگسالان (+۱۹ سال)';
 };
 
-const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [];
+const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [
+  {
+    id: 'ready-plan-free-football',
+    title: 'برنامه آمادگی بدنی و لمس توپ فرست تاچ',
+    ageGroup: 'تمامی رده‌ها',
+    price: 'رایگان',
+    priceNumber: 0,
+    durationWeeks: 4,
+    sessionsPerWeek: 3,
+    totalSessions: 12,
+    difficulty: 'متوسط',
+    goal: 'تقویت لمس اول، چابکی فرکانسی و هماهنگی عصبی عضلانی فوتبال',
+    description: 'برنامه پایه استاندارد آکادمی فرست تاچ شامل ۱۲ جلسه تقویمی با ویدیو و چک‌لیست حرکات.',
+    equipment: ['توپ فوتبال', 'مخروط', 'نردبان چابکی'],
+    coachName: 'کادر فنی فرست تاچ',
+    rating: 4.9,
+    studentsCount: 650,
+    drillsSummary: ['شتاب گام اول', 'نردبان چابکی', 'دریبل مارپیچ', 'پاس تک‌ضرب'],
+    isFree: true,
+  },
+  {
+    id: 'ready-plan-u12',
+    title: 'برنامه پایه چابکی، لمس اول و هماهنگی نونهالان',
+    ageGroup: 'نونهالان (زیر ۱۲ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    durationWeeks: 4,
+    sessionsPerWeek: 3,
+    totalSessions: 12,
+    difficulty: 'مبتدی',
+    goal: 'تقویت ریتم گام‌برداری، شادی تمرین و لمس جهت‌دار با هر دو پا',
+    description: 'طراحی شده بر مبنای متدهای پایه آکادمی‌های اروپایی برای رشد عصبی-عضلانی زیر ۱۲ سال بدون وزنه.',
+    equipment: ['نردبان چابکی سبک', 'مخروط رنگی', 'توپ شماره ۴'],
+    coachName: 'دپارتمان آکادمی نونهالان فرست تاچ',
+    rating: 4.9,
+    studentsCount: 312,
+    drillsSummary: ['ایکی شافل مقدماتی', 'بازی واکنش رنگی', 'کنترل با کفی و بغل پا', 'استارت ۱۰ متر تفریحی'],
+  },
+  {
+    id: 'ready-plan-u16',
+    title: 'برنامه شتاب انفجاری، پرس و استقامت عضلانی نوجوانان',
+    ageGroup: 'نوجوانان (۱۲ تا ۱۵ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    durationWeeks: 6,
+    sessionsPerWeek: 4,
+    totalSessions: 24,
+    difficulty: 'متوسط',
+    goal: 'ارتقای شتاب گام اول، استقامت بی‌هوازی و تکنیک در موقعیت‌های تحت فشار',
+    description: 'برنامه جامع بدنسازی تخصصی نوجوانان فوتبال با تأکید بر قدرت عملکردی وزن بدن و لمس دوم.',
+    equipment: ['مخروط', 'کش مقاومتی مینی‌لوپ', 'توپ شماره ۵', 'نردبان'],
+    coachName: 'کادر ارشد استعدادیابی فرست تاچ',
+    rating: 4.8,
+    studentsCount: 485,
+    drillsSummary: ['تست ۵-۱۰-۵ حرفه‌ای', 'اسکات پرشی تک‌پا', 'شاتل شتاب زاویه‌دار', 'پرس پرسرعت ۲ به ۲'],
+  },
+  {
+    id: 'ready-plan-u19',
+    title: 'برنامه قدرت، موبیلیتی و سرعت پیش‌فصل جوانان',
+    ageGroup: 'جوانان (۱۶ تا ۱۹ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    durationWeeks: 8,
+    sessionsPerWeek: 4,
+    totalSessions: 32,
+    difficulty: 'پیشرفته',
+    goal: 'آماده‌سازی برای تست‌های باشگاهی و لیگ جوانان، بهبود توان انفجاری و ریکاوری',
+    description: 'شامل پروتکل‌های حرفه‌ای FIFA 11+، تمرینات RSA استقامت در سرعت و کنترل پاس‌های پرفشار.',
+    equipment: ['بوسوبال', 'موانع پرش', 'وزنه آزاد / مدیسن بال', 'توپ'],
+    coachName: 'مربی بدنساز رسمی فیفا',
+    rating: 5.0,
+    studentsCount: 620,
+    drillsSummary: ['تکرار اسپرینت بی‌هوازی', 'موبیلیتی ۹۰/۹۰ لگن', 'پاس تک‌ضرب تحت فشار', 'پرش سرزنی با فرود مقاومتی'],
+  },
+  {
+    id: 'ready-plan-senior',
+    title: 'برنامه جامع آماده‌سازی فیزیکی و تاکتیکی بزرگسالان',
+    ageGroup: 'بزرگسالان (+۱۹ سال)',
+    price: '۱۹۹,۰۰۰ تومان',
+    priceNumber: 199000,
+    durationWeeks: 8,
+    sessionsPerWeek: 4,
+    totalSessions: 32,
+    difficulty: 'حرفه‌ای',
+    goal: 'رسیدن به اوج آمادگی بدنی مسابقاتی، چابکی عرضی و استقامت ۹۰ دقیقه‌ای',
+    description: 'تمرینات ویژه لیگ و بازیکنان باشگاهی با بالاترین چگالی تمرین و آنالیز بار کاری.',
+    equipment: ['کامل آکادمی', 'جی‌پی‌اس یا ساعت هوشمند', 'وزنه'],
+    coachName: 'سرمربی بین‌المللی UEFA Pro',
+    rating: 4.9,
+    studentsCount: 290,
+    drillsSummary: ['RSA فوتبال ۹۰ دقیقه', 'شیرجه و انتقال موقعیت', 'شوت‌زنی بعد از استارت ۴۰ متری', 'حرکات ضد مصدومیت کشاله'],
+  },
+];
 
 const DEFAULT_READY_NUTRITION_PLANS: ReadyNutritionPlan[] = [
   {
@@ -155,8 +247,18 @@ export const getReadyTrainingPlans = (): ReadyTrainingPlan[] => {
     const raw = localStorage.getItem(TRAINING_STORAGE_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.filter((p: ReadyTrainingPlan) => p && !deletedIds.includes(p.id));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const cleaned = parsed.filter(
+          (p: ReadyTrainingPlan) =>
+            p &&
+            !deletedIds.includes(p.id) &&
+            !p.title?.includes('تست') &&
+            !p.title?.toLowerCase().includes('test') &&
+            !p.description?.includes('تستی')
+        );
+        const storedIds = new Set(cleaned.map((p) => p.id));
+        const remaining = DEFAULT_READY_TRAINING_PLANS.filter((p) => !deletedIds.includes(p.id) && !storedIds.has(p.id));
+        return [...cleaned, ...remaining];
       }
     }
   } catch (err) {
@@ -206,7 +308,13 @@ export const syncProgramsWithServer = async (): Promise<ReadyTrainingPlan[]> => 
       if (Array.isArray(serverPrograms) && serverPrograms.length > 0) {
         const deletedIds = getDeletedPlanIds();
         const mapped: ReadyTrainingPlan[] = serverPrograms
-          .filter((p) => !deletedIds.includes(p.id))
+          .filter(
+            (p) =>
+              !deletedIds.includes(p.id) &&
+              !p.title?.includes('تست') &&
+              !p.title?.toLowerCase().includes('test') &&
+              !p.description?.includes('تستی')
+          )
           .map((p) => ({
             id: p.id,
             title: p.title,
@@ -231,9 +339,8 @@ export const syncProgramsWithServer = async (): Promise<ReadyTrainingPlan[]> => 
             isCustomAdminCreated: true,
           }));
 
-        const local = getReadyTrainingPlans();
         const serverIds = new Set(mapped.map((m) => m.id));
-        const merged = [...mapped, ...local.filter((l) => !serverIds.has(l.id))];
+        const merged = [...mapped, ...DEFAULT_READY_TRAINING_PLANS.filter((d) => !serverIds.has(d.id))];
         saveReadyTrainingPlans(merged);
         return merged;
       }

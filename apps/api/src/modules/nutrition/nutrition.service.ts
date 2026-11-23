@@ -404,4 +404,64 @@ export class NutritionService {
     this.dailyLogs.set(dateKey, filtered);
     return this.getDailyLog(dateKey);
   }
+
+  // =========================================================================
+  // NUTRITION GUIDE (قابل تنظیم و ویرایش از پنل ادمین)
+  // =========================================================================
+  private nutritionGuide = {
+    title: 'راهنمای جامع تغذیه و سوخت‌رسانی فوتبال',
+    subtitle: 'اصول تخصصی تغذیه مسابقه، آب‌رسانی و بازسازی گلیکوژن برای فوتبالیست‌ها',
+    summary: 'تغذیه مناسب تا ۴۰٪ در راندمان بدنی، استقامت ۹۰ دقیقه‌ای و جلوگیری از گرفتگی عضلات در نیمه دوم مؤثر است.',
+    hydrationGuidelines: [
+      'نوشیدن ۵۰۰ میلی‌لیتر آب یا نوشیدنی الکترولیت ۲ ساعت قبل از تمرین',
+      'مصرف جرعه‌های کوچک (۱۵۰ تا ۲۰۰ میلی‌لیتر) هر ۱۵ تا ۲۰ دقیقه حین فعالیت',
+      'جایگزینی وزن آب از دست رفته پس از مسابقه (به ازای هر کیلو افت وزن، ۱.۵ لیتر آب و املاح)',
+    ],
+    preMatchMeal: [
+      'وعده اصلی ۳ تا ۴ ساعت قبل مسابقه (کربوهیدرات پیچیده با شاخص گلیسمی متوسط + پروتئین کم‌چرب)',
+      'میان‌وعده سبک ۶۰ تا ۹۰ دقیقه قبل مسابقه (موز، نان تست با عسل طبیعی)',
+      'پرهیز از غذاهای چرب، پرادویه و فیبر سنگین قبل از سوت آغاز بازی',
+    ],
+    postMatchRecovery: [
+      'پنجره آنابولیک ۳۰ دقیقه اول: مصرف پروتئین باکیفیت (۲۰ تا ۳۰ گرم) به همراه کربوهیدرات ساده',
+      'شیک اسموتی پروتئینی با شیر کم‌چرب، موز، پودر کاکائو یا وی',
+      'وعده شام ریکاوری: ماهی سالمون یا سینه مرغ به همراه برنج قهوه‌ای و سبزیجات سبز',
+    ],
+    dailyTips: [
+      'تقسیم کالری در ۵ الی ۶ وعده کوچک جهت جذب حداکثری و حفظ ثبات قند خون',
+      'حداقل ۸ تا ۱۰ لیوان آب در روزهای استراحت و تمرین سبک',
+      'مصرف خواب کافی (۸ الی ۹ ساعت) برای بازسازی بهینه فیبرهای عضلانی',
+    ],
+    supplementNotes: 'مصرف کراتین، منیزیم، ویتامین D3 و امگا ۳ تنها تحت نظارت پزشک تیم یا مربی مجرب توصیه می‌شود.',
+  };
+
+  private getNutritionGuidePath(): string {
+    const dataDir = path.resolve(__dirname, '../../../data');
+    if (!fs.existsSync(dataDir)) {
+      try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
+    }
+    return path.join(dataDir, 'nutrition-guide.json');
+  }
+
+  getNutritionGuide() {
+    try {
+      const p = this.getNutritionGuidePath();
+      if (fs.existsSync(p)) {
+        const raw = fs.readFileSync(p, 'utf-8');
+        return JSON.parse(raw);
+      }
+    } catch {}
+    return this.nutritionGuide;
+  }
+
+  updateNutritionGuide(data: any) {
+    const current = this.getNutritionGuide();
+    const updated = { ...current, ...data };
+    try {
+      const p = this.getNutritionGuidePath();
+      fs.writeFileSync(p, JSON.stringify(updated, null, 2), 'utf-8');
+    } catch {}
+    this.nutritionGuide = updated;
+    return updated;
+  }
 }
