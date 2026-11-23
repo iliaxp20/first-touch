@@ -1,194 +1,323 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, RotateCcw, Play, Clock } from 'lucide-react';
+import { VideoModal } from '@/features/admin/components/VideoModal';
+import { resolveMediaUrl } from '@/lib/api';
 
 interface ActiveTrainingPlanCardProps {
   activePlan: any;
   onOpenDetails: () => void;
 }
 
+interface TrainingTask {
+  id: string | number;
+  title: string;
+  duration?: string;
+  videoUrl?: string;
+  completed: boolean;
+}
+
 export const ActiveTrainingPlanCard: React.FC<ActiveTrainingPlanCardProps> = ({
   activePlan,
   onOpenDetails,
 }) => {
-  // Default session tasks if not provided
-  const defaultTasks = [
-    { id: 1, title: '۲۰ دقیقه پاس و کنترل توپ', completed: true },
-    { id: 2, title: '۱۵ دقیقه دریبل و سرعت', completed: true },
-    { id: 3, title: '۳ ست فوتبال کوچک', completed: false },
-  ];
+  // Calendar days for training week
+  const weekDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
 
-  const [tasks, setTasks] = useState<{ id: number; title: string; completed: boolean }[]>(() => {
+  // Current selected day
+  const [selectedDay, setSelectedDay] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem('ft_active_training_tasks_status');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return defaultTasks;
+      return new Intl.DateTimeFormat('fa-IR', { weekday: 'long' }).format(new Date());
+    } catch {
+      return 'شنبه';
+    }
   });
 
-  const toggleTask = (id: number) => {
+  // Video preview modal
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title: string } | null>(null);
+
+  // Default tasks generator based on day
+  const getDayDefaultTasks = (day: string): TrainingTask[] => {
+    const daySeed = day === 'شنبه' ? 1 : day === 'دوشنبه' ? 2 : day === 'چهارشنبه' ? 3 : 0;
+    if (daySeed === 0) {
+      return [
+        { id: `${day}-1`, title: 'استراحت فعال و کشش عضلانی', duration: '۱۵ دقیقه', completed: false },
+        { id: `${day}-2`, title: 'ریکاوری و هیدراتاسیون پویا', duration: '۱۰ دقیقه', completed: false },
+      ];
+    }
+    return [
+      {
+        id: `${day}-1`,
+        title: 'گرم‌کردن پویا و چابکی با نردبان',
+        duration: '۱۵ دقیقه',
+        videoUrl: '/uploads/drill_agility.mp4',
+        completed: false,
+      },
+      {
+        id: `${day}-2`,
+        title: 'تمرین لمس اول و شتاب اولیه در جهت مخالف',
+        duration: '۲۰ دقیقه',
+        videoUrl: '/uploads/drill_first_touch.mp4',
+        completed: false,
+      },
+      {
+        id: `${day}-3`,
+        title: 'دریبلینگ و انتقال توپ در فضاهای فشرده',
+        duration: '۱۵ دقیقه',
+        videoUrl: '/uploads/drill_dribble.mp4',
+        completed: false,
+      },
+    ];
+  };
+
+  // State for all tasks indexed by storage key
+  const storageKey = `ft_training_calendar_tasks_${activePlan?.id || 'default'}`;
+
+  const [allDaysTasks, setAllDaysTasks] = useState<Record<string, TrainingTask[]>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    const initial: Record<string, TrainingTask[]> = {};
+    weekDays.forEach((d) => {
+      initial[d] = getDayDefaultTasks(d);
+    });
+    return initial;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(allDaysTasks));
+    } catch {}
+  }, [allDaysTasks, storageKey]);
+
+  // Current day tasks
+  const currentTasks = allDaysTasks[selectedDay] || getDayDefaultTasks(selectedDay);
+
+  // Toggle task with CREATIVE GLOWING ANIMATION (NEVER REMOVES THE TASK!)
+  const toggleTask = (taskId: string | number) => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([14]);
+        navigator.vibrate([16]);
       } catch {}
     }
-    setTasks((prev) => {
-      const updated = prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
-      try {
-        localStorage.setItem('ft_active_training_tasks_status', JSON.stringify(updated));
-      } catch {}
-      return updated;
+
+    setAllDaysTasks((prev) => {
+      const updatedDayTasks = (prev[selectedDay] || []).map((t) =>
+        t.id === taskId ? { ...t, completed: !t.completed } : t
+      );
+      const next = { ...prev, [selectedDay]: updatedDayTasks };
+      return next;
     });
   };
 
-  const completedCount = tasks.filter((t) => t.completed).length;
-  const progressPercent = Math.round((completedCount / tasks.length) * 100);
+  // Progress metrics
+  const completedCount = currentTasks.filter((t) => t.completed).length;
+  const progressPercent = currentTasks.length > 0 ? Math.round((completedCount / currentTasks.length) * 100) : 0;
 
-  // SVG circular gauge math
-  const radius = 32;
+  // SVG Gauge
+  const radius = 28;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
 
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-      className="relative w-full max-w-[420px] rounded-2xl sm:rounded-3xl p-3 sm:p-4 bg-gradient-to-r from-[#06180f] via-[#081e13] to-[#140b29] border border-emerald-500/40 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)] overflow-hidden select-none my-3"
-      dir="rtl"
-    >
-      {/* Top Left Neon Emerald Radiance Glow */}
-      <div
-        className="absolute -top-8 -left-8 w-36 h-36 rounded-full pointer-events-none opacity-60"
-        style={{
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.6) 0%, transparent 70%)',
-          filter: 'blur(20px)',
-        }}
-      />
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative w-full max-w-[480px] rounded-3xl p-3.5 sm:p-4 bg-gradient-to-br from-[#06180f]/95 via-[#081e13]/90 to-[#120b24]/90 border border-emerald-500/40 backdrop-blur-2xl shadow-[0_12px_45px_rgba(0,0,0,0.7)] select-none my-2 sm:my-3"
+        dir="rtl"
+      >
+        {/* Neon Emerald Atmosphere Glow */}
+        <div
+          className="absolute -top-10 -left-10 w-44 h-44 rounded-full pointer-events-none opacity-50"
+          style={{
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.5) 0%, transparent 70%)',
+            filter: 'blur(24px)',
+          }}
+        />
 
-      {/* Bottom Right Neon Purple Glow */}
-      <div
-        className="absolute -bottom-8 -right-8 w-36 h-36 rounded-full pointer-events-none opacity-50"
-        style={{
-          background: 'radial-gradient(circle, rgba(147, 51, 234, 0.5) 0%, transparent 70%)',
-          filter: 'blur(22px)',
-        }}
-      />
-
-      {/* Top Header Row */}
-      <div className="relative z-10 flex items-center justify-between pb-2 border-b border-white/10">
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-black text-white">
-          <Calendar className="h-4 w-4 text-purple-400 stroke-[2.2]" />
-          <span>{activePlan?.title ? activePlan.title.slice(0, 26) : 'برنامه تمرینی شما'}</span>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenDetails}
-          className="text-[10px] sm:text-[11px] font-bold text-emerald-400/90 hover:text-emerald-300 transition-colors cursor-pointer flex items-center gap-0.5"
-          title="مشاهده و تغییر برنامه"
-        >
-          <RotateCcw className="h-3 w-3" />
-          <span>تغییر</span>
-        </button>
-      </div>
-
-      {/* Main Card Body */}
-      <div className="relative z-10 flex items-center justify-between gap-2 pt-3">
-        {/* 1. Left Side: Circular Gauge */}
-        <div className="flex flex-col items-center justify-center shrink-0">
-          <div className="relative w-18 h-18 sm:w-20 sm:h-20 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="50%"
-                cy="50%"
-                r={radius}
-                className="stroke-slate-800/80"
-                strokeWidth="6"
-                fill="transparent"
-              />
-              <circle
-                cx="50%"
-                cy="50%"
-                r={radius}
-                className="transition-all duration-500 ease-out"
-                stroke="url(#trainingGaugeGrad)"
-                strokeWidth="6"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                fill="transparent"
-              />
-              <defs>
-                <linearGradient id="trainingGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="100%" stopColor="#34d399" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-base sm:text-lg font-black text-white tracking-tight">
-                {progressPercent}%
+        {/* 1. Header Row: Plan Title + Change Plan Button */}
+        <div className="relative z-10 flex items-center justify-between pb-2.5 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center border border-purple-500/30">
+              <Calendar className="h-3.5 w-3.5 stroke-[2.2]" />
+            </div>
+            <div>
+              <span className="text-xs sm:text-sm font-black text-white">
+                {activePlan?.title ? activePlan.title.slice(0, 30) : 'برنامه تمرینی اختصاصی'}
               </span>
+              <span className="block text-[10px] text-emerald-400 font-bold">تقویم هفتگی جلسات</span>
             </div>
           </div>
-          <span className="text-[10px] font-bold text-slate-300 mt-1">پیشرفت کلی</span>
-        </div>
 
-        {/* Vertical Divider Line */}
-        <div className="w-px h-24 bg-white/10 shrink-0" />
-
-        {/* 2. Middle: Tasks Checklist + Details Button */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between space-y-1.5 py-0.5">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              onClick={() => toggleTask(task.id)}
-              className="flex items-center gap-1.5 cursor-pointer group"
-            >
-              {task.completed ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 fill-emerald-500/20 shrink-0 transition-transform group-hover:scale-110" />
-              ) : (
-                <Circle className="h-4 w-4 text-slate-500 shrink-0 transition-transform group-hover:scale-110" />
-              )}
-              <span
-                className={`text-[11px] font-bold leading-tight truncate transition-colors ${
-                  task.completed ? 'text-slate-200' : 'text-slate-400 group-hover:text-slate-200'
-                }`}
-              >
-                {task.title}
-              </span>
-            </div>
-          ))}
-
-          {/* Action Button: مشاهده جزئیات برنامه */}
           <button
             type="button"
             onClick={onOpenDetails}
-            className="mt-1 w-fit px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-[10px] font-black flex items-center gap-1.5 cursor-pointer transition-all shadow-[0_0_12px_rgba(16,185,129,0.25)]"
+            className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+            title="تغییر برنامه تمرینی"
           >
-            <span>مشاهده جزئیات برنامه</span>
-            <ArrowLeft className="h-3 w-3 text-emerald-400" />
+            <RotateCcw className="h-3 w-3" />
+            <span>تغییر برنامه</span>
           </button>
         </div>
 
-        {/* 3. Right: Silhouette Footballer with Neon Aura */}
-        <div className="shrink-0 w-16 sm:w-20 h-24 relative flex items-center justify-center overflow-hidden">
-          <div
-            className="absolute inset-0 pointer-events-none opacity-90"
-            style={{
-              background: 'radial-gradient(ellipse at 60% 50%, rgba(16, 185, 129, 0.45) 0%, rgba(139, 92, 246, 0.3) 50%, transparent 80%)',
-              filter: 'blur(8px)',
-            }}
-          />
-          <img
-            src="/haaland.png"
-            alt="بازیکن"
-            className="relative z-10 w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(52,211,153,0.7)]"
-            onError={(e) => {
-              (e.currentTarget as HTMLElement).style.display = 'none';
-            }}
-          />
+        {/* 2. WEEK CALENDAR PILLS SELECTOR */}
+        <div className="relative z-10 py-2.5">
+          <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
+            {weekDays.map((day) => {
+              const isSelected = selectedDay === day;
+              const dayTasks = allDaysTasks[day] || [];
+              const isAllDone = dayTasks.length > 0 && dayTasks.every((t) => t.completed);
+
+              return (
+                <motion.button
+                  key={day}
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setSelectedDay(day)}
+                  className={`flex-1 py-1 px-1 rounded-xl text-center flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-slate-950 font-black shadow-[0_0_15px_rgba(52,211,153,0.6)]'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5'
+                  }`}
+                >
+                  <span className="text-[10px] sm:text-[11px]">{day.replace('‌شنبه', '')}</span>
+                  {isAllDone && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] mt-0.5" />
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </motion.div>
+
+        {/* 3. CARD BODY: Progress Gauge + Interactive Checklist */}
+        <div className="relative z-10 flex items-center justify-between gap-3 pt-1">
+          {/* Circular Progress Gauge */}
+          <div className="flex flex-col items-center justify-center shrink-0">
+            <div className="relative w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="50%"
+                  cy="50%"
+                  r={radius}
+                  className="stroke-slate-800/80"
+                  strokeWidth="5"
+                  fill="transparent"
+                />
+                <circle
+                  cx="50%"
+                  cy="50%"
+                  r={radius}
+                  className="transition-all duration-500 ease-out"
+                  stroke="url(#trainingCardGaugeGrad)"
+                  strokeWidth="5"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+                <defs>
+                  <linearGradient id="trainingCardGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#34d399" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+                <span className="text-sm sm:text-base font-black text-white tracking-tight">
+                  {progressPercent}%
+                </span>
+                <span className="text-[8px] text-emerald-400 font-bold mt-0.5">انجام شد</span>
+              </div>
+            </div>
+            <span className="text-[9px] font-bold text-slate-400 mt-1">پیشرفت جلسه</span>
+          </div>
+
+          {/* Vertical Divider */}
+          <div className="w-px h-28 bg-white/10 shrink-0" />
+
+          {/* Drills Checklist with Creative Animation (NEVER REMOVES ITEMS!) */}
+          <div className="flex-1 min-w-0 space-y-1.5">
+            {currentTasks.map((task) => (
+              <motion.div
+                key={task.id}
+                layout
+                whileTap={{ scale: 0.97 }}
+                onClick={() => toggleTask(task.id)}
+                className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all duration-300 ${
+                  task.completed
+                    ? 'bg-emerald-500/15 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {/* Creative animated checkmark */}
+                  <motion.div
+                    animate={task.completed ? { scale: [1, 1.35, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className="shrink-0"
+                  >
+                    {task.completed ? (
+                      <div className="h-5 w-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-[0_0_10px_#34d399]">
+                        <CheckCircle2 className="h-3.5 w-3.5 stroke-[3]" />
+                      </div>
+                    ) : (
+                      <Circle className="h-5 w-5 text-slate-500 stroke-[2] hover:text-emerald-400 transition-colors" />
+                    )}
+                  </motion.div>
+
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className={`text-[11px] font-black block truncate transition-all duration-300 ${
+                        task.completed
+                          ? 'text-emerald-300 line-through opacity-80'
+                          : 'text-slate-100'
+                      }`}
+                    >
+                      {task.title}
+                    </span>
+                    {task.duration && (
+                      <span className="text-[9px] text-slate-400 font-bold flex items-center gap-0.5 mt-0.5">
+                        <Clock className="h-2.5 w-2.5" />
+                        <span>{task.duration}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Direct Video Preview Button (به جای عکس بازیکن) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveVideo({
+                      url: task.videoUrl || '/uploads/drill_agility.mp4',
+                      title: task.title,
+                    });
+                  }}
+                  className="px-2 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-[9px] font-black flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                  title="مشاهده ویدیوی این تمرین"
+                >
+                  <Play className="h-2.5 w-2.5 fill-current" />
+                  <span>ویدیو</span>
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Video Modal Player */}
+      {activeVideo && (
+        <VideoModal
+          isOpen={!!activeVideo}
+          onClose={() => setActiveVideo(null)}
+          videoUrl={resolveMediaUrl(activeVideo.url)}
+          title={activeVideo.title}
+        />
+      )}
+    </>
   );
 };

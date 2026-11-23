@@ -250,8 +250,8 @@ export const NutritionView: React.FC = () => {
       {/* =========================================================================
           NUTRITION CATEGORIES (کراپ‌شده از تصویر ۳ تایی، همراه با انیمیشن کلیک نرم)
           ========================================================================= */}
-      <div className="w-full mt-4 sm:mt-5 mb-5">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3.5 w-full">
+      <div className="w-full mt-2 mb-2">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
           {categories.map((cat, index) => {
             const isSelected = selectedCategory === cat.id;
 
@@ -287,9 +287,9 @@ export const NutritionView: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          NUTRITION PLAN PROGRESS CARD (عکس دریافت برنامه غذایی / کارت زنده پس از دریافت)
+          NUTRITION PLAN PROGRESS CARD (کارت تقویم زنده وعده‌ها پس از دریافت / عکس دریافت)
           ========================================================================= */}
-      <div className="w-full my-3 flex justify-center">
+      <div className="w-full my-1.5 flex justify-center">
         {activePlan ? (
           <ActiveNutritionPlanCard
             activePlan={activePlan}

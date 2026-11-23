@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL, resolveMediaUrl } from '@/lib/api';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
@@ -725,11 +725,21 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                                 onClick={() => setFreeDrillDetail(drill)}
                                 className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 cursor-pointer group shadow-lg border border-white/10"
                               >
-                                <img
-                                  src={posterSrc}
-                                  alt={drill.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
+                                {drill.videoUrl ? (
+                                  <video
+                                    src={`${resolveMediaUrl(drill.videoUrl)}#t=0.5`}
+                                    preload="metadata"
+                                    muted
+                                    playsInline
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                                  />
+                                ) : (
+                                  <img
+                                    src={posterSrc}
+                                    alt={drill.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                )}
 
                                 {/* Ambient Gradient Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 group-hover:via-black/15 transition-colors flex items-center justify-center">

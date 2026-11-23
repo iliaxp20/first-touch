@@ -46,6 +46,9 @@ import {
   updateTrainingDrill,
   deleteTrainingDrill,
   syncDrillsWithServer,
+  getSuggestedDrills,
+  saveSuggestedDrills,
+  SuggestedDrill,
   FreeDrill,
   TrainingCategoryMeta,
 } from '../plans/data/freeTrainingCategories';
@@ -98,6 +101,29 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   const [nutritionPlans, setNutritionPlans] = useState<ReadyNutritionPlan[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
+
+  // Suggested Drills State (مدیریت تمرینات پیشنهادی)
+  const [suggestedDrills, setSuggestedDrillsState] = useState<SuggestedDrill[]>(getSuggestedDrills);
+
+  // 800 Food Database Explorer State
+  const [foodDatabase, setFoodDatabase] = useState<any[]>([]);
+  const [foodSearch, setFoodSearch] = useState('');
+  const [selectedFoodCategory, setSelectedFoodCategory] = useState<string>('all');
+  const [isFoodLoading, setIsFoodLoading] = useState(false);
+
+  // Load 800 foods
+  useEffect(() => {
+    setIsFoodLoading(true);
+    fetch('/first_touch_food_database_800.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.foods && Array.isArray(data.foods)) {
+          setFoodDatabase(data.foods);
+        }
+      })
+      .catch((err) => console.warn('Could not load 800 foods json:', err))
+      .finally(() => setIsFoodLoading(false));
+  }, []);
 
   // Search & Filters
   const [drillSearch, setDrillSearch] = useState('');
@@ -998,6 +1024,96 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
               </form>
             </div>
 
+            {/* =============================================================
+                SUGGESTED DRILLS MANAGER (مدیریت ۳ تمرین پیشنهادی صفحه تمرینات)
+                ============================================================= */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#06150c] border border-amber-500/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                    <Dumbbell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-white">
+                      مدیریت ۳ تمرین پیشنهادی (Suggested Drills)
+                    </h3>
+                    <p className="text-[10px] text-slate-400">
+                      این ۳ تمرین مستقیماً در صفحه اصلی تمرینات نمایش داده می‌شوند و با کلیک روی هرکدام ویدیوی آن پخش می‌شود.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 Suggested Drills Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                {suggestedDrills.map((sDrill, sIdx) => (
+                  <div
+                    key={sDrill.id}
+                    className="p-3 rounded-xl bg-black/40 border border-amber-500/20 space-y-2 text-right"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-amber-400 px-2 py-0.5 rounded bg-amber-500/10">
+                        جایگاه {sIdx + 1}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-bold">{sDrill.difficultyLabel}</span>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={sDrill.title}
+                      onChange={(e) => {
+                        const updated = [...suggestedDrills];
+                        updated[sIdx] = { ...sDrill, title: e.target.value };
+                        setSuggestedDrillsState(updated);
+                        saveSuggestedDrills(updated);
+                      }}
+                      className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white font-bold outline-none focus:border-amber-400"
+                      placeholder="عنوان تمرین"
+                    />
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={sDrill.duration}
+                        onChange={(e) => {
+                          const updated = [...suggestedDrills];
+                          updated[sIdx] = { ...sDrill, duration: e.target.value };
+                          setSuggestedDrillsState(updated);
+                          saveSuggestedDrills(updated);
+                        }}
+                        className="w-24 h-7 px-2 rounded-lg bg-white/5 border border-white/10 text-[11px] text-emerald-400 font-bold outline-none"
+                        placeholder="۱۵ دقیقه"
+                      />
+                      <select
+                        value={sDrill.difficultyLabel}
+                        onChange={(e) => {
+                          const updated = [...suggestedDrills];
+                          updated[sIdx] = {
+                            ...sDrill,
+                            difficultyLabel: e.target.value,
+                            difficultyBars:
+                              e.target.value === 'آسان'
+                                ? [true, false, false]
+                                : e.target.value === 'سخت'
+                                ? [true, true, true]
+                                : [true, true, false],
+                            barColor: e.target.value === 'سخت' ? 'purple' : 'emerald',
+                          };
+                          setSuggestedDrillsState(updated);
+                          saveSuggestedDrills(updated);
+                        }}
+                        className="flex-1 h-7 px-1.5 rounded-lg bg-slate-900 border border-white/10 text-[10px] text-slate-200 outline-none cursor-pointer"
+                      >
+                        <option value="آسان">آسان</option>
+                        <option value="متوسط">متوسط</option>
+                        <option value="سخت">سخت</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Drills List Section (لیست تمرینات با کلید ویرایش و مشاهده ویدیو) */}
             <div className="space-y-3">
               {/* Filter & Search Bar */}
@@ -1396,6 +1512,152 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* ===================================================================
+                800 FOOD DATABASE EXPLORER (بانک جامع ۸۰۰ غذای ورزشی و تغذیه)
+                =================================================================== */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#06150c] border border-emerald-500/30 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <Apple className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white">
+                      بانک جامع ۸۰۰ غذای ورزشی و تغذیه (Food Database v2.2)
+                    </h3>
+                    <p className="text-[10px] text-slate-400">
+                      پایگاه داده کامل با مقادیر دقیق کالری، پروتئین، کربوهیدرات و چربی بر اساس استاندارد ورزشی ایران
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-xs font-black text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                  {foodDatabase.length} غذای استاندارد
+                </div>
+              </div>
+
+              {/* Search & Category Filter */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={foodSearch}
+                    onChange={(e) => setFoodSearch(e.target.value)}
+                    placeholder="جستجو در بین ۸۰۰ غذا (مثال: سینه مرغ، موز، جو دوسر، سالمون، بادام)..."
+                    className="w-full h-10 pr-9 pl-3 rounded-xl bg-black/50 border border-white/10 text-xs text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                  {[
+                    { key: 'all', title: 'همه' },
+                    { key: 'bread_grains', title: 'نان و غلات' },
+                    { key: 'meat_poultry', title: 'گوشت و مرغ' },
+                    { key: 'dairy', title: 'لبنیات' },
+                    { key: 'fruits', title: 'میوه‌ها' },
+                    { key: 'vegetables', title: 'سبزیجات' },
+                    { key: 'legumes', title: 'حبوبات' },
+                    { key: 'nuts_seeds', title: 'مغزها' },
+                    { key: 'supplements', title: 'مکمل‌ها' },
+                  ].map((fCat) => (
+                    <button
+                      key={fCat.key}
+                      type="button"
+                      onClick={() => setSelectedFoodCategory(fCat.key)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors shrink-0 ${
+                        selectedFoodCategory === fCat.key
+                          ? 'bg-emerald-500 text-slate-950 font-black'
+                          : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                      }`}
+                    >
+                      {fCat.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Foods Grid */}
+              {isFoodLoading ? (
+                <div className="text-center py-8 text-xs text-slate-400">در حال بارگذاری بانک اطلاعاتی غذاها...</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[420px] overflow-y-auto pr-1">
+                  {foodDatabase
+                    .filter((food) => {
+                      const matchesCat =
+                        selectedFoodCategory === 'all' || food.category === selectedFoodCategory;
+                      const q = foodSearch.toLowerCase().trim();
+                      if (!q) return matchesCat;
+                      const nameFa = food.name?.fa?.toLowerCase() || '';
+                      const nameEn = food.name?.en?.toLowerCase() || '';
+                      const searchTerms = (food.search_terms || []).join(' ').toLowerCase();
+                      return matchesCat && (nameFa.includes(q) || nameEn.includes(q) || searchTerms.includes(q));
+                    })
+                    .slice(0, 48)
+                    .map((food) => {
+                      const serving = food.default_serving || { amount_g: 100, unit: 'گرم', label_fa: '۱۰۰ گرم' };
+                      const nutrition = food.nutrition_per_default_serving || food.nutrition_per_100g || {};
+                      const cals = Math.round(nutrition.energy_kcal || 0);
+                      const protein = Math.round(nutrition.protein_g || 0);
+                      const carbs = Math.round(nutrition.carbohydrate_g || 0);
+                      const fat = Math.round(nutrition.total_fat_g || 0);
+
+                      return (
+                        <div
+                          key={food.id}
+                          className="p-3 rounded-xl bg-black/40 border border-white/10 hover:border-emerald-500/40 flex flex-col justify-between gap-2 text-right transition-colors"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
+                                {serving.amount_g} گرم ({serving.label_fa || serving.unit})
+                              </span>
+                              <span className="text-[10px] text-amber-400 font-black">{cals} kcal</span>
+                            </div>
+                            <h4 className="text-xs font-black text-white">{food.name?.fa || food.id}</h4>
+                            <span className="text-[10px] text-slate-400 font-mono block dir-ltr truncate">
+                              {food.name?.en}
+                            </span>
+                          </div>
+
+                          <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-[10px]">
+                              <span className="text-emerald-400 font-bold">{protein}g پروتئین</span>
+                              <span className="text-sky-400 font-bold">{carbs}g کربوهیدرات</span>
+                              <span className="text-amber-400 font-bold">{fat}g چربی</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newPlan = addReadyNutritionPlan({
+                                  title: `برنامه بر پایه ${food.name?.fa || 'غذای ورزشی'}`,
+                                  ageGroup: 'تمامی رده‌ها',
+                                  price: 'رایگان',
+                                  priceNumber: 0,
+                                  dailyCalories: cals > 0 ? cals * 4 : 2200,
+                                  goal: `تغذیه غنی از ${food.name?.fa}`,
+                                  focus: `پروتئین ${protein} گرم و کالری متناسب`,
+                                  description: `برنامه غذایی شامل ${food.name?.fa} (${serving.amount_g} گرم) با ارزش غذایی استاندارد`,
+                                  mealsSummary: [],
+                                });
+                                setNutritionPlans([newPlan, ...nutritionPlans]);
+                                showToast(`«${food.name?.fa}» به برنامه‌های غذایی اضافه شد.`);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                              title="ایجاد برنامه غذایی با این ماده"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>افزودن</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </div>
         )}

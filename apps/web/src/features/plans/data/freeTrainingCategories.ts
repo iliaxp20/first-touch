@@ -1,4 +1,65 @@
 import { API_BASE_URL } from '@/lib/api';
+export interface SuggestedDrill {
+  id: string;
+  title: string;
+  duration: string;
+  difficultyLabel: string;
+  difficultyBars: boolean[];
+  barColor: 'emerald' | 'purple';
+  image: string;
+  videoUrl?: string;
+}
+
+const SUGGESTED_DRILLS_KEY = 'first_touch_suggested_drills';
+
+export const getSuggestedDrills = (): SuggestedDrill[] => {
+  try {
+    const raw = localStorage.getItem(SUGGESTED_DRILLS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [
+    {
+      id: 'drill-passing',
+      title: 'پاس‌کاری دقیق',
+      duration: '15 min',
+      difficultyLabel: 'آسان',
+      difficultyBars: [true, false, false],
+      barColor: 'emerald',
+      image: '/drill-thumb-passing.png',
+    },
+    {
+      id: 'drill-agility',
+      title: 'کنترل توپ در فضاهای تنگ',
+      duration: '20 min',
+      difficultyLabel: 'سخت',
+      difficultyBars: [true, true, false],
+      barColor: 'purple',
+      image: '/drill-thumb-agility.png',
+    },
+    {
+      id: 'drill-cones',
+      title: 'دریبلینگ با مخروط‌ها',
+      duration: '15 min',
+      difficultyLabel: 'متوسط',
+      difficultyBars: [true, true, false],
+      barColor: 'emerald',
+      image: '/drill-thumb-cones.png',
+    },
+  ];
+};
+
+export const saveSuggestedDrills = (drills: SuggestedDrill[]): void => {
+  try {
+    localStorage.setItem(SUGGESTED_DRILLS_KEY, JSON.stringify(drills));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('ft_suggested_drills_updated'));
+    }
+  } catch {}
+};
+
 export interface FreeDrill {
   id: string;
   categoryKey: string;
@@ -318,7 +379,7 @@ export const syncDrillsWithServer = async (): Promise<FreeDrill[]> => {
           title: d.persianName || d.title,
           englishTitle: d.englishName || '',
           difficulty: d.difficulty === 'ADVANCED' ? 'پیشرفته' : d.difficulty === 'BEGINNER' ? 'مبتدی' : 'متوسط',
-          duration: d.duration || '۱۰ دقیقه',
+          duration: d.duration || (d.durationMinutes ? `${d.durationMinutes} دقیقه` : '۱۵ دقیقه'),
           setsReps: d.setsReps || '۴ ست',
           equipment: d.equipment || 'توپ، مخروط',
           targetSkill: d.targetSkill || d.persianName,

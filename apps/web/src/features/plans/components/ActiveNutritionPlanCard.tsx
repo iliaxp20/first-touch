@@ -1,132 +1,207 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Circle, RotateCcw, Utensils } from 'lucide-react';
 
 interface ActiveNutritionPlanCardProps {
   activePlan: any;
   onOpenDetails: () => void;
 }
 
+interface MealTask {
+  id: string | number;
+  type: string;
+  title: string;
+  desc: string;
+  calories: number;
+  protein: number;
+  completed: boolean;
+}
+
 export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = ({
   activePlan,
   onOpenDetails,
 }) => {
-  const defaultMeals = [
+  const weekDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+
+  const [selectedDay, setSelectedDay] = useState<string>(() => {
+    try {
+      return new Intl.DateTimeFormat('fa-IR', { weekday: 'long' }).format(new Date());
+    } catch {
+      return 'شنبه';
+    }
+  });
+
+  const getDayDefaultMeals = (day: string): MealTask[] => [
     {
-      id: 1,
-      title: 'صبحانه',
-      desc: 'جو دوسر با میوه و مغزها',
-      calories: 450,
-      completed: true,
-      image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=120&q=80',
+      id: `${day}-m1`,
+      type: 'صبحانه',
+      title: 'املت اسفناج و نان سنگک',
+      desc: '۳ عدد سفیده + ۱ تخم‌مرغ کامل، کف دست سنگک',
+      calories: 380,
+      protein: 24,
+      completed: false,
     },
     {
-      id: 2,
-      title: 'ناهار',
-      desc: 'مرغ گریل با سبزیجات',
-      calories: 650,
+      id: `${day}-m2`,
+      type: 'ناهار',
+      title: 'سینه مرغ گریل با برنج کته و کلم بروکلی',
+      desc: '۱۸۰ گرم سینه مرغ، ۱۰ قاشق برنج، لیموترش',
+      calories: 620,
+      protein: 48,
       completed: false,
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=120&q=80',
     },
     {
-      id: 3,
-      title: 'شام',
-      desc: 'ماهی سالمون و سالاد سبز',
-      calories: 550,
+      id: `${day}-m3`,
+      type: 'میان‌وعده',
+      title: 'اسموتی پروتئینی موز و بادام‌زمینی',
+      desc: 'شیر کم‌چرب، موز، ۱ قاشق کره بادام‌زمینی',
+      calories: 280,
+      protein: 16,
       completed: false,
-      image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=120&q=80',
+    },
+    {
+      id: `${day}-m4`,
+      type: 'شام',
+      title: 'فیله ماهی یا خوراک عدسی با قارچ',
+      desc: 'سبک با هضم آسان جهت بهبود ترشح هورمون رشد',
+      calories: 420,
+      protein: 32,
+      completed: false,
     },
   ];
 
-  const [meals, setMeals] = useState(() => {
+  const storageKey = `ft_nutrition_calendar_meals_${activePlan?.id || 'default'}`;
+
+  const [allDaysMeals, setAllDaysMeals] = useState<Record<string, MealTask[]>>(() => {
     try {
-      const saved = localStorage.getItem('ft_active_nutrition_meals_status');
+      const saved = localStorage.getItem(storageKey);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return defaultMeals;
+    const initial: Record<string, MealTask[]> = {};
+    weekDays.forEach((d) => {
+      initial[d] = getDayDefaultMeals(d);
+    });
+    return initial;
   });
 
-  const toggleMeal = (id: number) => {
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(allDaysMeals));
+    } catch {}
+  }, [allDaysMeals, storageKey]);
+
+  const currentMeals = allDaysMeals[selectedDay] || getDayDefaultMeals(selectedDay);
+
+  // Toggle meal with creative animation (NEVER DISAPPEARS!)
+  const toggleMeal = (mealId: string | number) => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([14]);
+        navigator.vibrate([16]);
       } catch {}
     }
-    setMeals((prev: typeof defaultMeals) => {
-      const updated = prev.map((m) => (m.id === id ? { ...m, completed: !m.completed } : m));
-      try {
-        localStorage.setItem('ft_active_nutrition_meals_status', JSON.stringify(updated));
-      } catch {}
-      return updated;
+
+    setAllDaysMeals((prev) => {
+      const updated = (prev[selectedDay] || []).map((m) =>
+        m.id === mealId ? { ...m, completed: !m.completed } : m
+      );
+      return { ...prev, [selectedDay]: updated };
     });
   };
 
   const totalTargetCalories = activePlan?.dailyCalories || 1700;
-  const consumedCalories = meals
-    .filter((m: any) => m.completed)
-    .reduce((sum: number, m: any) => sum + m.calories, 0);
+  const consumedCalories = currentMeals
+    .filter((m) => m.completed)
+    .reduce((sum, m) => sum + m.calories, 0);
 
   const calPercent = Math.min(100, Math.round((consumedCalories / totalTargetCalories) * 100));
 
-  // Circular gauge math
-  const radius = 32;
+  const radius = 28;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (calPercent / 100) * circumference;
 
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-      className="relative w-full max-w-[420px] rounded-2xl sm:rounded-3xl p-3 sm:p-4 bg-gradient-to-r from-[#06180f] via-[#081e13] to-[#140b29] border border-emerald-500/40 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)] overflow-hidden select-none my-3"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative w-full max-w-[480px] rounded-3xl p-3.5 sm:p-4 bg-gradient-to-br from-[#06180f]/95 via-[#081e13]/90 to-[#120b24]/90 border border-emerald-500/40 backdrop-blur-2xl shadow-[0_12px_45px_rgba(0,0,0,0.7)] select-none my-2 sm:my-2.5"
       dir="rtl"
     >
-      {/* Top Left Neon Emerald Glow */}
+      {/* Neon Emerald Atmosphere Glow */}
       <div
-        className="absolute -top-8 -left-8 w-36 h-36 rounded-full pointer-events-none opacity-60"
+        className="absolute -top-10 -left-10 w-44 h-44 rounded-full pointer-events-none opacity-50"
         style={{
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.6) 0%, transparent 70%)',
-          filter: 'blur(20px)',
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.5) 0%, transparent 70%)',
+          filter: 'blur(24px)',
         }}
       />
 
-      {/* Bottom Right Neon Purple Glow */}
-      <div
-        className="absolute -bottom-8 -right-8 w-36 h-36 rounded-full pointer-events-none opacity-50"
-        style={{
-          background: 'radial-gradient(circle, rgba(147, 51, 234, 0.5) 0%, transparent 70%)',
-          filter: 'blur(22px)',
-        }}
-      />
-
-      {/* Top Header Row */}
-      <div className="relative z-10 flex items-center justify-between pb-2 border-b border-white/10">
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-black text-white">
-          <Calendar className="h-4 w-4 text-purple-400 stroke-[2.2]" />
-          <span>{activePlan?.title ? activePlan.title.slice(0, 26) : 'برنامه امروز'}</span>
+      {/* 1. Header: Plan Title + Change Plan */}
+      <div className="relative z-10 flex items-center justify-between pb-2.5 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center border border-amber-500/30">
+            <Utensils className="h-3.5 w-3.5 stroke-[2.2]" />
+          </div>
+          <div>
+            <span className="text-xs sm:text-sm font-black text-white">
+              {activePlan?.title ? activePlan.title.slice(0, 30) : 'برنامه غذایی اختصاصی'}
+            </span>
+            <span className="block text-[10px] text-emerald-400 font-bold">تقویم وعده‌های روزانه</span>
+          </div>
         </div>
+
         <button
           type="button"
           onClick={onOpenDetails}
-          className="text-[10px] sm:text-[11px] font-bold text-emerald-400/90 hover:text-emerald-300 transition-colors cursor-pointer flex items-center gap-0.5"
-          title="مشاهده و تغییر برنامه غذایی"
+          className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+          title="تغییر برنامه غذایی"
         >
           <RotateCcw className="h-3 w-3" />
-          <span>تغییر</span>
+          <span>تغییر برنامه</span>
         </button>
       </div>
 
-      {/* Main Card Body */}
-      <div className="relative z-10 flex items-center justify-between gap-2 pt-3">
-        {/* 1. Left: Circular Progress Gauge + Calories */}
+      {/* 2. WEEK CALENDAR PILLS */}
+      <div className="relative z-10 py-2.5">
+        <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
+          {weekDays.map((day) => {
+            const isSelected = selectedDay === day;
+            const dayMeals = allDaysMeals[day] || [];
+            const isAllDone = dayMeals.length > 0 && dayMeals.every((m) => m.completed);
+
+            return (
+              <motion.button
+                key={day}
+                type="button"
+                whileTap={{ scale: 0.94 }}
+                onClick={() => setSelectedDay(day)}
+                className={`flex-1 py-1 px-1 rounded-xl text-center flex flex-col items-center justify-center transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-slate-950 font-black shadow-[0_0_15px_rgba(52,211,153,0.6)]'
+                    : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5'
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px]">{day.replace('‌شنبه', '')}</span>
+                {isAllDone && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] mt-0.5" />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. CARD BODY: Calorie Circular Progress + Meals Checklist */}
+      <div className="relative z-10 flex items-center justify-between gap-3 pt-1">
+        {/* Calorie Gauge */}
         <div className="flex flex-col items-center justify-center shrink-0">
-          <div className="relative w-18 h-18 sm:w-20 sm:h-20 flex items-center justify-center">
+          <div className="relative w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90">
               <circle
                 cx="50%"
                 cy="50%"
                 r={radius}
                 className="stroke-slate-800/80"
-                strokeWidth="6"
+                strokeWidth="5"
                 fill="transparent"
               />
               <circle
@@ -134,78 +209,92 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
                 cy="50%"
                 r={radius}
                 className="transition-all duration-500 ease-out"
-                stroke="url(#nutritionGaugeGrad)"
-                strokeWidth="6"
+                stroke="url(#nutritionCardGaugeGrad)"
+                strokeWidth="5"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 fill="transparent"
               />
               <defs>
-                <linearGradient id="nutritionGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="nutritionCardGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="100%" stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#fbbf24" />
                 </linearGradient>
               </defs>
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-base sm:text-lg font-black text-white tracking-tight">
+            <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+              <span className="text-sm sm:text-base font-black text-white tracking-tight">
                 {calPercent}%
               </span>
+              <span className="text-[8px] text-amber-400 font-bold mt-0.5">کالری</span>
             </div>
           </div>
-          <span className="text-[10px] font-bold text-slate-300 mt-1">کالری مصرفی</span>
-          <span className="text-[11px] font-black text-emerald-400 mt-0.5">
-            {consumedCalories} / {totalTargetCalories} kcal
+          <span className="text-[9px] font-bold text-slate-400 mt-1">
+            {consumedCalories} از {totalTargetCalories}
           </span>
         </div>
 
-        {/* Vertical Divider Line */}
-        <div className="w-px h-28 bg-white/10 shrink-0" />
+        {/* Vertical Divider */}
+        <div className="w-px h-32 bg-white/10 shrink-0" />
 
-        {/* 2. Middle: Meals Checklist */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2 py-0.5">
-          {meals.map((m: any) => (
-            <div
-              key={m.id}
-              onClick={() => toggleMeal(m.id)}
-              className="flex items-center gap-1.5 cursor-pointer group"
+        {/* Meals Checklist with Creative Animation */}
+        <div className="flex-1 min-w-0 space-y-1.5">
+          {currentMeals.map((meal) => (
+            <motion.div
+              key={meal.id}
+              layout
+              whileTap={{ scale: 0.97 }}
+              onClick={() => toggleMeal(meal.id)}
+              className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all duration-300 ${
+                meal.completed
+                  ? 'bg-emerald-500/15 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10'
+              }`}
             >
-              {m.completed ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 fill-emerald-500/20 shrink-0 transition-transform group-hover:scale-110" />
-              ) : (
-                <Circle className="h-4 w-4 text-slate-500 shrink-0 transition-transform group-hover:scale-110" />
-              )}
-              <div className="flex flex-col min-w-0 leading-tight">
-                <span
-                  className={`text-xs font-black transition-colors ${
-                    m.completed ? 'text-white' : 'text-slate-300 group-hover:text-white'
-                  }`}
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {/* Creative animated checkmark */}
+                <motion.div
+                  animate={meal.completed ? { scale: [1, 1.35, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.25 }}
+                  className="shrink-0"
                 >
-                  {m.title}
-                </span>
-                <span className="text-[10px] text-slate-400 truncate max-w-[140px] sm:max-w-[170px]">
-                  {m.desc}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+                  {meal.completed ? (
+                    <div className="h-5 w-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-[0_0_10px_#34d399]">
+                      <CheckCircle2 className="h-3.5 w-3.5 stroke-[3]" />
+                    </div>
+                  ) : (
+                    <Circle className="h-5 w-5 text-slate-500 stroke-[2] hover:text-emerald-400 transition-colors" />
+                  )}
+                </motion.div>
 
-        {/* 3. Right: Circular Food Photos */}
-        <div className="shrink-0 flex flex-col justify-between space-y-2">
-          {meals.map((m: any) => (
-            <div
-              key={m.id}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/15 shadow-sm bg-slate-900 shrink-0"
-            >
-              <img
-                src={m.image}
-                alt={m.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-white/10 text-emerald-400">
+                      {meal.type}
+                    </span>
+                    <span
+                      className={`text-[11px] font-black truncate transition-all duration-300 ${
+                        meal.completed
+                          ? 'text-emerald-300 line-through opacity-80'
+                          : 'text-slate-100'
+                      }`}
+                    >
+                      {meal.title}
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-400 truncate block mt-0.5">
+                    {meal.desc}
+                  </span>
+                </div>
+              </div>
+
+              {/* Calorie & Protein Badge */}
+              <div className="text-left shrink-0">
+                <span className="text-[10px] font-bold text-amber-400 block">{meal.calories} kcal</span>
+                <span className="text-[9px] text-emerald-400 font-semibold">{meal.protein}g پروتئین</span>
+              </div>
+            </motion.div>
           ))}
         </div>
       </div>

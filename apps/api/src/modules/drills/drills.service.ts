@@ -130,6 +130,8 @@ export class DrillsService implements OnModuleInit {
       difficulty: dto.difficulty || 'INTERMEDIATE',
       equipment: dto.equipment || 'توپ، مخروط',
       targetSkill: dto.targetSkill || dto.persianName,
+      duration: dto.duration || '۱۵ دقیقه',
+      setsReps: dto.setsReps || '۴ ست',
     };
 
     try {
@@ -169,6 +171,8 @@ export class DrillsService implements OnModuleInit {
       videoUrl: dto.videoUrl ?? existing.videoUrl,
       equipment: dto.equipment ?? existing.equipment,
       targetSkill: dto.targetSkill ?? existing.targetSkill,
+      duration: dto.duration ?? existing.duration,
+      setsReps: dto.setsReps ?? existing.setsReps,
     };
 
     this.memoryDrills[index] = updated;

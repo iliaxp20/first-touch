@@ -4,6 +4,9 @@ import { Bell, X, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PlanAcquisitionModal } from './PlanAcquisitionModal';
 import { ActiveTrainingPlanCard } from './ActiveTrainingPlanCard';
+import { getSuggestedDrills, SuggestedDrill } from '../data/freeTrainingCategories';
+import { VideoModal } from '@/features/admin/components/VideoModal';
+import { resolveMediaUrl } from '@/lib/api';
 
 export const PlanList: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +15,9 @@ export const PlanList: React.FC = () => {
   const [isPlanPressed, setIsPlanPressed] = useState(false);
   const [isAcquisitionOpen, setIsAcquisitionOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title: string } | null>(null);
+  const [suggestedDrills, setSuggestedDrills] = useState<SuggestedDrill[]>(getSuggestedDrills);
+
   const [activePlan, setActivePlan] = useState<any>(() => {
     try {
       const saved = localStorage.getItem('first_touch_student_active_plans');
@@ -37,8 +43,17 @@ export const PlanList: React.FC = () => {
         setActivePlan(null);
       } catch {}
     };
+
+    const handleSuggestedUpdate = () => {
+      setSuggestedDrills(getSuggestedDrills());
+    };
+
     window.addEventListener('ft_student_plan_updated', handlePlanUpdate);
-    return () => window.removeEventListener('ft_student_plan_updated', handlePlanUpdate);
+    window.addEventListener('ft_suggested_drills_updated', handleSuggestedUpdate);
+    return () => {
+      window.removeEventListener('ft_student_plan_updated', handlePlanUpdate);
+      window.removeEventListener('ft_suggested_drills_updated', handleSuggestedUpdate);
+    };
   }, []);
 
   // هماهنگ‌سازی و بارگذاری همزمان تمام تصاویر صفحه بدون نمایش تکه‌تکه
@@ -96,36 +111,6 @@ export const PlanList: React.FC = () => {
     { id: 3, image: '/category-3.png' },
     { id: 4, image: '/category-4.png' },
     { id: 5, image: '/category-5.png' },
-  ];
-
-  const suggestedDrills = [
-    {
-      id: 'drill-passing',
-      title: 'پاس‌کاری دقیق',
-      duration: '15 min',
-      difficultyLabel: 'آسان',
-      difficultyBars: [true, false, false],
-      barColor: 'emerald',
-      image: '/drill-thumb-passing.png',
-    },
-    {
-      id: 'drill-agility',
-      title: 'کنترل توپ در فضاهای تنگ',
-      duration: '20 min',
-      difficultyLabel: 'سخت',
-      difficultyBars: [true, true, false],
-      barColor: 'purple',
-      image: '/drill-thumb-agility.png',
-    },
-    {
-      id: 'drill-cones',
-      title: 'دریبلینگ با مخروط‌ها',
-      duration: '15 min',
-      difficultyLabel: 'متوسط',
-      difficultyBars: [true, true, false],
-      barColor: 'emerald',
-      image: '/drill-thumb-cones.png',
-    },
   ];
 
   const triggerHaptic = () => {
@@ -391,7 +376,13 @@ export const PlanList: React.FC = () => {
             whileHover={{ scale: 1.03, y: -3 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-            onClick={triggerHaptic}
+            onClick={() => {
+              triggerHaptic();
+              setActiveVideo({
+                url: drill.videoUrl || '/uploads/drill_agility.mp4',
+                title: drill.title,
+              });
+            }}
             className="group relative flex flex-col rounded-2xl sm:rounded-3xl bg-[#07160e]/90 hover:bg-[#0b2417] border border-emerald-500/20 hover:border-emerald-500/50 backdrop-blur-xl overflow-hidden shadow-[0_8px_25px_rgba(0,0,0,0.4)] cursor-pointer transition-colors"
           >
             {/* Thumbnail Header with Duration Badge */}
@@ -495,6 +486,15 @@ export const PlanList: React.FC = () => {
               window.dispatchEvent(new Event('ft_student_plan_updated'));
             } catch {}
           }}
+        />
+      )}
+      {/* Video Modal Player */}
+      {activeVideo && (
+        <VideoModal
+          isOpen={!!activeVideo}
+          onClose={() => setActiveVideo(null)}
+          videoUrl={resolveMediaUrl(activeVideo.url)}
+          title={activeVideo.title}
         />
       )}
     </div>

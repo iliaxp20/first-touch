@@ -15,6 +15,8 @@ export interface AgilityDrillItem {
   targetAge?: string;
   targetPosition?: string;
   durationMinutes?: number;
+  duration?: string;
+  setsReps?: string;
   setsAndReps?: string;
   coachingTips?: string;
   commonMistakes?: string;
