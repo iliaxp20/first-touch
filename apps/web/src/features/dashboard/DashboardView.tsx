@@ -69,11 +69,15 @@ export const DashboardView: React.FC = () => {
     const imagesToLoad = [
       '/firsttouchcrop.png',
       '/glossy-profile-icon.png',
-      '/dashboard-banner-profile.webp',
-      '/dashboard-tactics-nutrition.webp',
-      '/dashboard-training-quiz-progress.webp',
-      '/dashboard-messages-health.webp',
-      '/dashboard-student-report.webp',
+      '/dashboard-cards/card_banner_profile.webp',
+      '/dashboard-cards/card_nutrition.webp',
+      '/dashboard-cards/card_tactics.webp',
+      '/dashboard-cards/card_progress.webp',
+      '/dashboard-cards/card_quiz.webp',
+      '/dashboard-cards/card_training.webp',
+      '/dashboard-cards/card_health.webp',
+      '/dashboard-cards/card_messages.webp',
+      '/dashboard-cards/card_student_report.webp',
     ];
 
     let loadedCount = 0;
@@ -280,10 +284,10 @@ export const DashboardView: React.FC = () => {
 
       {/* =========================================================================
           1. ITEM 1: PROFILE BANNER
-          - تصویر 64bad590... زیر topappbar
-          - روی تصویر کنار دکمش سن، نام و پست هافبک دفاعی
+          - تصویر کراپ‌شده card_banner_profile.webp بدون حاشیه مشکی
+          - موقعیت متن نام و مشخصات بازیکن به سمت چپ‌تر منتقل شده تا از دکمه فاصله بگیرد
           ========================================================================= */}
-      <div className="w-full mb-3 sm:mb-3.5">
+      <div className="w-full mb-2 sm:mb-2.5">
         <motion.div
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
@@ -291,21 +295,21 @@ export const DashboardView: React.FC = () => {
             triggerHaptic();
             navigate('/settings');
           }}
-          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
           title="مشاهده پروفایل کاربری"
         >
           <img
-            src="/dashboard-banner-profile.webp"
+            src="/dashboard-cards/card_banner_profile.webp"
             alt="پروفایل بازیکن"
             className="w-full h-auto block select-none"
             loading="eager"
             decoding="sync"
           />
 
-          {/* User details overlay positioned right next to the button */}
+          {/* User details overlay: shifted comfortably to the left */}
           <div
             dir="rtl"
-            className="absolute inset-y-0 right-[32%] sm:right-[31%] left-[22%] sm:left-[20%] flex flex-col justify-center items-start text-right pointer-events-none select-none z-10"
+            className="absolute inset-y-0 right-[38%] sm:right-[40%] left-[10%] flex flex-col justify-center items-start text-right pointer-events-none select-none z-10"
           >
             <div className="truncate max-w-full">
               <span className="text-xs sm:text-sm md:text-base font-black text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
@@ -323,142 +327,181 @@ export const DashboardView: React.FC = () => {
 
       {/* =========================================================================
           2. ITEM 2: TACTICS & NUTRITION ROW
-          - تصویر 5c237fbd...
-          - سمت چپ: تخته تاکتیک -> /tactics
-          - سمت راست: برنامه غذایی -> /nutrition
+          - تصاویر کراپ‌شده اختصاصی و شفاف (بدون حاشیه و بک‌گراند مشکی)
+          - راست: برنامه غذایی -> /nutrition
+          - چپ: تخته تاکتیک -> /tactics
+          - فاصله مینیمال و فشرده (gap-2)
           ========================================================================= */}
-      <div className="w-full mb-3 sm:mb-3.5">
-        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
-          <img
-            src="/dashboard-tactics-nutrition.webp"
-            alt="تخته تاکتیک و برنامه غذایی"
-            className="w-full h-auto block select-none"
-            loading="eager"
-            decoding="sync"
-          />
-
-          {/* Tactics Hotspot (Left 50% in image) */}
+      <div className="w-full mb-2 sm:mb-2.5">
+        <div dir="rtl" className="grid grid-cols-[1fr_1.16fr] gap-2 sm:gap-2.5 items-stretch">
+          {/* Nutrition (Right in RTL) */}
           <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              triggerHaptic();
-              navigate('/tactics');
-            }}
-            className="absolute inset-y-0 left-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
-            title="ورود به تخته تاکتیک"
-          />
-
-          {/* Nutrition Hotspot (Right 50% in image) */}
-          <motion.div
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => {
               triggerHaptic();
               navigate('/nutrition');
             }}
-            className="absolute inset-y-0 right-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
             title="مشاهده برنامه غذایی"
-          />
+          >
+            <img
+              src="/dashboard-cards/card_nutrition.webp"
+              alt="برنامه غذایی"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
+
+          {/* Tactics (Left in RTL) */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/tactics');
+            }}
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
+            title="ورود به تخته تاکتیک"
+          >
+            <img
+              src="/dashboard-cards/card_tactics.webp"
+              alt="تخته تاکتیک"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
         </div>
       </div>
 
       {/* =========================================================================
           3. ITEM 3: TRAINING, QUIZ & PROGRESS ROW
-          - تصویر 7a243db5...
-          - چپ: تمرینات و برنامه‌ها -> /practice
-          - وسط: بازی کوییز -> /quiz
+          - تصاویر کراپ‌شده اختصاصی و شفاف (بدون حاشیه مشکی)
           - راست: گزارش پیشرفت -> باز شدن مودال تحلیل پیشرفت
+          - وسط: بازی کوییز -> /quiz
+          - چپ: تمرینات و برنامه‌ها -> /practice
           ========================================================================= */}
-      <div className="w-full mb-3 sm:mb-3.5">
-        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
-          <img
-            src="/dashboard-training-quiz-progress.webp"
-            alt="تمرینات، بازی کوییز و گزارش پیشرفت"
-            className="w-full h-auto block select-none"
-            loading="eager"
-            decoding="sync"
-          />
-
-          {/* Training Hotspot (Left 33.3% in image) */}
+      <div className="w-full mb-2 sm:mb-2.5">
+        <div dir="rtl" className="grid grid-cols-3 gap-2 sm:gap-2.5 items-stretch">
+          {/* Progress (Right in RTL) */}
           <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              triggerHaptic();
-              navigate('/practice');
-            }}
-            className="absolute inset-y-0 left-0 w-[33.33%] cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
-            title="مشاهده برنامه تمرینات"
-          />
-
-          {/* Quiz Hotspot (Middle 33.3% in image) */}
-          <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              triggerHaptic();
-              navigate('/quiz');
-            }}
-            className="absolute inset-y-0 left-[33.33%] w-[33.34%] cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
-            title="شروع بازی کوییز"
-          />
-
-          {/* Progress Hotspot (Right 33.3% in image) */}
-          <motion.div
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => {
               triggerHaptic();
               setIsProgressModalOpen(true);
             }}
-            className="absolute inset-y-0 right-0 w-[33.33%] cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
             title="مشاهده گزارش پیشرفت"
-          />
+          >
+            <img
+              src="/dashboard-cards/card_progress.webp"
+              alt="گزارش پیشرفت"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
+
+          {/* Quiz (Middle) */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/quiz');
+            }}
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
+            title="شروع بازی کوییز"
+          >
+            <img
+              src="/dashboard-cards/card_quiz.webp"
+              alt="بازی کوییز"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
+
+          {/* Training (Left in RTL) */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              triggerHaptic();
+              navigate('/practice');
+            }}
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
+            title="مشاهده برنامه تمرینات"
+          >
+            <img
+              src="/dashboard-cards/card_training.webp"
+              alt="تمرینات و برنامه‌ها"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
         </div>
       </div>
 
       {/* =========================================================================
           4. ITEM 4: MESSAGES & HEALTH STATUS ROW
-          - تصویر 0b98f1f0...
-          - چپ: پیام‌ها و اطلاعیه‌ها -> باز شدن مودال پیام‌ها
-          - راست: وضعیت خواب و سلامت -> باز شدن مودال وضعیت خواب و هیدراتاسیون
+          - تصاویر کراپ‌شده اختصاصی و شفاف (بدون حاشیه مشکی)
+          - راست: وضعیت خواب و سلامت -> باز شدن مودال
+          - چپ: پیام‌ها و اطلاعیه‌ها -> باز شدن مودال
           ========================================================================= */}
-      <div className="w-full mb-3 sm:mb-3.5">
-        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
-          <img
-            src="/dashboard-messages-health.webp"
-            alt="پیام‌ها و وضعیت خواب و سلامت"
-            className="w-full h-auto block select-none"
-            loading="eager"
-            decoding="sync"
-          />
-
-          {/* Messages Hotspot (Left 50% in image) */}
+      <div className="w-full mb-2 sm:mb-2.5">
+        <div dir="rtl" className="grid grid-cols-2 gap-2 sm:gap-2.5 items-stretch">
+          {/* Health & Sleep (Right in RTL) */}
           <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              triggerHaptic();
-              setIsNotifOpen(true);
-            }}
-            className="absolute inset-y-0 left-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
-            title="مشاهده پیام‌ها و اطلاعیه‌ها"
-          />
-
-          {/* Health & Sleep Hotspot (Right 50% in image) */}
-          <motion.div
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => {
               triggerHaptic();
               setIsHealthModalOpen(true);
             }}
-            className="absolute inset-y-0 right-0 w-1/2 cursor-pointer transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.08]"
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
             title="مشاهده جزئیات خواب و سلامت"
-          />
+          >
+            <img
+              src="/dashboard-cards/card_health.webp"
+              alt="وضعیت خواب و سلامت"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
+
+          {/* Messages (Left in RTL) */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              triggerHaptic();
+              setIsNotifOpen(true);
+            }}
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-shadow hover:shadow-emerald-500/20"
+            title="مشاهده پیام‌ها و اطلاعیه‌ها"
+          >
+            <img
+              src="/dashboard-cards/card_messages.webp"
+              alt="پیام‌ها و اطلاعیه‌ها"
+              className="w-full h-full object-cover block select-none"
+              loading="eager"
+              decoding="sync"
+            />
+          </motion.div>
         </div>
       </div>
 
       {/* =========================================================================
           5. ITEM 5: STUDENT PERFORMANCE REPORT BANNER
-          - تصویر a301f3fb...
-          - گزارش عملکرد دانش‌آموز (مشاهده گزارش ماهانه)
+          - تصویر کراپ‌شده بدون حاشیه مشکی
           ========================================================================= */}
-      <div className="w-full mb-4">
+      <div className="w-full mb-3">
         <motion.div
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
@@ -466,11 +509,11 @@ export const DashboardView: React.FC = () => {
             triggerHaptic();
             setIsStudentReportModalOpen(true);
           }}
-          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
           title="مشاهده گزارش عملکرد دانش‌آموز"
         >
           <img
-            src="/dashboard-student-report.webp"
+            src="/dashboard-cards/card_student_report.webp"
             alt="گزارش عملکرد ماهانه دانش‌آموز"
             className="w-full h-auto block select-none"
             loading="eager"
