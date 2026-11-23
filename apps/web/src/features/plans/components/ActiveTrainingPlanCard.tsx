@@ -49,9 +49,9 @@ export const ActiveTrainingPlanCard: React.FC<ActiveTrainingPlanCardProps> = ({
     return [
       {
         id: `${day}-1`,
-        title: 'گرم‌کردن پویا و چابکی با نردبان',
+        title: 'شتاب اولیه و تغییر جهت انفجاری',
         duration: '۱۵ دقیقه',
-        videoUrl: '/uploads/drill_agility.mp4',
+        videoUrl: '/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4',
         completed: false,
       },
       {

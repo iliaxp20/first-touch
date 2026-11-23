@@ -412,10 +412,8 @@ export const syncDrillsWithServer = async (): Promise<FreeDrill[]> => {
         const mapped: FreeDrill[] = serverDrills
           .filter(
             (d: any) =>
-              !d.persianName?.includes('تست') &&
-              !d.title?.includes('تست') &&
-              !d.englishName?.toLowerCase().includes('test') &&
-              !d.description?.includes('تستی')
+              !d.persianName?.includes('شافل') &&
+              !d.title?.includes('شافل')
           )
           .map((d: any) => ({
             id: d.id,

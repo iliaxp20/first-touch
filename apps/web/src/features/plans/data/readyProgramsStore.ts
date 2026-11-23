@@ -72,7 +72,7 @@ const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [
     videoUrl: "/uploads/1795327247084-C63495EC-5FAC-443D-8C87-97E8EDD4FF88.mp4",
     imageUrl: "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
     totalSessions: 12,
-    drillsSummary: ["شتاب گام اول", "نردبان چابکی", "تست سرعت ۵-۱۰-۵", "تغییر مسیر انفجاری"],
+    drillsSummary: ["شتاب گام اول", "کنترل و لمس اول", "تست سرعت ۵-۱۰-۵", "تغییر مسیر انفجاری"],
   },
   {
     id: "prog-1794729591094",
@@ -94,7 +94,7 @@ const DEFAULT_READY_TRAINING_PLANS: ReadyTrainingPlan[] = [
     videoUrl: "/uploads/1795327270453-188C1646-FB83-4F65-B537-18EC2F7C8145.mp4",
     imageUrl: "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80",
     totalSessions: 12,
-    drillsSummary: ["شتاب گام اول", "نردبان چابکی"],
+    drillsSummary: ["شتاب گام اول", "کنترل و لمس اول"],
   },
 ];
 

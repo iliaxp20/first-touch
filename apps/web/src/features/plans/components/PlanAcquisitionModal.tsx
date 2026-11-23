@@ -1067,24 +1067,22 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           <h4 className="text-xs sm:text-sm font-black text-white truncate">
                             {foodName}
                           </h4>
-                          <span className="text-[10px] text-amber-400 font-bold block mt-0.5">
+                          <span className="text-[10px] text-emerald-400 font-bold block mt-0.5">
                             {foodCal} کالری • {servingLabel}
                           </span>
                         </div>
 
-                        {/* Direct Meal Selection [صبحانه] [ناهار] [میان وعده] [شام] */}
-                        <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-none py-0.5">
-                          {(['صبحانه', 'ناهار', 'میان وعده', 'شام'] as const).map((meal) => (
-                            <button
-                              key={meal}
-                              type="button"
-                              onClick={() => handleAssignFoodToMeal(food, meal)}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white/10 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 transition-all cursor-pointer whitespace-nowrap active:scale-95 border border-white/5 hover:border-emerald-400"
-                              title={`افزودن به ${meal}`}
-                            >
-                              + {meal}
-                            </button>
-                          ))}
+                        {/* Clean Single Add Button */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleAssignFoodToMeal(food, 'صبحانه')}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 transition-all cursor-pointer whitespace-nowrap active:scale-95 border border-emerald-500/40 hover:border-emerald-400 flex items-center gap-1"
+                            title={`افزودن ${foodName} به برنامه`}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>افزودن به برنامه</span>
+                          </button>
                         </div>
                       </div>
                     );
@@ -1360,7 +1358,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                                 قبلاً خریداری شده (رایگان)
                               </span>
                             ) : (
-                              <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+                              <span className="text-xs font-black text-emerald-400">
                                 {nutPlan.price}
                               </span>
                             )}
@@ -1388,19 +1386,17 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           </div>
 
                           <div className="space-y-1">
-                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                              وعده‌های شاخص:
+                            <span className="text-[11px] font-bold text-slate-400">
+                              ترکیب خوراک‌ها:
                             </span>
                             <div className="space-y-1 text-xs">
-                              {nutPlan.mealsSummary.slice(0, 3).map((m, idx) => (
+                              {nutPlan.mealsSummary.slice(0, 4).map((m, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-[11px]"
+                                  className="flex items-center gap-2 p-1.5 rounded-lg bg-white/5 border border-white/5 text-[11px]"
                                 >
-                                  <span className="font-bold text-emerald-700 dark:text-emerald-300">
-                                    {m.name}:
-                                  </span>
-                                  <span className="text-slate-600 dark:text-slate-300 truncate max-w-[200px]">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                  <span className="text-slate-200 truncate">
                                     {m.food}
                                   </span>
                                 </div>

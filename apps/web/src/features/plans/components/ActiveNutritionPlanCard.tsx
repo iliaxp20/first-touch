@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Circle, Plus, Trash2, RotateCcw, Utensils, X, Flame } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Trash2, RotateCcw, Utensils, X, Droplets, Zap } from 'lucide-react';
 
 interface ActiveNutritionPlanCardProps {
   activePlan: any;
@@ -40,15 +40,36 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
     }
   });
 
-  // Adding food inline form state
-  const [addingMealKey, setAddingMealKey] = useState<MealSectionKey | null>(null);
+  // Modal Dialog state for adding food
+  const [activeModalMeal, setActiveModalMeal] = useState<MealSectionKey | null>(null);
   const [newFoodTitle, setNewFoodTitle] = useState('');
   const [newFoodCalories, setNewFoodCalories] = useState('');
+
+  // Daily Water Tracker State
+  const [waterGlasses, setWaterGlasses] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('ft_player_water_glasses');
+      if (saved !== null && !isNaN(Number(saved))) return Number(saved);
+      return 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const handleUpdateWater = (newCount: number) => {
+    const clamped = Math.max(0, Math.min(16, newCount));
+    setWaterGlasses(clamped);
+    try {
+      localStorage.setItem('ft_player_water_glasses', String(clamped));
+      localStorage.setItem('ft_player_water_ml', String(clamped * 250));
+      window.dispatchEvent(new Event('ft_water_updated'));
+    } catch {}
+  };
 
   // Storage key
   const storageKey = `ft_daily_nutrition_meals_${activePlan?.id || 'default'}`;
 
-  // Default clean athletic foods for each meal
+  // Default athletic foods for each meal
   const getDefaultMeals = (day: string): Record<MealSectionKey, MealFoodItem[]> => ({
     breakfast: [
       { id: `${day}-b1`, title: 'نان سنگک و پنیر گردو', calories: 280, protein: 12, completed: false },
@@ -155,7 +176,7 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
     });
   };
 
-  // Add new food item inline
+  // Add new food item from Dialog
   const handleAddNewFood = (mealKey: MealSectionKey) => {
     if (!newFoodTitle.trim()) return;
     const cals = parseInt(newFoodCalories, 10) || 150;
@@ -181,7 +202,7 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
 
     setNewFoodTitle('');
     setNewFoodCalories('');
-    setAddingMealKey(null);
+    setActiveModalMeal(null);
   };
 
   return (
@@ -222,7 +243,7 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
         </button>
       </div>
 
-      {/* 2. WEEK CALENDAR STRIP (تقویم شیک و مینیمال بالایی) */}
+      {/* 2. WEEK CALENDAR STRIP */}
       <div className="relative z-10 py-2.5">
         <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
           {weekDays.map((day) => {
@@ -240,10 +261,7 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
                 key={day}
                 type="button"
                 whileTap={{ scale: 0.94 }}
-                onClick={() => {
-                  setSelectedDay(day);
-                  setAddingMealKey(null);
-                }}
+                onClick={() => setSelectedDay(day)}
                 className={`flex-1 py-1 px-1 rounded-xl text-center flex flex-col items-center justify-center transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-slate-950 font-black shadow-[0_0_15px_rgba(52,211,153,0.6)]'
@@ -260,33 +278,79 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
         </div>
       </div>
 
-      {/* 3. CALORIE PROGRESS BAR (جلو رفتن کالری با تیک) */}
+      {/* 3. CALORIE PROGRESS BAR (NO YELLOW - Crisp Emerald & Teal) */}
       <div className="relative z-10 p-2.5 rounded-2xl bg-white/5 border border-white/10 mb-3 space-y-1.5">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
-            <Flame className="h-3.5 w-3.5 text-amber-400" />
+            <Zap className="h-3.5 w-3.5 text-emerald-400" />
             <span className="font-bold text-slate-200">کالری مصرفی:</span>
-            <span className="font-black text-amber-400">{consumedCalories}</span>
+            <span className="font-black text-emerald-400">{consumedCalories}</span>
             <span className="text-[10px] text-slate-400">از {targetCalories} kcal</span>
           </div>
-          <span className="font-black text-emerald-400 text-xs">{caloriePercent}٪</span>
+          <span className="font-black text-emerald-300 text-xs">{caloriePercent}٪</span>
         </div>
 
         {/* Dynamic Progress Bar */}
         <div className="h-2.5 w-full bg-slate-950/80 rounded-full overflow-hidden p-0.5 border border-white/5">
           <motion.div
-            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)] transition-all duration-300"
+            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)] transition-all duration-300"
             style={{ width: `${caloriePercent}%` }}
           />
         </div>
       </div>
 
-      {/* 4. THE 4 MEALS: صبحانه، ناهار، میان وعده، شام */}
+      {/* 4. DAILY WATER TRACKER (قابلیت تغییر مصرف آب همینجا) */}
+      <div className="relative z-10 p-2.5 rounded-2xl bg-sky-500/[0.06] border border-sky-500/20 mb-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Droplets className="h-3.5 w-3.5 text-sky-400" />
+            <span className="text-xs font-black text-white">مصرف آب روزانه:</span>
+            <span className="text-xs font-black text-sky-300">
+              {waterGlasses} از ۸ لیوان ({waterGlasses * 250} ml)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handleUpdateWater(waterGlasses + 1)}
+              className="px-2 py-0.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[10px] font-bold transition-all cursor-pointer"
+            >
+              +۱ لیوان
+            </button>
+            <button
+              type="button"
+              onClick={() => handleUpdateWater(waterGlasses - 1)}
+              className="px-1.5 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-bold transition-all cursor-pointer"
+            >
+              -۱
+            </button>
+          </div>
+        </div>
+
+        {/* 8 Glass Visual Bars */}
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleUpdateWater(idx + 1 === waterGlasses ? idx : idx + 1)}
+              className={`h-2 flex-1 rounded-full transition-all cursor-pointer ${
+                idx < waterGlasses
+                  ? 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)]'
+                  : 'bg-white/10 hover:bg-white/20'
+              }`}
+              title={`تنظیم روی ${idx + 1} لیوان`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 5. THE 4 MEALS: صبحانه، ناهار، میان وعده، شام */}
       <div className="relative z-10 space-y-2">
         {MEAL_SECTIONS.map(({ key, title }) => {
           const items = currentDayMeals[key] || [];
           const mealCaloriesSum = items.reduce((sum, it) => sum + (it.calories || 0), 0);
-          const isAddingThisMeal = addingMealKey === key;
 
           return (
             <div
@@ -297,100 +361,31 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-black text-white">{title}</span>
-                  <span className="text-[10px] text-amber-400 font-bold px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-[10px] text-emerald-400 font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
                     {mealCaloriesSum} kcal
                   </span>
                 </div>
 
+                {/* Dialog Open Button */}
                 <button
                   type="button"
                   onClick={() => {
-                    setAddingMealKey(isAddingThisMeal ? null : key);
+                    setActiveModalMeal(key);
                     setNewFoodTitle('');
                     setNewFoodCalories('');
                   }}
-                  className="px-2 py-0.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                  className="px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-xs"
                 >
                   <Plus className="h-3 w-3" />
                   <span>افزودن</span>
                 </button>
               </div>
 
-              {/* Inline Add Food Drawer */}
-              <AnimatePresence>
-                {isAddingThisMeal && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="p-2 rounded-xl bg-slate-900/90 border border-emerald-500/40 space-y-2 overflow-hidden"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="text"
-                        value={newFoodTitle}
-                        onChange={(e) => setNewFoodTitle(e.target.value)}
-                        placeholder="نام خوراک (مثلاً املت، سیب، فیله مرغ)"
-                        className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
-                        autoFocus
-                      />
-                      <input
-                        type="number"
-                        value={newFoodCalories}
-                        onChange={(e) => setNewFoodCalories(e.target.value)}
-                        placeholder="کالری"
-                        className="w-20 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 text-center"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleAddNewFood(key)}
-                        disabled={!newFoodTitle.trim()}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs hover:bg-emerald-400 transition-all cursor-pointer disabled:opacity-40"
-                      >
-                        ثبت
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAddingMealKey(null)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-white"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Quick Suggestions */}
-                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                      <span className="text-[9px] text-slate-400 shrink-0">سریع:</span>
-                      {[
-                        { title: 'تخم‌مرغ آب‌پز', cal: 75 },
-                        { title: 'نان سنگک', cal: 150 },
-                        { title: 'شیر کم‌چرب', cal: 110 },
-                        { title: 'موز', cal: 105 },
-                        { title: 'سینه مرغ گریل', cal: 220 },
-                        { title: 'برنج کته', cal: 200 },
-                      ].map((s) => (
-                        <button
-                          key={s.title}
-                          type="button"
-                          onClick={() => {
-                            setNewFoodTitle(s.title);
-                            setNewFoodCalories(String(s.cal));
-                          }}
-                          className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 text-[9px] text-slate-300 border border-white/5 shrink-0"
-                        >
-                          {s.title} ({s.cal})
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Foods List under this Meal */}
               <div className="space-y-1">
                 {items.length === 0 ? (
                   <div className="py-2 text-center text-[10px] text-slate-500">
-                    موردی ثبت نشده است. دکمه «+ افزودن» را بزنید.
+                    موردی ثبت نشده است. دکمه «افزودن» را بزنید.
                   </div>
                 ) : (
                   items.map((item) => (
@@ -403,7 +398,7 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
                           : 'bg-white/5 hover:bg-white/10 border-white/5'
                       }`}
                     >
-                      {/* Checkbox + Title (NO redundant meal sub-labels!) */}
+                      {/* Checkbox + Title */}
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <div className="shrink-0">
                           {item.completed ? (
@@ -426,7 +421,7 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
 
                       {/* Calorie & Delete */}
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-bold text-amber-400">
+                        <span className="text-[10px] font-bold text-emerald-400">
                           {item.calories} kcal
                         </span>
                         <button
@@ -446,6 +441,118 @@ export const ActiveNutritionPlanCard: React.FC<ActiveNutritionPlanCardProps> = (
           );
         })}
       </div>
+
+      {/* 6. DEDICATED DIALOG MODAL FOR ADDING FOOD (دکمه افزودن یک دیالوگ باز می‌کند) */}
+      <AnimatePresence>
+        {activeModalMeal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-in fade-in select-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+              className="w-full max-w-sm rounded-3xl bg-[#091d13] border border-emerald-500/40 p-4 sm:p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] space-y-4 text-right text-white"
+            >
+              {/* Dialog Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <Plus className="h-4 w-4 stroke-[2.5]" />
+                  </div>
+                  <h3 className="text-xs sm:text-sm font-black text-white">
+                    افزودن خوراک به {MEAL_SECTIONS.find((m) => m.key === activeModalMeal)?.title}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveModalMeal(null)}
+                  className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Inputs */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                    نام خوراک
+                  </label>
+                  <input
+                    type="text"
+                    value={newFoodTitle}
+                    onChange={(e) => setNewFoodTitle(e.target.value)}
+                    placeholder="مثلاً املت، نان سنگک، فیله مرغ"
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                    کالری (کیلوکالری)
+                  </label>
+                  <input
+                    type="number"
+                    value={newFoodCalories}
+                    onChange={(e) => setNewFoodCalories(e.target.value)}
+                    placeholder="مثلاً ۲۰۰"
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Quick suggestions */}
+                <div>
+                  <span className="text-[10px] text-slate-400 block mb-1.5">انتخاب سریع:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { title: 'نان سنگک', cal: 150 },
+                      { title: 'تخم‌مرغ آب‌پز', cal: 75 },
+                      { title: 'سینه مرغ گریل', cal: 220 },
+                      { title: 'برنج کته', cal: 200 },
+                      { title: 'سیب درختی', cal: 80 },
+                      { title: 'شیر کم‌چرب', cal: 110 },
+                      { title: 'ماست و سالاد', cal: 90 },
+                    ].map((s) => (
+                      <button
+                        key={s.title}
+                        type="button"
+                        onClick={() => {
+                          setNewFoodTitle(s.title);
+                          setNewFoodCalories(String(s.cal));
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-white/10 text-[10px] font-bold transition-all cursor-pointer"
+                      >
+                        {s.title} ({s.cal})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dialog Actions */}
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAddNewFood(activeModalMeal)}
+                    disabled={!newFoodTitle.trim()}
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs hover:from-emerald-400 hover:to-teal-400 transition-all cursor-pointer disabled:opacity-40 shadow-lg shadow-emerald-500/20"
+                  >
+                    ثبت خوراک
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModalMeal(null)}
+                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    انصراف
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
