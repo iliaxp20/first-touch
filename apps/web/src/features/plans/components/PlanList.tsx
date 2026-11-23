@@ -7,11 +7,14 @@ import { ActiveTrainingPlanCard } from './ActiveTrainingPlanCard';
 import { getSuggestedDrills, SuggestedDrill } from '../data/freeTrainingCategories';
 import { VideoModal } from '@/features/admin/components/VideoModal';
 import { resolveMediaUrl } from '@/lib/api';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export const PlanList: React.FC = () => {
   const navigate = useNavigate();
+  const { notifications } = useNotifications();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [initialCategoryKey, setInitialCategoryKey] = useState<string>('all');
   const [isPlanPressed, setIsPlanPressed] = useState(false);
   const [isAcquisitionOpen, setIsAcquisitionOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -106,11 +109,11 @@ export const PlanList: React.FC = () => {
   }, []);
 
   const categories = [
-    { id: 1, image: '/category-1.png' },
-    { id: 2, image: '/category-2.png' },
-    { id: 3, image: '/category-3.png' },
-    { id: 4, image: '/category-4.png' },
-    { id: 5, image: '/category-5.png' },
+    { id: 1, key: 'agility', title: 'چابکی', image: '/category-1.png' },
+    { id: 2, key: 'strength', title: 'قدرتی', image: '/category-2.png' },
+    { id: 3, key: 'speed', title: 'سرعت', image: '/category-3.png' },
+    { id: 4, key: 'endurance', title: 'استقامت', image: '/category-4.png' },
+    { id: 5, key: 'technique', title: 'تکنیکی', image: '/category-5.png' },
   ];
 
   const triggerHaptic = () => {
@@ -121,9 +124,11 @@ export const PlanList: React.FC = () => {
     }
   };
 
-  const handleCategoryClick = (id: number) => {
+  const handleCategoryClick = (cat: typeof categories[0]) => {
     triggerHaptic();
-    setSelectedCategory((prev) => (prev === id ? null : id));
+    setSelectedCategory(cat.id);
+    setInitialCategoryKey(cat.key);
+    setIsAcquisitionOpen(true);
   };
 
   return (
@@ -193,8 +198,9 @@ export const PlanList: React.FC = () => {
             title="اعلان‌ها"
           >
             <Bell className="h-5 w-5 sm:h-5.5 sm:w-5.5 stroke-[2] shrink-0" />
-            {/* Neon Green Unread Indicator Dot */}
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] ring-2 ring-background" />
+            {notifications.length > 0 && (
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] ring-2 ring-background" />
+            )}
           </motion.button>
 
           {/* 3. Pure 3D Profile Icon (دقیقاً متناسب با اعلان، با کاهش بسیار ظریف در ابعاد) */}
@@ -242,11 +248,45 @@ export const PlanList: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10 text-right">
-                <h4 className="text-xs font-black">تمرین امروز شما آماده است</h4>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  جهت شروع تمرینات تخصصی، برنامه روزانه را مشاهده کنید.
-                </p>
+              <div className="space-y-2.5 text-right max-h-[60vh] overflow-y-auto pr-1">
+                {notifications.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    هیچ اعلان یا پیامی برای نمایش وجود ندارد.
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const badgeColor =
+                      n.type === 'training'
+                        ? 'text-emerald-400'
+                        : n.type === 'nutrition'
+                        ? 'text-amber-400'
+                        : n.type === 'urgent'
+                        ? 'text-rose-400'
+                        : 'text-sky-400';
+                    return (
+                      <div
+                        key={n.id}
+                        className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-[10px] font-bold ${badgeColor}`}>
+                            {n.type === 'training'
+                              ? 'تمرینی'
+                              : n.type === 'nutrition'
+                              ? 'تغذیه'
+                              : n.type === 'urgent'
+                              ? 'فوری'
+                              : 'سیستمی'}
+                          </span>
+                          <h4 className="text-xs font-black">{n.title}</h4>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {n.message}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </motion.div>
           </div>
@@ -282,7 +322,7 @@ export const PlanList: React.FC = () => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.92 }}
                 transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-                onClick={() => handleCategoryClick(cat.id)}
+                onClick={() => handleCategoryClick(cat)}
                 className={`relative flex flex-col items-center justify-center p-0.5 sm:p-1.5 rounded-2xl cursor-pointer transition-all duration-300 ${
                   isSelected
                     ? 'ring-2 ring-emerald-400 bg-emerald-500/20 shadow-[0_0_20px_rgba(52,211,153,0.4)]'
@@ -479,6 +519,7 @@ export const PlanList: React.FC = () => {
           isOpen={isAcquisitionOpen}
           onClose={() => setIsAcquisitionOpen(false)}
           mode="training"
+          initialCategoryKey={initialCategoryKey}
           onPlanActivated={(newPlan) => {
             try {
               const active = [newPlan];

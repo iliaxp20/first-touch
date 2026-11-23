@@ -20,6 +20,7 @@ import {
   Search,
   Layers,
   Award,
+  Bell,
 } from 'lucide-react';
 import { API_BASE_URL, uploadFile, resolveMediaUrl } from '@/lib/api';
 import { VideoModal } from './components/VideoModal';
@@ -31,6 +32,7 @@ import {
 } from '../quiz/quizStore';
 import {
   getReadyTrainingPlans,
+  syncProgramsWithServer,
   addReadyTrainingPlan,
   updateReadyTrainingPlan,
   deleteReadyTrainingPlan,
@@ -76,7 +78,7 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'drills' | 'programs' | 'nutrition' | 'users' | 'quiz'>('drills');
+  const [activeTab, setActiveTab] = useState<'drills' | 'programs' | 'nutrition' | 'users' | 'quiz' | 'notifications'>('drills');
 
   // Video Modal State
   const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null);
@@ -102,6 +104,15 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   const [nutritionPlans, setNutritionPlans] = useState<ReadyNutritionPlan[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
+
+  // Notifications State (مدیریت اعلان‌ها)
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
+  const [notifForm, setNotifForm] = useState({
+    title: '',
+    message: '',
+    type: 'training' as 'training' | 'nutrition' | 'system' | 'urgent',
+  });
+  const [isSavingNotif, setIsSavingNotif] = useState(false);
 
   // Suggested Drills State (مدیریت تمرینات پیشنهادی)
   const [suggestedDrills, setSuggestedDrillsState] = useState<SuggestedDrill[]>(getSuggestedDrills);
@@ -274,6 +285,50 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
   };
 
   // ---------------------------------------------------------------------------
+  // Notifications Handlers
+  // ---------------------------------------------------------------------------
+  const handleSaveNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notifForm.title.trim() || !notifForm.message.trim()) {
+      showToast('لطفاً عنوان و متن اعلان را وارد نمایید.');
+      return;
+    }
+    setIsSavingNotif(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notifForm),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setNotificationsList((prev) => [created, ...prev]);
+        setNotifForm({ title: '', message: '', type: 'training' });
+        showToast('اعلان با موفقیت ایجاد و برای کاربران ارسال شد.');
+        window.dispatchEvent(new Event('ft_notifications_updated'));
+      } else {
+        showToast('خطا در ارسال اعلان.');
+      }
+    } catch {
+      showToast('خطا در برقراری ارتباط با سرور.');
+    } finally {
+      setIsSavingNotif(false);
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    if (!confirm('آیا از حذف این اعلان مطمئن هستید؟')) return;
+    try {
+      await fetch(`${API_BASE_URL}/notifications/${id}`, { method: 'DELETE' });
+      setNotificationsList((prev) => prev.filter((n) => n.id !== id));
+      showToast('اعلان با موفقیت حذف شد.');
+      window.dispatchEvent(new Event('ft_notifications_updated'));
+    } catch {
+      showToast('خطا در حذف اعلان.');
+    }
+  };
+
+  // ---------------------------------------------------------------------------
   // Load Data
   // ---------------------------------------------------------------------------
   const loadAllData = async () => {
@@ -288,9 +343,14 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
     const cats = getTrainingCategories();
     setCategories(cats);
 
-    // Programs
-    const localPlans = getReadyTrainingPlans();
-    setPrograms(localPlans);
+    // Programs - Direct sync with server
+    try {
+      const serverPlans = await syncProgramsWithServer();
+      setPrograms(serverPlans);
+    } catch {
+      const localPlans = getReadyTrainingPlans();
+      setPrograms(localPlans);
+    }
 
     // Nutrition
     const localNutri = getReadyNutritionPlans();
@@ -299,6 +359,15 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
     // Quiz
     const localQuiz = getQuizQuestions();
     setQuizQuestions(localQuiz);
+
+    // Notifications - Direct sync from server
+    try {
+      const notifRes = await fetch(`${API_BASE_URL}/notifications`).catch(() => null);
+      if (notifRes && notifRes.ok) {
+        const notifData = await notifRes.json();
+        if (Array.isArray(notifData)) setNotificationsList(notifData);
+      }
+    } catch {}
 
     // Try fetching live users from API
     try {
@@ -833,6 +902,7 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
             { id: 'drills', label: 'بانک تمرینات و دریل‌ها', icon: Dumbbell, count: drills.length },
             { id: 'programs', label: 'برنامه‌های تمرینی', icon: Layers, count: programs.length },
             { id: 'nutrition', label: 'برنامه‌های غذایی', icon: Apple, count: nutritionPlans.length },
+            { id: 'notifications', label: 'مدیریت اعلان‌ها', icon: Bell, count: notificationsList.length },
             { id: 'users', label: 'کاربران و شاگردان', icon: Users, count: usersList.length || 'فعال' },
             { id: 'quiz', label: 'کوئیز و جوایز', icon: HelpCircle, count: quizQuestions.length },
           ].map((tab) => {
@@ -1844,6 +1914,142 @@ export const SecretAdminPortal: React.FC<SecretAdminPortalProps> = ({
                   ذخیره و انتشار راهنمای تغذیه
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ===================================================================
+            TAB: NOTIFICATIONS MANAGEMENT (مدیریت اعلان‌ها)
+            =================================================================== */}
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            {/* Form Card */}
+            <div className="rounded-2xl p-4 sm:p-5 bg-[#06150c] border border-emerald-500/20 shadow-md">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-black text-white">ارسال و انتشار اعلان جدید به کاربران</h3>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveNotification} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">عنوان اعلان *</label>
+                    <input
+                      type="text"
+                      required
+                      value={notifForm.title}
+                      onChange={(e) => setNotifForm({ ...notifForm, title: e.target.value })}
+                      placeholder="مثال: بارگذاری تمرینات تخصصی استقامت"
+                      className="w-full h-10 px-3 rounded-xl bg-black/40 border border-slate-700 text-xs text-white outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">دسته‌بندی پیام</label>
+                    <select
+                      value={notifForm.type}
+                      onChange={(e) => setNotifForm({ ...notifForm, type: e.target.value as any })}
+                      className="w-full h-10 px-3 rounded-xl bg-black/40 border border-slate-700 text-xs text-white outline-none cursor-pointer"
+                    >
+                      <option value="training" className="bg-slate-900">تمرینی (Training)</option>
+                      <option value="nutrition" className="bg-slate-900">تغذیه (Nutrition)</option>
+                      <option value="system" className="bg-slate-900">سیستمی (System)</option>
+                      <option value="urgent" className="bg-slate-900">فوری و مهم (Urgent)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">متن کامل اعلان *</label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={notifForm.message}
+                    onChange={(e) => setNotifForm({ ...notifForm, message: e.target.value })}
+                    placeholder="متن پیامی که در زنگوله بالای صفحه برای شاگردان و بازیکنان نمایش داده می‌شود..."
+                    className="w-full p-3 rounded-xl bg-black/40 border border-slate-700 text-xs text-white outline-none focus:border-emerald-500 leading-relaxed resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSavingNotif}
+                  className="px-6 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  {isSavingNotif ? 'در حال انتشار...' : 'انتشار اعلان برای همه کاربران'}
+                </button>
+              </form>
+            </div>
+
+            {/* Notifications List */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h4 className="text-xs font-black text-white">اعلان‌های فعال ({notificationsList.length})</h4>
+              </div>
+
+              {notificationsList.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl bg-[#07170e] border border-white/5 text-slate-400 text-xs">
+                  هیچ اعلانی در سیستم ثبت نشده است. از فرم بالا اعلان جدیدی ثبت نمایید.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {notificationsList.map((notif) => {
+                    const typeColor =
+                      notif.type === 'training'
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                        : notif.type === 'nutrition'
+                        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                        : notif.type === 'urgent'
+                        ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                        : 'bg-sky-500/15 text-sky-400 border-sky-500/30';
+
+                    const typeLabel =
+                      notif.type === 'training'
+                        ? 'تمرینی'
+                        : notif.type === 'nutrition'
+                        ? 'تغذیه'
+                        : notif.type === 'urgent'
+                        ? 'فوری'
+                        : 'سیستمی';
+
+                    return (
+                      <div
+                        key={notif.id}
+                        className="rounded-2xl p-4 bg-[#07170e] border border-emerald-500/20 flex flex-col justify-between gap-3"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${typeColor}`}>
+                              {typeLabel}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('fa-IR') : 'به تازگی'}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-black text-white">{notif.title}</h4>
+                          <p className="text-xs text-slate-300 mt-1 leading-relaxed">{notif.message}</p>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/10 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNotification(notif.id)}
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            حذف اعلان
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

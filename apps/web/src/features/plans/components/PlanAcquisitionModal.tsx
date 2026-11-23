@@ -62,6 +62,8 @@ interface PlanAcquisitionModalProps {
   onClose: () => void;
   mode: 'training' | 'nutrition';
   onPlanActivated: (planDetails: any) => void;
+  initialCategoryKey?: string;
+  initialTab?: AcquisitionTab;
 }
 
 export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
@@ -69,9 +71,11 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   onClose,
   mode,
   onPlanActivated,
+  initialCategoryKey,
+  initialTab,
 }) => {
   const { currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<AcquisitionTab>('free');
+  const [activeTab, setActiveTab] = useState<AcquisitionTab>(initialTab || 'free');
 
   // Personalization based on user profile age
   const userAgeGroup = useMemo(() => {
@@ -96,6 +100,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   const [foodList, setFoodList] = useState<any[]>([]);
   const [selectedFoodCategory, setSelectedFoodCategory] = useState<string>('all');
   const [foodSearchText, setFoodSearchText] = useState<string>('');
+  const [foodDisplayLimit, setFoodDisplayLimit] = useState<number>(50);
   const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null);
 
   // --- CUSTOM COACH TAB STATE ---
@@ -115,6 +120,18 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
   // Load Ready Plans & Drills from Store (Synchronized with Secret Admin & Backend)
   useEffect(() => {
     if (!isOpen) return;
+
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+    if (initialCategoryKey) {
+      if (mode === 'training') {
+        setSelectedCategoryKey(initialCategoryKey);
+      } else {
+        setSelectedFoodCategory(initialCategoryKey);
+      }
+    }
+
     setReadyTrainingPlans(getReadyTrainingPlans());
     setReadyNutritionPlans(getReadyNutritionPlans());
     setTrainingDrills(getTrainingDrills());
@@ -937,19 +954,14 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
               </>
             ) : (
               /* TAB 1 - NUTRITION CATEGORIES & 800+ FOODS DATABASE */
-              <div className="space-y-3.5">
-                {/* Standard 5-Meal Football Plan Quick Activation Card */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-900/30 border border-emerald-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-emerald-400" />
-                      <h4 className="text-xs sm:text-sm font-black text-white">
-                        برنامه غذایی ۵ وعده‌ای استاندارد آکادمی (رایگان)
-                      </h4>
-                    </div>
-                    <p className="text-[11px] text-emerald-200/80 mt-1">
-                      شامل صبحانه، میان‌وعده، ناهار، عصرانه قبل تمرین و شام ریکاوری با ۲۴۰۰ کیلوکالری
-                    </p>
+              <div className="space-y-3">
+                {/* Compact Quick Start Banner */}
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <span className="text-xs font-bold text-white truncate">
+                      برنامه پیشنهادی کادر فنی (۵ وعده ورزشی • ۲۴۰۰ کالری)
+                    </span>
                   </div>
                   <Button
                     variant="primary"
@@ -959,10 +971,10 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                         nutrition_per_100g: { energy_kcal: 2400, protein_g: 135, carbohydrate_g: 280, total_fat_g: 65 },
                       })
                     }
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-4 h-9 shadow-md cursor-pointer shrink-0"
+                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-3 h-8 shadow-xs cursor-pointer shrink-0"
                   >
-                    <CheckCircle2 className="h-4 w-4" />
-                    فعال‌سازی برنامه پیش‌فرض
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>فعال‌سازی سریع</span>
                   </Button>
                 </div>
 
@@ -972,9 +984,12 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                   <input
                     type="text"
                     value={foodSearchText}
-                    onChange={(e) => setFoodSearchText(e.target.value)}
+                    onChange={(e) => {
+                      setFoodSearchText(e.target.value);
+                      setFoodDisplayLimit(50);
+                    }}
                     placeholder="جستجو در بین ۸۰۰ ماده و غذای ایرانی (تخم‌مرغ، برنج، مرغ، موز، عدسی...)"
-                    className="w-full pr-10 pl-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full pr-10 pl-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -986,8 +1001,11 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                       <button
                         key={cat.key}
                         type="button"
-                        onClick={() => setSelectedFoodCategory(cat.key)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                        onClick={() => {
+                          setSelectedFoodCategory(cat.key);
+                          setFoodDisplayLimit(50);
+                        }}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-[0_0_12px_rgba(52,211,153,0.4)]'
                             : 'bg-white/10 dark:bg-white/[0.05] text-slate-300 hover:text-white hover:bg-white/15 border border-white/10'
@@ -1001,7 +1019,7 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
 
                 {/* Foods Counter */}
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold px-1">
-                  <span>نمایش غذاها ({activeFoods.length} مورد از بانک غذایی فرست تاچ):</span>
+                  <span>نمایش غذاها ({activeFoods.length} مورد در بانک اطلاعاتی فرست تاچ):</span>
                   {selectedFoodCategory !== 'all' && (
                     <span className="text-emerald-400">
                       دسته‌بندی: {IRANIAN_FOOD_CATEGORIES.find((c) => c.key === selectedFoodCategory)?.title}
@@ -1010,19 +1028,19 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                 </div>
 
                 {/* 800 Foods Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
-                  {activeFoods.slice(0, 80).map((food) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
+                  {activeFoods.slice(0, foodDisplayLimit).map((food) => {
                     const kcal = Math.round(food.nutrition_per_100g?.energy_kcal || 0);
                     const protein = food.nutrition_per_100g?.protein_g ?? 0;
                     const carbs = food.nutrition_per_100g?.carbohydrate_g ?? 0;
                     const fat = food.nutrition_per_100g?.total_fat_g ?? 0;
                     const foodName = food.name?.fa || food.name || '';
-                    const servingLabel = food.serving_sizes && food.serving_sizes[0]?.label_fa;
+                    const servingLabel = food.default_serving?.display_label_fa || food.default_serving?.label_fa || '۱۰۰ گرم';
 
                     return (
                       <div
                         key={food.id}
-                        className="p-3.5 rounded-2xl border border-white/10 bg-white/5 dark:bg-white/[0.04] backdrop-blur-xl flex flex-col justify-between space-y-2.5 hover:border-emerald-500/40 transition-all text-right"
+                        className="p-3 rounded-2xl border border-white/10 bg-white/5 dark:bg-white/[0.04] backdrop-blur-xl flex flex-col justify-between gap-2 hover:border-emerald-500/40 transition-all text-right"
                       >
                         <div>
                           <div className="flex items-center justify-between gap-1 mb-1">
@@ -1036,15 +1054,13 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           <h4 className="text-xs sm:text-sm font-black text-white line-clamp-1">
                             {foodName}
                           </h4>
-                          {servingLabel && (
-                            <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
-                              واحد مصرف: {servingLabel}
-                            </p>
-                          )}
+                          <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                            واحد: {servingLabel}
+                          </p>
                         </div>
 
-                        {/* Nutrition Macros breakdown */}
-                        <div className="grid grid-cols-3 gap-1 p-1.5 rounded-xl bg-black/30 text-center text-[10px] border border-white/5">
+                        {/* Nutrition Macros breakdown inline */}
+                        <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-black/30 text-center text-[10px] border border-white/5">
                           <div>
                             <span className="text-slate-400 block text-[9px]">پروتئین</span>
                             <span className="font-bold text-emerald-400">{protein}g</span>
@@ -1065,14 +1081,27 @@ export const PlanAcquisitionModal: React.FC<PlanAcquisitionModalProps> = ({
                           className="w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" />
-                          <span>فعال‌سازی برنامه با این ماده</span>
+                          <span>دریافت و تنظیم برنامه با این خوراک</span>
                         </button>
                       </div>
                     );
                   })}
+
+                  {activeFoods.length > foodDisplayLimit && (
+                    <div className="col-span-full py-3 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setFoodDisplayLimit((prev) => prev + 50)}
+                        className="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 text-xs font-black transition-all cursor-pointer border border-emerald-500/30 shadow-md"
+                      >
+                        نمایش ۵۰ مورد بیشتر (مشاهده {foodDisplayLimit} از {activeFoods.length} غذا)
+                      </button>
+                    </div>
+                  )}
+
                   {activeFoods.length === 0 && (
                     <div className="col-span-full py-12 text-center text-slate-400 text-xs">
-                      هیچ ماده غذایی با عبارت «{foodSearchText}» یافت نشد.
+                      هیچ ماده غذایی با عبارت «{foodSearchText}» در این دسته‌بندی یافت نشد.
                     </div>
                   )}
                 </div>

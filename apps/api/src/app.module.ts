@@ -11,6 +11,7 @@ import { CoachesModule } from './modules/coaches/coaches.module';
 import { TacticsModule } from './modules/tactics/tactics.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { QuizModule } from './modules/quiz/quiz.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
     TacticsModule,
     UploadModule,
     QuizModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/lib/api';
 import { LinearPerformanceChart, DayPoint } from './components/LinearPerformanceChart';
 import { Button } from '@/components/ui/Button';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const WATER_STORAGE_KEY = 'ft_player_water_glasses';
 const TARGET_WATER_GLASSES = 8;
@@ -23,6 +24,7 @@ const TARGET_WATER_GLASSES = 8;
 export const DashboardView: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { notifications } = useNotifications();
 
   // Page readiness and image preloader
   const [isReady, setIsReady] = useState(false);
@@ -256,7 +258,9 @@ export const DashboardView: React.FC = () => {
             title="اعلان‌ها"
           >
             <Bell className="h-5 w-5 sm:h-5.5 sm:w-5.5 stroke-[2] shrink-0" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] ring-2 ring-background" />
+            {notifications.length > 0 && (
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] ring-2 ring-background" />
+            )}
           </motion.button>
 
           {/* 3. Pure 3D Profile Icon */}
@@ -306,26 +310,45 @@ export const DashboardView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="space-y-2.5 text-right">
-                <div className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-emerald-400 font-bold">امروز • ۱۰:۳۰</span>
-                    <h4 className="text-xs font-black">جلسه تمرینی روزانه آماده است</h4>
+              <div className="space-y-2.5 text-right max-h-[60vh] overflow-y-auto pr-1">
+                {notifications.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    هیچ اعلان یا پیامی برای نمایش وجود ندارد.
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    جلسه تمرین استقامت و کنترل توپ توسط کادر فنی بارگذاری شد.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-amber-400 font-bold">دیروز</span>
-                    <h4 className="text-xs font-black">ثبت میان‌وعده ریکاوری</h4>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    میزان پروتئین و آب‌رسانی پس از تمرین خود را در برنامه غذایی ثبت کنید.
-                  </p>
-                </div>
+                ) : (
+                  notifications.map((n) => {
+                    const badgeColor =
+                      n.type === 'training'
+                        ? 'text-emerald-400'
+                        : n.type === 'nutrition'
+                        ? 'text-amber-400'
+                        : n.type === 'urgent'
+                        ? 'text-rose-400'
+                        : 'text-sky-400';
+                    return (
+                      <div
+                        key={n.id}
+                        className="p-3 rounded-2xl bg-muted/40 dark:bg-white/[0.04] border border-border/60 dark:border-white/10"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-[10px] font-bold ${badgeColor}`}>
+                            {n.type === 'training'
+                              ? 'تمرینی'
+                              : n.type === 'nutrition'
+                              ? 'تغذیه'
+                              : n.type === 'urgent'
+                              ? 'فوری'
+                              : 'سیستمی'}
+                          </span>
+                          <h4 className="text-xs font-black">{n.title}</h4>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {n.message}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </motion.div>
           </div>
